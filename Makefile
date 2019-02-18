@@ -1039,6 +1039,11 @@ else
 CC_FLAGS_LTO	:= -flto
 endif
 
+ifdef CONFIG_LD_IS_LLD
+KBUILD_LDFLAGS += --lto-O3
+KBUILD_LDFLAGS_MODULE += --lto-O3
+endif
+
 ifeq ($(SRCARCH),x86)
 # Workaround for compiler / linker bug
 CC_FLAGS_LTO	+= -fvisibility=hidden
