@@ -43,6 +43,14 @@
 
 #define FORCE_INLINE __always_inline
 
+#if defined(__PPC64__) && defined(__LITTLE_ENDIAN__) && defined(__GNUC__) && !defined(__clang__)
+#  define FORCE_O2_GCC_PPC64LE __attribute__((optimize("O2")))
+#  define FORCE_O2_INLINE_GCC_PPC64LE __attribute__((optimize("O2"))) FORCE_INLINE
+#else
+#  define FORCE_O2_GCC_PPC64LE		FORCE_INLINE
+#  define FORCE_O2_INLINE_GCC_PPC64LE	FORCE_INLINE
+#endif
+
 /*-************************************
  *	Basic Types
  **************************************/
@@ -169,7 +177,7 @@ static FORCE_INLINE void LZ4_copy8(void *dst, const void *src)
  * customized variant of memcpy,
  * which can overwrite up to 7 bytes beyond dstEnd
  */
-static FORCE_INLINE void LZ4_wildCopy(void *dstPtr,
+static FORCE_O2_INLINE_GCC_PPC64LE void LZ4_wildCopy8(void *dstPtr,
 	const void *srcPtr, void *dstEnd)
 {
 	BYTE *d = (BYTE *)dstPtr;
