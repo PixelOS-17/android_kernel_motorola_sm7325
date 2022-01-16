@@ -53,6 +53,7 @@ endif
 
 KBUILD_CFLAGS	+= $(call cc-option,-mabi=lp64)
 KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
+KBUILD_CFLAGS	+= $(call cc-option,-march=armv8.2-a+crypto+dotprod+rcpc)
 
 # Avoid generating .eh_frame* sections.
 ifneq ($(CONFIG_UNWIND_TABLES),y)
