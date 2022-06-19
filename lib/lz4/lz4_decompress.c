@@ -406,6 +406,7 @@ safe_decode:
 #endif
 	/* Main Loop : decode sequences */
 	while (1) {
+		token = *ip++;
 		length = token >> ML_BITS;
 
 		/* ip < iend before the increment */
