@@ -284,7 +284,7 @@ struct swr_driver {
 	const struct swr_device_id	*id_table;
 };
 
-static inline struct swr_driver *to_swr_driver(struct device_driver *drv)
+static inline struct swr_driver *to_swr_driver(const struct device_driver *drv)
 {
 	return drv ? container_of(drv, struct swr_driver, driver) : NULL;
 }
