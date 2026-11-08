@@ -272,7 +272,7 @@ static inline int __qdf_spin_is_locked(__qdf_spinlock_t *lock)
  */
 static inline int __qdf_spin_trylock_bh(__qdf_spinlock_t *lock)
 {
-	if (likely(irqs_disabled() || in_irq() || in_softirq()))
+	if (likely(irqs_disabled() || in_hardirq() || in_softirq()))
 		return spin_trylock(&lock->spinlock);
 
 	if (spin_trylock_bh(&lock->spinlock)) {
@@ -302,7 +302,7 @@ static inline int __qdf_spin_trylock(__qdf_spinlock_t *lock)
  */
 static inline void __qdf_spin_lock_bh(__qdf_spinlock_t *lock)
 {
-	if (likely(irqs_disabled() || in_irq() || in_softirq())) {
+	if (likely(irqs_disabled() || in_hardirq() || in_softirq())) {
 		spin_lock(&lock->spinlock);
 	} else {
 		spin_lock_bh(&lock->spinlock);

@@ -281,7 +281,7 @@ static int msm_pcm_loopback_get_session(struct snd_soc_pcm_runtime *rtd,
 		goto exit;
 	}
 
-	strlcpy(session_map[index].stream_name,
+	strscpy(session_map[index].stream_name,
 		rtd->dai_link->stream_name,
 		sizeof(session_map[index].stream_name));
 	dev_dbg(component->dev, "%s: stream %s index %d\n",

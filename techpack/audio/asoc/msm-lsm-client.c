@@ -5158,7 +5158,7 @@ static int msm_lsm_create_char_dev(struct platform_device *pdev)
 		return ret;
 	}
 
-	lsm_dev->cls = class_create(THIS_MODULE, cdev_name);
+	lsm_dev->cls = class_create(cdev_name);
 	if (IS_ERR(lsm_dev->cls)) {
 		ret = PTR_ERR(lsm_dev->cls);
 		pr_err("%s: Failed to create class, dev %s, err %d\n",

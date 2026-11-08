@@ -795,9 +795,9 @@ static int wcd_cpe_check_new_image(struct wcd_cpe_core *core)
 	 * Different firmware name requested,
 	 * Re-load the instruction section
 	 */
-	strlcpy(temp_img_name, core->fname,
+	strscpy(temp_img_name, core->fname,
 		WCD_CPE_IMAGE_FNAME_MAX);
-	strlcpy(core->fname, core->dyn_fname,
+	strscpy(core->fname, core->dyn_fname,
 		WCD_CPE_IMAGE_FNAME_MAX);
 
 	rc = wcd_cpe_load_fw(core, ELF_FLAG_EXECUTE);
@@ -806,7 +806,7 @@ static int wcd_cpe_check_new_image(struct wcd_cpe_core *core)
 			"%s: Failed to dload new image %s, err = %d\n",
 			__func__, core->fname, rc);
 		/* If new image download failed, revert back to old image */
-		strlcpy(core->fname, temp_img_name,
+		strscpy(core->fname, temp_img_name,
 			WCD_CPE_IMAGE_FNAME_MAX);
 		rc = wcd_cpe_load_fw(core, ELF_FLAG_EXECUTE);
 		if (rc)
@@ -1739,7 +1739,7 @@ static ssize_t fw_name_store(struct wcd_cpe_core *core,
 		return -EINVAL;
 	}
 
-	strlcpy(core->dyn_fname, buf, copy_count + 1);
+	strscpy(core->dyn_fname, buf, copy_count + 1);
 
 	return count;
 }
@@ -1918,7 +1918,7 @@ struct wcd_cpe_core *wcd_cpe_init(const char *img_fname,
 		return NULL;
 
 	snprintf(core->fname, sizeof(core->fname), "%s", img_fname);
-	strlcpy(core->dyn_fname, core->fname, WCD_CPE_IMAGE_FNAME_MAX);
+	strscpy(core->dyn_fname, core->fname, WCD_CPE_IMAGE_FNAME_MAX);
 
 	wcd_get_cpe_core = params->get_cpe_core;
 

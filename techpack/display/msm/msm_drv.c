@@ -1178,7 +1178,7 @@ static void msm_lastclose(struct drm_device *dev)
 		struct drm_vblank_crtc *vblank = &dev->vblank[i];
 		struct timer_list *disable_timer = &vblank->disable_timer;
 
-		if (del_timer_sync(disable_timer))
+		if (timer_delete_sync(disable_timer))
 			disable_timer->function(disable_timer);
 	}
 
@@ -1817,7 +1817,7 @@ static const struct file_operations fops = {
 	.compat_ioctl       = drm_compat_ioctl,
 	.poll               = drm_poll,
 	.read               = drm_read,
-	.llseek             = no_llseek,
+	.llseek             = noop_llseek,
 	.mmap               = msm_gem_mmap,
 };
 

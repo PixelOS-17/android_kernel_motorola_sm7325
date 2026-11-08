@@ -10,7 +10,7 @@
 #include <linux/uaccess.h>
 #include <linux/wait.h>
 #include <linux/mutex.h>
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 
 #include <soc/qcom/socinfo.h>
 
@@ -770,7 +770,7 @@ static int voice_send_mvm_cvd_version_cmd(struct voice_data *v)
 
 done:
 	if (ret) {
-		strlcpy(common.cvd_version, CVD_VERSION_0_0,
+		strscpy(common.cvd_version, CVD_VERSION_0_0,
 				sizeof(common.cvd_version));
 	}
 	pr_debug("%s: CVD Version retrieved=%s\n",
@@ -963,31 +963,31 @@ static int voice_create_mvm_cvs_session(struct voice_data *v)
 			mvm_session_cmd.hdr.opcode =
 				VSS_IMVM_CMD_CREATE_PASSIVE_CONTROL_SESSION;
 			if (is_volte_session(v->session_id)) {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				"default volte voice",
 				strlen("default volte voice")+1);
 			} else if (is_voice2_session(v->session_id)) {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				VOICE2_SESSION_VSID_STR,
 				strlen(VOICE2_SESSION_VSID_STR)+1);
 			} else if (is_qchat_session(v->session_id)) {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				QCHAT_SESSION_VSID_STR,
 				strlen(QCHAT_SESSION_VSID_STR)+1);
 			} else if (is_vowlan_session(v->session_id)) {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				VOWLAN_SESSION_VSID_STR,
 				strlen(VOWLAN_SESSION_VSID_STR)+1);
 			} else if (is_voicemmode1(v->session_id)) {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				VOICEMMODE1_VSID_STR,
 				strlen(VOICEMMODE1_VSID_STR) + 1);
 			} else if (is_voicemmode2(v->session_id)) {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				VOICEMMODE2_VSID_STR,
 				strlen(VOICEMMODE2_VSID_STR) + 1);
 			} else {
-				strlcpy(mvm_session_cmd.mvm_session.name,
+				strscpy(mvm_session_cmd.mvm_session.name,
 				"default modem voice",
 				strlen("default modem voice")+1);
 			}
@@ -1032,7 +1032,7 @@ static int voice_create_mvm_cvs_session(struct voice_data *v)
 			mvm_session_cmd.hdr.token = 0;
 			mvm_session_cmd.hdr.opcode =
 				VSS_IMVM_CMD_CREATE_FULL_CONTROL_SESSION;
-			strlcpy(mvm_session_cmd.mvm_session.name,
+			strscpy(mvm_session_cmd.mvm_session.name,
 				"default voip",
 				strlen("default voip")+1);
 
@@ -1087,31 +1087,31 @@ static int voice_create_mvm_cvs_session(struct voice_data *v)
 			cvs_session_cmd.hdr.opcode =
 				VSS_ISTREAM_CMD_CREATE_PASSIVE_CONTROL_SESSION;
 			if (is_volte_session(v->session_id)) {
-				strlcpy(cvs_session_cmd.cvs_session.name,
+				strscpy(cvs_session_cmd.cvs_session.name,
 				"default volte voice",
 				strlen("default volte voice")+1);
 			} else if (is_voice2_session(v->session_id)) {
-				strlcpy(cvs_session_cmd.cvs_session.name,
+				strscpy(cvs_session_cmd.cvs_session.name,
 				VOICE2_SESSION_VSID_STR,
 				strlen(VOICE2_SESSION_VSID_STR)+1);
 			} else if (is_qchat_session(v->session_id)) {
-				strlcpy(cvs_session_cmd.cvs_session.name,
+				strscpy(cvs_session_cmd.cvs_session.name,
 				QCHAT_SESSION_VSID_STR,
 				strlen(QCHAT_SESSION_VSID_STR)+1);
 			} else if (is_vowlan_session(v->session_id)) {
-				strlcpy(cvs_session_cmd.cvs_session.name,
+				strscpy(cvs_session_cmd.cvs_session.name,
 				VOWLAN_SESSION_VSID_STR,
 				strlen(VOWLAN_SESSION_VSID_STR)+1);
 			} else if (is_voicemmode1(v->session_id)) {
-				strlcpy(cvs_session_cmd.cvs_session.name,
+				strscpy(cvs_session_cmd.cvs_session.name,
 				VOICEMMODE1_VSID_STR,
 				strlen(VOICEMMODE1_VSID_STR) + 1);
 			} else if (is_voicemmode2(v->session_id)) {
-				strlcpy(cvs_session_cmd.cvs_session.name,
+				strscpy(cvs_session_cmd.cvs_session.name,
 				VOICEMMODE2_VSID_STR,
 				strlen(VOICEMMODE2_VSID_STR) + 1);
 			} else {
-			strlcpy(cvs_session_cmd.cvs_session.name,
+			strscpy(cvs_session_cmd.cvs_session.name,
 				"default modem voice",
 				strlen("default modem voice")+1);
 			}
@@ -1172,7 +1172,7 @@ static int voice_create_mvm_cvs_session(struct voice_data *v)
 			memset(cvs_full_ctl_cmd.cvs_session.name, 0,
 				sizeof(cvs_full_ctl_cmd.cvs_session.name));
 
-			strlcpy(cvs_full_ctl_cmd.cvs_session.name,
+			strscpy(cvs_full_ctl_cmd.cvs_session.name,
 				"default q6 voice",
 				strlen("default q6 voice")+1);
 
@@ -7847,7 +7847,7 @@ static int32_t qdsp_mvm_callback(struct apr_client_data *data, void *priv)
 				pr_debug("%s: Error retrieving CVD Version, error:%d\n",
 					 __func__, ptr[1]);
 
-				strlcpy(common.cvd_version, CVD_VERSION_0_0,
+				strscpy(common.cvd_version, CVD_VERSION_0_0,
 					sizeof(common.cvd_version));
 				pr_debug("%s: Fall back to default value, CVD Version = %s\n",
 					 __func__, common.cvd_version);
@@ -10476,7 +10476,7 @@ int __init voice_init(void)
 	common.is_destroy_cvd = false;
 
 	/* Initialize CVD version */
-	strlcpy(common.cvd_version, CVD_VERSION_DEFAULT,
+	strscpy(common.cvd_version, CVD_VERSION_DEFAULT,
 		sizeof(common.cvd_version));
 	/* Initialize Per-Vocoder Calibration flag */
 	common.is_per_vocoder_cal_enabled = false;

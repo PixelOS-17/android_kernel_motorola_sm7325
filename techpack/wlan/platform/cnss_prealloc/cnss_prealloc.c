@@ -325,7 +325,7 @@ void cnss_record_stack_trace(struct cnss_alloc_info *alloc_info, void *mem)
 	alloc_info->ptr = mem;
 	alloc_info->timestamp = jiffies;
 	alloc_info->pid = current->pid;
-	strlcpy(alloc_info->comm, current->comm, TASK_COMM_LEN - 1);
+	strscpy(alloc_info->comm, current->comm, TASK_COMM_LEN - 1);
 	alloc_info->comm[TASK_COMM_LEN - 1] = '\0';
 
 	/* First get the raw stack addresses */

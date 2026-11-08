@@ -632,7 +632,7 @@ QDF_STATUS osif_dp_rx_pkt_to_nw(qdf_nbuf_t nbuf, enum dp_nbuf_push_type type)
 		netif_status = netif_receive_skb(nbuf);
 		local_bh_enable();
 	} else if (type == DP_NBUF_PUSH_NI) {
-		netif_status = netif_rx_ni(nbuf);
+		netif_status = netif_rx(nbuf);
 	} else if (type == DP_NBUF_PUSH_NAPI) {
 		netif_status = netif_receive_skb(nbuf);
 	} else {

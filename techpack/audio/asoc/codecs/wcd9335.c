@@ -14497,11 +14497,11 @@ static void tasha_add_child_devices(struct work_struct *work)
 
 	for_each_child_of_node(wcd9xxx->dev->of_node, node) {
 		if (!strcmp(node->name, "swr_master"))
-			strlcpy(plat_dev_name, "tasha_swr_ctrl",
+			strscpy(plat_dev_name, "tasha_swr_ctrl",
 				(WCD9335_STRING_LEN - 1));
 		else if (strnstr(node->name, "msm_cdc_pinctrl",
 				 strlen("msm_cdc_pinctrl")) != NULL)
-			strlcpy(plat_dev_name, node->name,
+			strscpy(plat_dev_name, node->name,
 				(WCD9335_STRING_LEN - 1));
 		else
 			continue;

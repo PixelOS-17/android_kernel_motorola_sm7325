@@ -219,7 +219,7 @@ static int avcs_core_enable_avtimer(char *client_name)
 		payload.hdr.dest_port = TEMP_PORT;
 		payload.hdr.token = CORE_CLIENT;
 		payload.hdr.opcode = AVCS_CMD_REMOTE_AVTIMER_VOTE_REQUEST;
-		strlcpy(payload.client_name, client_name,
+		strscpy(payload.client_name, client_name,
 			   sizeof(payload.client_name));
 		pr_debug("%s: enable avtimer opcode %x client name %s\n",
 			__func__, payload.hdr.opcode, payload.client_name);
@@ -518,7 +518,7 @@ static int dev_avtimer_probe(struct platform_device *pdev)
 		goto unmap;
 	}
 
-	avtimer.avtimer_class = class_create(THIS_MODULE, "avtimer");
+	avtimer.avtimer_class = class_create("avtimer");
 	if (IS_ERR(avtimer.avtimer_class)) {
 		result = PTR_ERR(avtimer.avtimer_class);
 		dev_err(&pdev->dev, "%s: Error creating avtimer class: %d\n",

@@ -546,7 +546,7 @@ EXPORT_SYMBOL(sensors_classdev_unregister);
 static int __init sensors_init(void)
 {
 	printk("moto sensor init!\n");
-	sensors_class = class_create(THIS_MODULE, "sensors");
+	sensors_class = class_create("sensors");
 	if (IS_ERR(sensors_class))
 		{
 			printk("sensor init fail!\n");

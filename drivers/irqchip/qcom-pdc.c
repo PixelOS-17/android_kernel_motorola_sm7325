@@ -25,7 +25,7 @@
 #include <linux/slab.h>
 #include <linux/types.h>
 
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/ipc_logging.h>
 
 #define PDC_IPC_LOG_SZ		2

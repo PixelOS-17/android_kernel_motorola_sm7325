@@ -39,10 +39,10 @@
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0))
 /*
- * Commit 359745d78351 ("proc: remove PDE_DATA() completely")
- * Replaced PDE_DATA() with pde_data()
+ * Commit 359745d78351 ("proc: remove pde_data() completely")
+ * Replaced pde_data() with pde_data()
  */
-#define pde_data(inode) PDE_DATA(inode)
+#define pde_data(inode) pde_data(inode)
 #endif
 
 static struct proc_dir_entry *proc_file_driver, *proc_dir_driver;

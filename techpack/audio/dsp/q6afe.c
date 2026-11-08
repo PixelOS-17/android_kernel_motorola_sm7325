@@ -10019,7 +10019,7 @@ static int afe_get_clk_src(u16 port_id, char *clk_src)
 		return -EINVAL;
 	}
 
-	strlcpy(clk_src, clkinfo_per_port[idx].clk_src_name,
+	strscpy(clk_src, clkinfo_per_port[idx].clk_src_name,
 				CLK_SRC_NAME_MAX);
 	pr_debug("%s: clk src name %s port id 0x%x\n", __func__, clk_src,
 		  idx);
@@ -10048,7 +10048,7 @@ int afe_set_source_clk(u16 port_id, const char *clk_src)
 
 	if (clk_src == NULL)
 		return -EINVAL;
-	strlcpy(clkinfo_per_port[idx].clk_src_name, clk_src, CLK_SRC_NAME_MAX);
+	strscpy(clkinfo_per_port[idx].clk_src_name, clk_src, CLK_SRC_NAME_MAX);
 	pr_debug("%s: updated clk src name %s port id 0x%x\n", __func__,
 		  clkinfo_per_port[idx].clk_src_name, idx);
 
@@ -10068,7 +10068,7 @@ void afe_set_clk_src_array(const char *clk_src_array[CLK_SRC_MAX])
 
 	for (i = 0; i < CLK_SRC_MAX; i++) {
 		if (clk_src_array[i] != NULL)
-			strlcpy(clk_src_name[i], clk_src_array[i],
+			strscpy(clk_src_name[i], clk_src_array[i],
 					CLK_SRC_NAME_MAX);
 	}
 }
@@ -10141,7 +10141,7 @@ int afe_set_pll_clk_drift(u16 port_id, int32_t set_clk_drift,
 
 	clk_drift.clk_drift = set_clk_drift;
 	clk_drift.clk_reset = clk_reset;
-	strlcpy(clk_drift.clk_src_name, clk_src_name, CLK_SRC_NAME_MAX);
+	strscpy(clk_drift.clk_src_name, clk_src_name, CLK_SRC_NAME_MAX);
 	pr_debug("%s: clk src= %s clkdrft= %d clkrst= %d port id 0x%x\n",
 		  __func__, clk_drift.clk_src_name, clk_drift.clk_drift,
 		 clk_drift.clk_reset, port_id);
@@ -10321,7 +10321,7 @@ int afe_set_lpass_ext_mclk_mux_cfg(const char *mux_str,
 	param_hdr.param_id = AFE_PARAM_ID_CLOCK_MUX_CFG;
 	param_hdr.param_size = sizeof(struct afe_param_id_clock_mux_cfg_t);
 	memset(&clk_mux_cfg, 0, sizeof(clk_mux_cfg));
-	strlcpy(clk_mux_cfg.mux_string, mux_str, sizeof(clk_mux_cfg.mux_string));
+	strscpy(clk_mux_cfg.mux_string, mux_str, sizeof(clk_mux_cfg.mux_string));
 	clk_mux_cfg.mux_value = mux_val;
 	pr_debug("%s: ext mclk mux cfg - mux_string: %s, mux_value = %u\n", __func__,
 		clk_mux_cfg.mux_string, clk_mux_cfg.mux_value);
@@ -12577,7 +12577,7 @@ int afe_vote_lpass_core_hw(uint32_t hw_block_id, char *client_name,
 	cmd_ptr->hdr.token = hw_block_id;
 	cmd_ptr->hdr.opcode = AFE_CMD_REMOTE_LPASS_CORE_HW_VOTE_REQUEST;
 	cmd_ptr->hw_block_id = hw_block_id;
-	strlcpy(cmd_ptr->client_name, client_name,
+	strscpy(cmd_ptr->client_name, client_name,
 			sizeof(cmd_ptr->client_name));
 
 	pr_debug("%s: lpass core hw vote opcode[0x%x] hw id[0x%x]\n",

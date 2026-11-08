@@ -292,7 +292,7 @@ static int __init subsys_legacy_init(void)
 	if (ret)
 		goto err_bus;
 
-	subsys_class = class_create(THIS_MODULE, "subsys");
+	subsys_class = class_create("subsys");
 	if (IS_ERR(subsys_class)) {
 		ret = PTR_ERR(subsys_class);
 		goto err_region;

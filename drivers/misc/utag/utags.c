@@ -154,7 +154,7 @@ struct ctrl {
 #include <linux/bio.h>
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-#define PDE_DATA(x) pde_data(x)
+#define pde_data(x) pde_data(x)
 #endif
 
 static struct page *addr_to_page(void *addr)
@@ -372,7 +372,7 @@ static int read_head(struct blkdev *cb, struct utag *htag)
 		return -EIO;
 	}
 
-	strlcpy(htag->name, buf->name, MAX_UTAG_NAME - 1);
+	strscpy(htag->name, buf->name, MAX_UTAG_NAME - 1);
 	if (strncmp(htag->name, UTAG_HEAD, MAX_UTAG_NAME)) {
 		pr_err("[%s] invalid or empty utags partition\n", cb->name);
 		vfree(buf);
@@ -400,7 +400,7 @@ static int init_empty(struct ctrl *ctrl)
 	if (!htag)
 		return -ENOMEM;
 
-	strlcpy(htag->name, UTAG_HEAD, MAX_UTAG_NAME);
+	strscpy(htag->name, UTAG_HEAD, MAX_UTAG_NAME);
 	add_utag_tail(htag, UTAG_TAIL, NULL);
 	ctrl->head = htag;
 	queue_work(ctrl->store_queue, &ctrl->store_work);
@@ -690,7 +690,7 @@ static int add_utag_tail(struct utag *head, char *utag_name, char *utag_type)
 	if (!new)
 		return -ENOMEM;
 
-	strlcpy(new->name, utag, MAX_UTAG_NAME);
+	strscpy(new->name, utag, MAX_UTAG_NAME);
 	new->size = new->flags = new->util = 0;
 
 	if (!tail->prev) { /* tail is in fact the head */
@@ -752,10 +752,10 @@ static int proc_utag_file(char *utag_name, char *utag_type,
 	node = kzalloc(sizeof(struct proc_node), GFP_KERNEL);
 	if (node) {
 		list_add_tail(&node->entry, &ctrl->node_list);
-		strlcpy(node->file_name, files[mode], MAX_UTAG_NAME);
-		strlcpy(node->name, utag_name, MAX_UTAG_NAME);
+		strscpy(node->file_name, files[mode], MAX_UTAG_NAME);
+		strscpy(node->name, utag_name, MAX_UTAG_NAME);
 		if (utag_type)
-			strlcpy(node->type, utag_type, MAX_UTAG_NAME);
+			strscpy(node->type, utag_type, MAX_UTAG_NAME);
 		else
 			node->type[0] = 0;
 		node->mode = mode;
@@ -847,8 +847,8 @@ static struct proc_dir_entry *proc_utag_dir(struct ctrl *ctrl,
 	dnode->ctrl = ctrl;
 	dnode->dir = dir;
 	list_add_tail(&dnode->entry, &ctrl->dir_list);
-	strlcpy(dnode->name, tname, MAX_UTAG_NAME);
-	strlcpy(dnode->path, path, MAX_UTAG_NAME);
+	strscpy(dnode->name, tname, MAX_UTAG_NAME);
+	strscpy(dnode->path, path, MAX_UTAG_NAME);
 
 	if (!populate)
 		return dir;
@@ -885,8 +885,8 @@ static struct utag *thaw_tags(size_t block_size, void *buf)
 				return NULL;
 		}
 
-		strlcpy(cur->name, frozen->name, MAX_UTAG_NAME - 1);
-		strlcpy(cur->name_only, frozen->name, MAX_UTAG_NAME-1);
+		strscpy(cur->name, frozen->name, MAX_UTAG_NAME - 1);
+		strscpy(cur->name_only, frozen->name, MAX_UTAG_NAME-1);
 		sep = strnchr(cur->name_only, MAX_UTAG_NAME, ':');
 		if (sep)
 			*sep = 0;
@@ -1179,7 +1179,7 @@ static int check_utag_range(char *tag, struct utag *head, char *data,
 	size_t len, data_len;
 
 	/* copy utag name and append .range */
-	strlcpy(rtag, tag, MAX_UTAG_NAME);
+	strscpy(rtag, tag, MAX_UTAG_NAME);
 	tok = strnchr(rtag, MAX_UTAG_NAME, ':');
 	if (tok)
 		*tok = 0;
@@ -1435,7 +1435,7 @@ static ssize_t write_utag(struct file *file, const char __user *buffer,
 	char *payload, utag[MAX_UTAG_NAME];
 	struct utag *tags = NULL;
 	struct inode *inode = file_inode(file);
-	struct proc_node *proc = PDE_DATA(inode);
+	struct proc_node *proc = pde_data(inode);
 	struct ctrl *ctrl = proc->ctrl;
 	size_t lco, length = count;
 
@@ -1550,7 +1550,7 @@ static ssize_t delete_utag(struct file *file, const char __user *buffer,
 	char *pattern, expendable[MAX_UTAG_NAME];
 	struct utag *tags, *cur, *next;
 	struct inode *inode = file_inode(file);
-	struct ctrl *ctrl = PDE_DATA(inode);
+	struct ctrl *ctrl = pde_data(inode);
 
 	if ((MAX_UTAG_NAME < count) || (0 == count)) {
 		pr_err("invalid utag name %zu\n", count);
@@ -1700,7 +1700,7 @@ static ssize_t new_utag(struct file *file, const char __user *buffer,
 	   size_t count, loff_t *pos)
 {
 	struct inode *inode = file_inode(file);
-	struct ctrl *ctrl = PDE_DATA(inode);
+	struct ctrl *ctrl = pde_data(inode);
 	struct utag *tags, *cur;
 	struct proc_dir_entry *parent = NULL;
 	char tree[UTAG_DEPTH][MAX_UTAG_NAME];
@@ -1842,7 +1842,7 @@ static ssize_t reload_write(struct file *file, const char __user *buffer,
 	   size_t count, loff_t *pos)
 {
 	struct inode *inode = file_inode(file);
-	struct ctrl *ctrl = PDE_DATA(inode);
+	struct ctrl *ctrl = pde_data(inode);
 
 
 	/* only single character input plus new line */
@@ -1880,17 +1880,17 @@ static ssize_t reload_write(struct file *file, const char __user *buffer,
 
 static int lock_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, lock_show, PDE_DATA(inode));
+	return single_open(file, lock_show, pde_data(inode));
 }
 
 static int reload_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, reload_show, PDE_DATA(inode));
+	return single_open(file, reload_show, pde_data(inode));
 }
 
 static int partition_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, read_utag, PDE_DATA(inode));
+	return single_open(file, read_utag, pde_data(inode));
 }
 
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
@@ -2004,7 +2004,7 @@ static int utag_get_bootarg(char *key, char **value, char *prop, char *spl_flag)
 		if (!bootargs_str)
 			goto err_putnode;
 	}
-	strlcpy(bootargs_str, bootargs_ptr, bootargs_ptr_len + 1);
+	strscpy(bootargs_str, bootargs_ptr, bootargs_ptr_len + 1);
 
 	idx = strnstr(bootargs_str, key, strlen(bootargs_str));
 	if (idx) {

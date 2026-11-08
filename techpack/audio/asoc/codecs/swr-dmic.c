@@ -374,39 +374,39 @@ static int swr_dmic_codec_probe(struct snd_soc_component *component)
 	}
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " ", sizeof(w_name));
 	strlcat(w_name, swr_dmic->dai_driver->capture.stream_name,
 				sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " SWR_DMIC", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " SMIC_PORT_EN", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " SWR_DMIC_OUTPUT", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " VA_SWR_DMIC", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " SMIC_VA_PORT_EN", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
-	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strscpy(w_name, component->name_prefix, sizeof(w_name));
 	strlcat(w_name, " SWR_DMIC_VA_OUTPUT", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
@@ -682,7 +682,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		ret = -ENOMEM;
 		goto dev_err;
 	}
-	strlcpy(prefix_name, swr_dmic_name_prefix_of, sizeof(prefix_name));
+	strscpy(prefix_name, swr_dmic_name_prefix_of, sizeof(prefix_name));
 	component->name_prefix = prefix_name;
 
 	return 0;

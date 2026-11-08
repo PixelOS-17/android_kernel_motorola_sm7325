@@ -265,7 +265,7 @@ static int msm_hdcp_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	hdcp->class = class_create(THIS_MODULE, CLASS_NAME);
+	hdcp->class = class_create(CLASS_NAME);
 	if (IS_ERR(hdcp->class)) {
 		ret = PTR_ERR(hdcp->class);
 		pr_err("couldn't create class rc = %d\n", ret);

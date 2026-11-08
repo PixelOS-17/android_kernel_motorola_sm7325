@@ -108,7 +108,7 @@ static void wcd_spi_ac_status_change(struct wcd_spi_ac_priv *ac,
 static int wcd_spi_ac_status_open(struct inode *inode,
 				    struct file *file)
 {
-	struct wcd_spi_ac_priv *ac = PDE_DATA(inode);
+	struct wcd_spi_ac_priv *ac = pde_data(inode);
 
 	file->private_data = ac;
 
@@ -679,7 +679,7 @@ static int wcd_spi_ac_reg_chardev(struct wcd_spi_ac_priv *ac)
 		return ret;
 	}
 
-	ac->cls = class_create(THIS_MODULE, WCD_SPI_AC_CLIENT_CDEV_NAME);
+	ac->cls = class_create(WCD_SPI_AC_CLIENT_CDEV_NAME);
 	if (IS_ERR(ac->cls)) {
 		ret = PTR_ERR(ac->cls);
 		dev_err(ac->dev, "%s: class_create failed %d\n",

@@ -1791,7 +1791,7 @@ done:
 
 void kgsl_timer(struct timer_list *t)
 {
-	struct kgsl_device *device = from_timer(device, t, idle_timer);
+	struct kgsl_device *device = timer_container_of(device, t, idle_timer);
 
 	if (device->requested_state != KGSL_STATE_SUSPEND) {
 		kgsl_pwrctrl_request_state(device, KGSL_STATE_SLUMBER);
@@ -1891,7 +1891,7 @@ static int _init(struct kgsl_device *device)
 	switch (device->state) {
 	case KGSL_STATE_ACTIVE:
 		kgsl_pwrctrl_irq(device, false);
-		del_timer_sync(&device->idle_timer);
+		timer_delete_sync(&device->idle_timer);
 		device->ftbl->stop(device);
 		fallthrough;
 	case KGSL_STATE_AWARE:
@@ -1993,7 +1993,7 @@ _aware(struct kgsl_device *device)
 		break;
 	case KGSL_STATE_ACTIVE:
 		kgsl_pwrctrl_irq(device, false);
-		del_timer_sync(&device->idle_timer);
+		timer_delete_sync(&device->idle_timer);
 		break;
 	case KGSL_STATE_SLUMBER:
 		status = kgsl_pwrctrl_enable(device);
@@ -2019,7 +2019,7 @@ _slumber(struct kgsl_device *device)
 			kgsl_pwrctrl_request_state(device, KGSL_STATE_NONE);
 			return -EBUSY;
 		}
-		del_timer_sync(&device->idle_timer);
+		timer_delete_sync(&device->idle_timer);
 		kgsl_pwrctrl_irq(device, false);
 		/* make sure power is on to stop the device*/
 		status = kgsl_pwrctrl_enable(device);

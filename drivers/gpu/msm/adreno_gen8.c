@@ -2423,7 +2423,7 @@ static int gen8_lpac_store(struct adreno_device *adreno_dev, bool enable)
 static void gen8_remove(struct adreno_device *adreno_dev)
 {
 	if (adreno_preemption_feature_set(adreno_dev))
-		del_timer(&adreno_dev->preempt.timer);
+		timer_delete(&adreno_dev->preempt.timer);
 }
 
 static void gen8_read_bus_stats(struct kgsl_device *device,

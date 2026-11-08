@@ -563,7 +563,7 @@ static int aw882xx_profile_info(struct snd_kcontrol *kcontrol,
 	count = uinfo->value.enumerated.item;
 	ret = aw_dev_get_profile_name(aw882xx->aw_pa, name, count);
 	if (ret) {
-		strlcpy(uinfo->value.enumerated.name, "null", strlen("null") + 1);
+		strscpy(uinfo->value.enumerated.name, "null", strlen("null") + 1);
 		return 0;
 	}
 
@@ -638,7 +638,7 @@ static int aw882xx_switch_info(struct snd_kcontrol *kcontrol,
 	if (uinfo->value.enumerated.item >= count)
 		uinfo->value.enumerated.item = count - 1;
 
-	strlcpy(uinfo->value.enumerated.name,
+	strscpy(uinfo->value.enumerated.name,
 		aw882xx_switch[uinfo->value.enumerated.item],
 		strlen(aw882xx_switch[uinfo->value.enumerated.item]) + 1);
 
@@ -711,7 +711,7 @@ static int aw882xx_ramp_status_info(struct snd_kcontrol *kcontrol,
 
 	if (uinfo->value.enumerated.item >= count)
 		uinfo->value.enumerated.item = count - 1;
-	strlcpy(uinfo->value.enumerated.name,
+	strscpy(uinfo->value.enumerated.name,
 		aw882xx_ramp_status[uinfo->value.enumerated.item],
 		strlen(aw882xx_ramp_status[uinfo->value.enumerated.item]) + 1);
 

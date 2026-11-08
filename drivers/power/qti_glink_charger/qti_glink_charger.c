@@ -2929,7 +2929,7 @@ static int mmi_get_bootarg_dt(char *key, char **value, char *prop, char *spl_fla
 		if (!bootargs_str)
 			goto putnode;
 	}
-	strlcpy(bootargs_str, bootargs_tmp, bootargs_tmp_len + 1);
+	strscpy(bootargs_str, bootargs_tmp, bootargs_tmp_len + 1);
 
 	idx = strnstr(bootargs_str, key, strlen(bootargs_str));
 	if (idx) {
@@ -2968,7 +2968,7 @@ static int mmi_get_sku_type(struct qti_charger *chg, u8 *sku_type)
 
 	if (mmi_get_bootarg("androidboot.radio=", &s) == 0) {
 		if (s != NULL) {
-			strlcpy(androidboot_radio_str, s, RADIO_MAX_LEN);
+			strscpy(androidboot_radio_str, s, RADIO_MAX_LEN);
 			if (!strncmp("PRC", androidboot_radio_str, 3)) {
 				*sku_type = MMI_CHARGER_SKU_PRC;
 			} else if (!strncmp("ROW", androidboot_radio_str, 3)) {
@@ -3008,7 +3008,7 @@ static int mmi_get_hw_revision(struct qti_charger *chg, u16 *hw_rev)
 
 	if (mmi_get_bootarg("androidboot.hwrev=", &s) == 0) {
 		if (s != NULL) {
-			strlcpy(androidboot_hwrev_str, s, RADIO_MAX_LEN);
+			strscpy(androidboot_hwrev_str, s, RADIO_MAX_LEN);
 			ret = kstrtou16(androidboot_hwrev_str, 16, hw_rev);
 			if (ret < 0) {
 				mmi_info(chg, "kstrtou16 error: %d \n", ret);
@@ -3110,7 +3110,7 @@ static bool mmi_is_softbank_sku(struct qti_charger *chg)
 	if (mmi_get_bootarg("androidboot.carrier=", &s) == 0) {
 		mmi_info(chg, "Get bootarg androidboot.hardware.sku success");
 		if (s != NULL) {
-			strlcpy(androidboot_carrier_str, s, RADIO_MAX_LEN);
+			strscpy(androidboot_carrier_str, s, RADIO_MAX_LEN);
 			mmi_info(chg, "carrier: %s", androidboot_carrier_str);
 			if (!strncmp("softbank", androidboot_carrier_str, 8)) {
 				is_softbank = true;

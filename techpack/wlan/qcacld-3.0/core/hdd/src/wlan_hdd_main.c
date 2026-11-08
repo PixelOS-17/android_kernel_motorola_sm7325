@@ -19328,7 +19328,7 @@ const struct file_operations wlan_hdd_state_fops = {
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
 static struct class *wlan_hdd_class_create(const char *name)
 {
-	return class_create(THIS_MODULE, name);
+	return class_create(name);
 }
 #else
 static struct class *wlan_hdd_class_create(const char *name)

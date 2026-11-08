@@ -135,7 +135,7 @@ static DECLARE_WAIT_QUEUE_HEAD(interrupt_waitq);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
 void egisfp_interrupt_timer_call(struct timer_list *t)
 {
-	struct egisfp_interrupt_desc_t *fps_int = from_timer(fps_int, t, timer);
+	struct egisfp_interrupt_desc_t *fps_int = timer_container_of(fps_int, t, timer);
 	struct egisfp_dev_t *egis_dev;
 
 	egis_dev = container_of(fps_int, struct egisfp_dev_t, fps_ints);
@@ -326,7 +326,7 @@ int egisfp_interrupt_free(struct egisfp_dev_t *egis_dev)
 	{
 		DEBUG_PRINT(" %s : irq disable \n", __func__);
 		disable_irq_nosync(egis_dev->gpio_irq);
-		del_timer_sync(&egis_dev->fps_ints.timer);
+		timer_delete_sync(&egis_dev->fps_ints.timer);
 		egis_dev->fps_ints.drdy_irq_flag = DRDY_IRQ_DISABLE;
 	}
 	spin_unlock_irqrestore(&egis_dev->irq_lock, irqflags);
@@ -1305,7 +1305,7 @@ const struct file_operations egisfp_fops = {
 	.compat_ioctl = egisfp_compat_ioctl,
 	.open = egisfp_open,
 	.release = egisfp_release,
-	.llseek = no_llseek,
+	.llseek = noop_llseek,
 	.poll = egisfp_interrupt_poll};
 
 /*-------------------------------------------------------------------------*/
@@ -1340,7 +1340,7 @@ int egisfp_remove(struct platform_device *pdev)
 	ets_fb_unregister_client(&egis_dev->notifier);
 #endif
 	}
-	del_timer_sync(&egis_dev->fps_ints.timer);
+	timer_delete_sync(&egis_dev->fps_ints.timer);
 
 	device_init_wakeup(&egis_dev->dd->dev, 0);
 
@@ -1377,7 +1377,7 @@ int egisfp_probe(struct platform_device *pdev)
 		ERROR_PRINT(" %s : register_chrdev error \n", __func__);
 		return status;
 	}
-	egisfp_class = class_create(THIS_MODULE, EGIS_CLASS_NAME);
+	egisfp_class = class_create(EGIS_CLASS_NAME);
 	if (IS_ERR(egisfp_class))
 	{
 		ERROR_PRINT(" %s : class_create error \n", __func__);

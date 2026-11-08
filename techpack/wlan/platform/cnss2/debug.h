@@ -47,7 +47,7 @@ extern enum log_level cnss_ipc_log_level;
 		 cnss_debug_ipc_log_print((void *)NULL, _x)
 #endif
 
-#define proc_name (in_irq() ? "irq" : \
+#define proc_name (in_hardirq() ? "irq" : \
 		   (in_softirq() ? "soft_irq" : current->comm))
 
 #define cnss_pr_err(_fmt, ...) \

@@ -1577,7 +1577,7 @@ static int goodix_ts_mmi_pre_suspend(struct device *dev) {
 
 #ifdef GOODIX_PALM_SENSOR_EN
 	if (core_data->set_mode.palm_detection) {
-		del_timer(&core_data->palm_release_timer);
+		timer_delete(&core_data->palm_release_timer);
 	}
 #endif
 
@@ -1765,7 +1765,7 @@ int goodix_ts_mmi_palm_set_enable(struct device *dev, unsigned int enable)
 			core_data->imports->report_palm(0);
 			ts_info("Disable palm detection, report far\n");
 		}
-		del_timer(&core_data->palm_release_timer);
+		timer_delete(&core_data->palm_release_timer);
 	}
 
 	ret = goodix_ts_send_cmd(core_data, PALM_DETECTION_SWITCH_CMD, 5,

@@ -864,7 +864,7 @@ int hif_pm_runtime_prevent_suspend(struct hif_pm_runtime_lock *lock)
 	if (!hif_rtpm_enabled() || !lock)
 		return -EINVAL;
 
-	if (in_irq())
+	if (in_hardirq())
 		WARN_ON(1);
 
 	qdf_spin_lock_bh(&gp_hif_rtpm_ctx->prevent_list_lock);
@@ -928,7 +928,7 @@ int hif_pm_runtime_prevent_suspend_sync(struct hif_pm_runtime_lock *lock)
 	if (!lock)
 		return -EINVAL;
 
-	if (in_irq())
+	if (in_hardirq())
 		WARN_ON(1);
 
 	__hif_pm_runtime_prevent_suspend_sync(lock);
@@ -949,7 +949,7 @@ int hif_pm_runtime_allow_suspend(struct hif_pm_runtime_lock *lock)
 	if (!lock)
 		return -EINVAL;
 
-	if (in_irq())
+	if (in_hardirq())
 		WARN_ON(1);
 
 	qdf_spin_lock_bh(&gp_hif_rtpm_ctx->prevent_list_lock);

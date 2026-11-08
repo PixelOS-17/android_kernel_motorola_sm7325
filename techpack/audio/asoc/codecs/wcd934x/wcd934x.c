@@ -11140,11 +11140,11 @@ static void tavil_add_child_devices(struct work_struct *work)
 
 		/* Parse other child device nodes and add platform device */
 		if (!strcmp(node->name, "swr_master"))
-			strlcpy(plat_dev_name, "tavil_swr_ctrl",
+			strscpy(plat_dev_name, "tavil_swr_ctrl",
 				(WCD934X_STRING_LEN - 1));
 		else if (strnstr(node->name, "msm_cdc_pinctrl",
 				 strlen("msm_cdc_pinctrl")) != NULL)
-			strlcpy(plat_dev_name, node->name,
+			strscpy(plat_dev_name, node->name,
 				(WCD934X_STRING_LEN - 1));
 		else
 			continue;

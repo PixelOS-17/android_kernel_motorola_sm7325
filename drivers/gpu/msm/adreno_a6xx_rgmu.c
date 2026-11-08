@@ -1096,7 +1096,7 @@ no_gx_power:
 
 	clear_bit(RGMU_PRIV_GPU_STARTED, &rgmu->flags);
 
-	del_timer_sync(&device->idle_timer);
+	timer_delete_sync(&device->idle_timer);
 
 	kgsl_pwrscale_sleep(device);
 

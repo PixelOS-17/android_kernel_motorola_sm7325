@@ -2237,7 +2237,7 @@ static int aw86006_create_sysfs(void)
 
 	if (!ois_debug_class) {
 		AW_LOGI("create aw86006_result_class!");
-		ois_debug_class = class_create(THIS_MODULE, "aw86006_ois");
+		ois_debug_class = class_create("aw86006_ois");
 
 		ret = class_create_file(ois_debug_class, &class_attr_reg);
 		if (ret < 0) {

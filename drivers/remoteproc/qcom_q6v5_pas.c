@@ -1459,7 +1459,7 @@ timer_setup:
 	read_early_boot_register(&(adsp->boot_timer));
 
 	wait_for_completion(&adsp->q6v5.subsys_booted);
-	del_timer(&adsp->boot_timer);
+	timer_delete(&adsp->boot_timer);
 
 	ret = ping_subsystem(&adsp->q6v5);
 

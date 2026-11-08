@@ -876,7 +876,7 @@ QDF_STATUS hdd_softap_ind_l2_update(struct hdd_adapter *adapter,
 	nbuf->dev = adapter->dev;
 	nbuf->protocol = eth_type_trans(nbuf, adapter->dev);
 	qdf_net_buf_debug_release_skb(nbuf);
-	netif_rx_ni(nbuf);
+	netif_rx(nbuf);
 
 	return QDF_STATUS_SUCCESS;
 }

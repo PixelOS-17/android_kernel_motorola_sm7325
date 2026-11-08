@@ -8254,34 +8254,34 @@ static int msm_dai_q6_dev_probe(struct platform_device *pdev)
 
 	switch (id) {
 	case SLIMBUS_0_RX:
-		strlcpy(stream_name, "Slimbus Playback", 80);
+		strscpy(stream_name, "Slimbus Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_2_RX:
-		strlcpy(stream_name, "Slimbus2 Playback", 80);
+		strscpy(stream_name, "Slimbus2 Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_1_RX:
-		strlcpy(stream_name, "Slimbus1 Playback", 80);
+		strscpy(stream_name, "Slimbus1 Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_3_RX:
-		strlcpy(stream_name, "Slimbus3 Playback", 80);
+		strscpy(stream_name, "Slimbus3 Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_4_RX:
-		strlcpy(stream_name, "Slimbus4 Playback", 80);
+		strscpy(stream_name, "Slimbus4 Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_5_RX:
-		strlcpy(stream_name, "Slimbus5 Playback", 80);
+		strscpy(stream_name, "Slimbus5 Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_6_RX:
-		strlcpy(stream_name, "Slimbus6 Playback", 80);
+		strscpy(stream_name, "Slimbus6 Playback", 80);
 		goto register_slim_playback;
 	case SLIMBUS_7_RX:
-		strlcpy(stream_name, "Slimbus7 Playback", sizeof(stream_name));
+		strscpy(stream_name, "Slimbus7 Playback", sizeof(stream_name));
 		goto register_slim_playback;
 	case SLIMBUS_8_RX:
-		strlcpy(stream_name, "Slimbus8 Playback", sizeof(stream_name));
+		strscpy(stream_name, "Slimbus8 Playback", sizeof(stream_name));
 		goto register_slim_playback;
 	case SLIMBUS_9_RX:
-		strlcpy(stream_name, "Slimbus9 Playback", sizeof(stream_name));
+		strscpy(stream_name, "Slimbus9 Playback", sizeof(stream_name));
 		goto register_slim_playback;
 register_slim_playback:
 		rc = -ENODEV;
@@ -8302,34 +8302,34 @@ register_slim_playback:
 				__func__, stream_name);
 		break;
 	case SLIMBUS_0_TX:
-		strlcpy(stream_name, "Slimbus Capture", 80);
+		strscpy(stream_name, "Slimbus Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_1_TX:
-		strlcpy(stream_name, "Slimbus1 Capture", 80);
+		strscpy(stream_name, "Slimbus1 Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_2_TX:
-		strlcpy(stream_name, "Slimbus2 Capture", 80);
+		strscpy(stream_name, "Slimbus2 Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_3_TX:
-		strlcpy(stream_name, "Slimbus3 Capture", 80);
+		strscpy(stream_name, "Slimbus3 Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_4_TX:
-		strlcpy(stream_name, "Slimbus4 Capture", 80);
+		strscpy(stream_name, "Slimbus4 Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_5_TX:
-		strlcpy(stream_name, "Slimbus5 Capture", 80);
+		strscpy(stream_name, "Slimbus5 Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_6_TX:
-		strlcpy(stream_name, "Slimbus6 Capture", 80);
+		strscpy(stream_name, "Slimbus6 Capture", 80);
 		goto register_slim_capture;
 	case SLIMBUS_7_TX:
-		strlcpy(stream_name, "Slimbus7 Capture", sizeof(stream_name));
+		strscpy(stream_name, "Slimbus7 Capture", sizeof(stream_name));
 		goto register_slim_capture;
 	case SLIMBUS_8_TX:
-		strlcpy(stream_name, "Slimbus8 Capture", sizeof(stream_name));
+		strscpy(stream_name, "Slimbus8 Capture", sizeof(stream_name));
 		goto register_slim_capture;
 	case SLIMBUS_9_TX:
-		strlcpy(stream_name, "Slimbus9 Capture", sizeof(stream_name));
+		strscpy(stream_name, "Slimbus9 Capture", sizeof(stream_name));
 		goto register_slim_capture;
 register_slim_capture:
 		rc = -ENODEV;
@@ -8384,13 +8384,13 @@ register_slim_capture:
 			&msm_dai_q6_component, &msm_dai_q6_usb_tx_dai, 1);
 		break;
 	case RT_PROXY_DAI_001_RX:
-		strlcpy(stream_name, "AFE Playback", 80);
+		strscpy(stream_name, "AFE Playback", 80);
 		goto register_afe_playback;
 	case RT_PROXY_DAI_003_RX:
-		strlcpy(stream_name, "AFE Playback1", 80);
+		strscpy(stream_name, "AFE Playback1", 80);
 		goto register_afe_playback;
 	case RT_PROXY_DAI_002_RX:
-		strlcpy(stream_name, "AFE-PROXY RX", 80);
+		strscpy(stream_name, "AFE-PROXY RX", 80);
 register_afe_playback:
 		rc = -ENODEV;
 		len = strnlen(stream_name, 80);
@@ -8409,10 +8409,10 @@ register_afe_playback:
 			__func__, stream_name);
 		break;
 	case RT_PROXY_DAI_001_TX:
-		strlcpy(stream_name, "AFE-PROXY TX", 80);
+		strscpy(stream_name, "AFE-PROXY TX", 80);
 		goto register_afe_capture;
 	case RT_PROXY_DAI_002_TX:
-		strlcpy(stream_name, "AFE Capture", 80);
+		strscpy(stream_name, "AFE Capture", 80);
 register_afe_capture:
 		rc = -ENODEV;
 		len = strnlen(stream_name, 80);
@@ -8435,10 +8435,10 @@ register_afe_capture:
 			&msm_dai_q6_component, &msm_dai_q6_afe_cap_dai, 1);
 		break;
 	case VOICE_PLAYBACK_TX:
-		strlcpy(stream_name, "Voice Farend Playback", 80);
+		strscpy(stream_name, "Voice Farend Playback", 80);
 		goto register_voice_playback;
 	case VOICE2_PLAYBACK_TX:
-		strlcpy(stream_name, "Voice2 Farend Playback", 80);
+		strscpy(stream_name, "Voice2 Farend Playback", 80);
 register_voice_playback:
 		rc = -ENODEV;
 		len = strnlen(stream_name, 80);
@@ -8457,10 +8457,10 @@ register_voice_playback:
 			       __func__, stream_name);
 		break;
 	case VOICE_RECORD_RX:
-		strlcpy(stream_name, "Voice Downlink Capture", 80);
+		strscpy(stream_name, "Voice Downlink Capture", 80);
 		goto register_uplink_capture;
 	case VOICE_RECORD_TX:
-		strlcpy(stream_name, "Voice Uplink Capture", 80);
+		strscpy(stream_name, "Voice Uplink Capture", 80);
 register_uplink_capture:
 		rc = -ENODEV;
 		len = strnlen(stream_name, 80);

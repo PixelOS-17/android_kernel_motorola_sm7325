@@ -332,7 +332,7 @@ int cam_irq_controller_subscribe_irq(void *irq_controller,
 	if (controller->hdl_idx > 0x3FFFFFFF)
 		controller->hdl_idx = 1;
 
-	need_lock = !in_irq();
+	need_lock = !in_hardirq();
 	if (need_lock)
 		spin_lock_irqsave(&controller->lock, flags);
 	for (i = 0; i < controller->num_registers; i++) {
@@ -384,7 +384,7 @@ int cam_irq_controller_enable_irq(void *irq_controller, uint32_t handle)
 	if (!controller)
 		return rc;
 
-	need_lock = !in_irq();
+	need_lock = !in_hardirq();
 	if (need_lock)
 		spin_lock_irqsave(&controller->lock, flags);
 
@@ -440,7 +440,7 @@ int cam_irq_controller_disable_irq(void *irq_controller, uint32_t handle)
 	if (!controller)
 		return rc;
 
-	need_lock = !in_irq();
+	need_lock = !in_hardirq();
 	if (need_lock)
 		spin_lock_irqsave(&controller->lock, flags);
 
@@ -509,7 +509,7 @@ int cam_irq_controller_unsubscribe_irq(void *irq_controller,
 	int                         rc = -EINVAL;
 	bool                        need_lock;
 
-	need_lock = !in_irq();
+	need_lock = !in_hardirq();
 	if (need_lock)
 		spin_lock_irqsave(&controller->lock, flags);
 

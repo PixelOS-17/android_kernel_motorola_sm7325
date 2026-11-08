@@ -20,7 +20,7 @@
 #include <linux/workqueue.h>
 #include <linux/platform_device.h>
 #include <linux/soc/qcom/llcc-qcom.h>
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/soc/qcom/smem.h>
 #include <linux/dma-mapping.h>
 #include <linux/reset.h>
@@ -1862,7 +1862,7 @@ static int __interface_queues_init(struct iris_hfi_device *dev)
 			dev->iface_q_table.align_virtual_addr;
 	q_tbl_hdr->qtbl_version = 0;
 	q_tbl_hdr->device_addr = (void *)dev;
-	strlcpy(q_tbl_hdr->name, "msm_cvp", sizeof(q_tbl_hdr->name));
+	strscpy(q_tbl_hdr->name, "msm_cvp", sizeof(q_tbl_hdr->name));
 	q_tbl_hdr->qtbl_size = CVP_IFACEQ_TABLE_SIZE;
 	q_tbl_hdr->qtbl_qhdr0_offset =
 				sizeof(struct cvp_hfi_queue_table_header);

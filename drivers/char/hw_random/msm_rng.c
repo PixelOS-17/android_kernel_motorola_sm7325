@@ -329,7 +329,7 @@ static int msm_rng_probe(struct platform_device *pdev)
 #if (KERNEL_VERSION(6, 3, 0) <= LINUX_VERSION_CODE)
 	msm_rng_class = class_create("msm-rng");
 #else
-	msm_rng_class = class_create(THIS_MODULE, "msm-rng");
+	msm_rng_class = class_create("msm-rng");
 #endif
 	if (IS_ERR(msm_rng_class)) {
 		pr_err("class_create failed\n");

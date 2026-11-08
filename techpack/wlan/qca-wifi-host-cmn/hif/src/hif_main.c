@@ -883,7 +883,7 @@ static void hif_cpuhp_unregister(struct hif_softc *scn)
 #endif
 
 static inline int
-__hif_tasklet_latency(struct hif_softc *scn, bool from_timer, int idx)
+__hif_tasklet_latency(struct hif_softc *scn, bool timer_container_of, int idx)
 {
 	qdf_time_t sched_time =
 		scn->latency_detect.tasklet_info[idx].sched_time;
@@ -895,15 +895,15 @@ __hif_tasklet_latency(struct hif_softc *scn, bool from_timer, int idx)
 		sched_time + qdf_system_msecs_to_ticks(threshold);
 
 	/* 2 kinds of check here.
-	 * from_timer==true:  check if tasklet stall
-	 * from_timer==false: check tasklet execute comes late
+	 * timer_container_of==true:  check if tasklet stall
+	 * timer_container_of==false: check tasklet execute comes late
 	 */
-	if (from_timer ?
+	if (timer_container_of ?
 	    (qdf_system_time_after(sched_time, exec_time) &&
 	     qdf_system_time_after(curr_time, expect_exec_time)) :
 	    qdf_system_time_after(exec_time, expect_exec_time)) {
-		hif_err("tasklet[%d] latency detected: from_timer %d, curr_time %lu, sched_time %lu, exec_time %lu, threshold %ums, timeout %ums, cpu_id %d, called: %ps",
-			idx, from_timer, curr_time, sched_time,
+		hif_err("tasklet[%d] latency detected: timer_container_of %d, curr_time %lu, sched_time %lu, exec_time %lu, threshold %ums, timeout %ums, cpu_id %d, called: %ps",
+			idx, timer_container_of, curr_time, sched_time,
 			exec_time, threshold,
 			scn->latency_detect.timeout,
 			qdf_get_cpu(), (void *)_RET_IP_);
@@ -970,7 +970,7 @@ void hif_tasklet_latency_record_sched(struct hif_softc *scn, int idx)
 	scn->latency_detect.tasklet_info[idx].sched_time = qdf_system_ticks();
 }
 
-static inline void hif_credit_latency(struct hif_softc *scn, bool from_timer)
+static inline void hif_credit_latency(struct hif_softc *scn, bool timer_container_of)
 {
 	qdf_time_t credit_request_time =
 		scn->latency_detect.credit_request_time;
@@ -980,18 +980,18 @@ static inline void hif_credit_latency(struct hif_softc *scn, bool from_timer)
 	int cpu_id = qdf_get_cpu();
 
 	/* 2 kinds of check here.
-	 * from_timer==true:  check if credit report stall
-	 * from_timer==false: check credit report comes late
+	 * timer_container_of==true:  check if credit report stall
+	 * timer_container_of==false: check credit report comes late
 	 */
 
-	if ((from_timer ?
+	if ((timer_container_of ?
 	     qdf_system_time_after(credit_request_time, credit_report_time) :
 	     qdf_system_time_after(credit_report_time, credit_request_time)) &&
 	    qdf_system_time_after(curr_jiffies,
 				  credit_request_time +
 				  qdf_system_msecs_to_ticks(threshold))) {
 		hif_err("credit report latency: from timer %d, curr_jiffies %lu, credit_request_time %lu, credit_report_time %lu, threshold %ums, timeout %ums, cpu_id %d, called: %ps",
-			from_timer, curr_jiffies, credit_request_time,
+			timer_container_of, curr_jiffies, credit_request_time,
 			credit_report_time, threshold,
 			scn->latency_detect.timeout,
 			cpu_id, (void *)_RET_IP_);
@@ -1003,7 +1003,7 @@ latency:
 	qdf_trigger_self_recovery(NULL, QDF_TASKLET_CREDIT_LATENCY_DETECT);
 }
 
-static inline void hif_tasklet_latency(struct hif_softc *scn, bool from_timer)
+static inline void hif_tasklet_latency(struct hif_softc *scn, bool timer_container_of)
 {
 	int i, ret;
 
@@ -1011,7 +1011,7 @@ static inline void hif_tasklet_latency(struct hif_softc *scn, bool from_timer)
 		if (!qdf_test_bit(i, scn->latency_detect.tasklet_bmap))
 			continue;
 
-		ret = __hif_tasklet_latency(scn, from_timer, i);
+		ret = __hif_tasklet_latency(scn, timer_container_of, i);
 		if (ret)
 			return;
 	}
@@ -1021,13 +1021,13 @@ static inline void hif_tasklet_latency(struct hif_softc *scn, bool from_timer)
  * hif_check_detection_latency(): to check if latency for tasklet/credit
  *
  * @scn: hif context
- * @from_timer: if called from timer handler
+ * @timer_container_of: if called from timer handler
  * @bitmap_type: indicate if check tasklet or credit
  *
  * Return: none
  */
 void hif_check_detection_latency(struct hif_softc *scn,
-				 bool from_timer,
+				 bool timer_container_of,
 				 uint32_t bitmap_type)
 {
 	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
@@ -1037,10 +1037,10 @@ void hif_check_detection_latency(struct hif_softc *scn,
 		return;
 
 	if (bitmap_type & BIT(HIF_DETECT_TASKLET))
-		hif_tasklet_latency(scn, from_timer);
+		hif_tasklet_latency(scn, timer_container_of);
 
 	if (bitmap_type & BIT(HIF_DETECT_CREDIT))
-		hif_credit_latency(scn, from_timer);
+		hif_credit_latency(scn, timer_container_of);
 }
 
 static void hif_latency_detect_timeout_handler(void *arg)

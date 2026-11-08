@@ -597,7 +597,7 @@ static int wdsp_register_rpmsg(struct platform_device *pdev,
 		if (!wpriv->ch[i])
 			return -ENOMEM;
 
-		strlcpy(wpriv->ch[i]->ch_name, ch_name, RPMSG_NAME_SIZE);
+		strscpy(wpriv->ch[i]->ch_name, ch_name, RPMSG_NAME_SIZE);
 		wpriv->ch[i]->wpriv = wpriv;
 		spin_lock_init(&wpriv->ch[i]->ch_lock);
 	}
@@ -626,7 +626,7 @@ static int wdsp_register_rpmsg(struct platform_device *pdev,
 	wpriv->no_of_channels = no_of_channels;
 	id_table = wdsp_rpmsg_id_table;
 	for (i = 0; i < no_of_channels; i++) {
-		strlcpy(id_table->name, wpriv->ch[i]->ch_name,
+		strscpy(id_table->name, wpriv->ch[i]->ch_name,
 			RPMSG_NAME_SIZE);
 		id_table++;
 	}
@@ -673,7 +673,7 @@ static int wdsp_glink_probe(struct platform_device *pdev)
 		goto err_chrdev;
 	}
 
-	wdev->cls = class_create(THIS_MODULE, WDSP_GLINK_DRIVER_NAME);
+	wdev->cls = class_create(WDSP_GLINK_DRIVER_NAME);
 	if (IS_ERR(wdev->cls)) {
 		ret = PTR_ERR(wdev->cls);
 		dev_err(&pdev->dev, "%s: Failed to create class, err = %d\n",

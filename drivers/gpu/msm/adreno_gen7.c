@@ -1962,7 +1962,7 @@ static void gen7_remove(struct adreno_device *adreno_dev)
 	/* Make sure timer is initialized, otherwise WARN_ON is generated */
 	if (adreno_preemption_feature_set(adreno_dev) &&
 	    (test_bit(GMU_PRIV_FIRST_BOOT_DONE, &gmu->flags)))
-		del_timer(&adreno_dev->preempt.timer);
+		timer_delete(&adreno_dev->preempt.timer);
 }
 
 static void gen7_read_bus_stats(struct kgsl_device *device,

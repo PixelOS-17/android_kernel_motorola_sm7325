@@ -23,7 +23,7 @@
 #include <linux/reboot.h>
 #include <linux/pm.h>
 #include <linux/log2.h>
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/soc/qcom/irq.h>
 #include <linux/bitmap.h>
 #include <linux/sizes.h>

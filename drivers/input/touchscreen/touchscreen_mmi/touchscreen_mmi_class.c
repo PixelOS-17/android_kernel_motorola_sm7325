@@ -291,7 +291,7 @@ static ssize_t ts_mmi_doreflash_store(struct device *dev,
 		}
 	}
 
-	strlcpy(fw_path, buf, size);
+	strscpy(fw_path, buf, size);
 	dev_dbg(dev, "%s: FW filename: %s\n", __func__, fw_path);
 
 	TRY_TO_CALL(firmware_update, fw_path);
@@ -1223,7 +1223,7 @@ static int __init touchscreens_init(void)
 		pr_info("touchscreen_class: moto touchscreen already exist!\n");
 		return 0;
 	}
-	touchscreens_class = class_create(THIS_MODULE, "touchscreen");
+	touchscreens_class = class_create("touchscreen");
 	if (IS_ERR(touchscreens_class)) {
 		error = PTR_ERR(touchscreens_class);
 		touchscreens_class = NULL;

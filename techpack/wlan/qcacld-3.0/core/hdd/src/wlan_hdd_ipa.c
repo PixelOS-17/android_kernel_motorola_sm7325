@@ -100,10 +100,10 @@ static void hdd_ipa_set_wake_up_idle(bool wake_up_idle)
  * @skb : data buffer sent to network stack
  *
  * If IPA LAN RX supports NAPI polling mechanism use
- * netif_receive_skb instead of netif_rx_ni to forward the skb
+ * netif_receive_skb instead of netif_rx to forward the skb
  * to network stack.
  *
- * Return: Return value from netif_rx_ni/netif_receive_skb
+ * Return: Return value from netif_rx/netif_receive_skb
  */
 static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
 {
@@ -112,7 +112,7 @@ static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
 	if (qdf_ipa_get_lan_rx_napi())
 		result = netif_receive_skb(skb);
 	else
-		result = netif_rx_ni(skb);
+		result = netif_rx(skb);
 	return result;
 }
 #else
@@ -120,7 +120,7 @@ static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
 {
 	int result;
 
-	result = netif_rx_ni(skb);
+	result = netif_rx(skb);
 	return result;
 }
 #endif
@@ -131,16 +131,16 @@ static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
  * hdd_ipa_aggregated_rx_ind() - Submit aggregated packets to the stack
  * @skb: skb to be submitted to the stack
  *
- * For CONFIG_SMP systems, simply call netif_rx_ni.
+ * For CONFIG_SMP systems, simply call netif_rx.
  * For non CONFIG_SMP systems call netif_rx till
- * IPA_WLAN_RX_SOFTIRQ_THRESH. When threshold is reached call netif_rx_ni.
+ * IPA_WLAN_RX_SOFTIRQ_THRESH. When threshold is reached call netif_rx.
  * In this manner, UDP/TCP packets are sent in an aggregated way to the stack.
- * For IP/ICMP packets, simply call netif_rx_ni.
+ * For IP/ICMP packets, simply call netif_rx.
  *
  * Check if IPA supports NAPI polling then use netif_receive_skb
- * instead of netif_rx_ni.
+ * instead of netif_rx.
  *
- * Return: return value from the netif_rx_ni/netif_rx api.
+ * Return: return value from the netif_rx/netif_rx api.
  */
 static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
 {
@@ -162,7 +162,7 @@ static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
 		(ip_h->protocol == IPPROTO_ICMP)) {
 		result = hdd_ipa_send_to_nw_stack(skb);
 	} else {
-		/* Call netif_rx_ni for every IPA_WLAN_RX_SOFTIRQ_THRESH packets
+		/* Call netif_rx for every IPA_WLAN_RX_SOFTIRQ_THRESH packets
 		 * to avoid excessive softirq's.
 		 */
 		if (atomic_dec_and_test(&softirq_mitigation_cntr)) {

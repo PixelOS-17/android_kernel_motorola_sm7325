@@ -616,7 +616,7 @@ int mot_actuator_get_bootarg(char *key, char **value)
 		if (!bootargs_str)
 			goto putnode;
 	}
-	strlcpy(bootargs_str, bootargs_tmp, bootargs_tmp_len + 1);
+	strscpy(bootargs_str, bootargs_tmp, bootargs_tmp_len + 1);
 
 	idx = strnstr(bootargs_str, key, strlen(bootargs_str));
 	if (idx) {
@@ -640,7 +640,7 @@ static int cam_select_actuator_by_device_name(void)
 	char *str;
 	uint32_t i;
 	if (mot_actuator_get_bootarg("androidboot.device=", &str) == 0)
-		strlcpy(androidboot_device, str, ANDROIDBOOT_DEVICE_MAX_LEN);
+		strscpy(androidboot_device, str, ANDROIDBOOT_DEVICE_MAX_LEN);
 
 	for (i=0; i<MOT_DEVICE_NUM; i++) {
 		if (!strcmp(str, mot_dev_list[i].dev_name)) {
@@ -1573,7 +1573,7 @@ static int mot_actuator_init_subdev(struct device *dev, struct mot_actuator_ctrl
 
 	f_ctrl->v4l2_dev_str.internal_ops = &mot_actuator_internal_ops;
 	f_ctrl->v4l2_dev_str.ops = &mot_actuator_subdev_ops;
-	strlcpy(f_ctrl->device_name, MOT_ACTUATOR_NAME, sizeof(f_ctrl->device_name));
+	strscpy(f_ctrl->device_name, MOT_ACTUATOR_NAME, sizeof(f_ctrl->device_name));
 	f_ctrl->v4l2_dev_str.name = f_ctrl->device_name;
 	f_ctrl->v4l2_dev_str.sd_flags =
 		(V4L2_SUBDEV_FL_HAS_DEVNODE | V4L2_SUBDEV_FL_HAS_EVENTS);

@@ -50,7 +50,7 @@
  *
  * Use netif_rx().
  */
-#define netif_rx_ni(skb) netif_rx(skb)
+#define netif_rx(skb) netif_rx(skb)
 #endif
 
 /*
@@ -428,7 +428,7 @@ __qdf_nbuf_page_frag_alloc(__qdf_device_t osdev, size_t size, int reserve,
  * called from interrupt context and then do it or else in
  * normal case use GFP_KERNEL
  *
- * example     use "in_irq() || irqs_disabled()"
+ * example     use "in_hardirq() || irqs_disabled()"
  *
  * Return: cloned skb
  */

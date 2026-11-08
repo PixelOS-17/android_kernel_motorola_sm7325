@@ -1225,7 +1225,7 @@ int q6core_create_lpass_npa_client(uint32_t node_id, char *client_name,
 	cmd_ptr->hdr.token = 0;
 	cmd_ptr->hdr.opcode = AVCS_CMD_CREATE_LPASS_NPA_CLIENT;
 	cmd_ptr->node_id = AVCS_SLEEP_ISLAND_CORE_DRIVER_NODE_ID;
-	strlcpy(cmd_ptr->client_name, client_name,
+	strscpy(cmd_ptr->client_name, client_name,
 			sizeof(cmd_ptr->client_name));
 
 	pr_debug("%s: create lpass npa client opcode[0x%x] node id[0x%x]\n",

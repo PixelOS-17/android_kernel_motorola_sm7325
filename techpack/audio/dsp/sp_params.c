@@ -405,7 +405,7 @@ int __init spk_params_init(void)
 	this_afe_spk.xt_logging.count_exceeded_excursion[SP_V2_SPKR_1] = 0;
 	this_afe_spk.xt_logging.count_exceeded_excursion[SP_V2_SPKR_2] = 0;
 
-	this_afe_spk.p_class = class_create(THIS_MODULE, SPK_PARAMS);
+	this_afe_spk.p_class = class_create(SPK_PARAMS);
 	if (this_afe_spk.p_class) {
 		this_afe_spk.p_dev = device_create(this_afe_spk.p_class, NULL,
 						   1, NULL, CLASS_NAME);

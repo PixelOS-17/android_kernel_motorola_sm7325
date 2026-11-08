@@ -1425,7 +1425,7 @@ int aw_dev_get_profile_name(struct aw_device *aw_dev, char *name, int index)
 
 	dev_profile_id = aw_dev->prof_info.prof_desc[index].id;
 
-	strlcpy(name, profile_name[dev_profile_id],
+	strscpy(name, profile_name[dev_profile_id],
 			strlen(profile_name[dev_profile_id]) + 1);
 	/*aw_dev_dbg(aw_dev->dev, "%s: get name [%s]",
 			__func__, profile_name[dev_profile_id]);*/

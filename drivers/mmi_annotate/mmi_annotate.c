@@ -261,7 +261,7 @@ static int mmi_annotate_probe(struct platform_device *pdev)
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
 #if IS_ENABLED(CONFIG_QCOM_MINIDUMP)
 	/*Register annotate to minidump */
-	strlcpy(md_entry.name, "ANNOTATE", sizeof(md_entry.name));
+	strscpy(md_entry.name, "ANNOTATE", sizeof(md_entry.name));
 	if (!persist_unsupported) {
 		md_entry.virt_addr = (uintptr_t)phys_to_virt(pdata->mem_address);
 		md_entry.phys_addr = pdata->mem_address;

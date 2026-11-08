@@ -205,7 +205,7 @@ static int gsi_wakeup_host(struct f_gsi *gsi)
 
 static void gsi_rw_timer_func(struct timer_list *t)
 {
-	struct f_gsi *gsi = from_timer(gsi, t, gsi_rw_timer);
+	struct f_gsi *gsi = timer_container_of(gsi, t, gsi_rw_timer);
 
 	if (!atomic_read(&gsi->connected)) {
 		log_event_dbg("%s: gsi not connected.. bail-out\n", __func__);
@@ -287,7 +287,7 @@ static ssize_t usb_gsi_rw_write(struct file *file,
 			  msecs_to_jiffies(gsi->gsi_rw_timer_interval));
 		log_event_dbg("%s: timer initialized\n", __func__);
 	} else {
-		del_timer_sync(&gsi->gsi_rw_timer);
+		timer_delete_sync(&gsi->gsi_rw_timer);
 		log_event_dbg("%s: timer deleted\n", __func__);
 	}
 
@@ -1936,7 +1936,7 @@ static int gsi_function_ctrl_port_init(struct f_gsi *gsi)
 err_create_dev:
 	cdev_del(&gsi->c_port.cdev);
 err_cdev_add:
-	ida_simple_remove(&gsi_ida, minor);
+	ida_free(&gsi_ida, minor);
 	return ret;
 }
 
@@ -3921,7 +3921,7 @@ static void gsi_inst_clean(struct gsi_opts *opts)
 		device_destroy(gsi_class, cdev->dev);
 		cdev_del(cdev);
 		cdev->dev = 0;
-		ida_simple_remove(&gsi_ida, minor);
+		ida_free(&gsi_ida, minor);
 	}
 
 	kfree(opts->gsi);
@@ -4070,7 +4070,7 @@ static int fgsi_init(void)
 	for (i = 0; i < IPA_USB_MAX_TETH_PROT_SIZE; i++)
 		mutex_init(&inst_status[i].gsi_lock);
 
-	gsi_class = class_create(THIS_MODULE, "gsi_usb");
+	gsi_class = class_create("gsi_usb");
 	if (IS_ERR(gsi_class)) {
 		ret = PTR_ERR(gsi_class);
 		gsi_class = NULL;

@@ -1559,7 +1559,7 @@ int synx_initialize(struct synx_session *session_id,
 	}
 
 	if (params->name)
-		strlcpy(client->name, params->name, sizeof(client->name));
+		strscpy(client->name, params->name, sizeof(client->name));
 
 	do {
 		get_random_bytes(&unique_id, sizeof(unique_id));
@@ -1686,7 +1686,7 @@ int synx_register_ops(const struct synx_register_params *params)
 		client_ops->valid = true;
 		memcpy(&client_ops->ops, &params->ops,
 			sizeof(client_ops->ops));
-		strlcpy(client_ops->name, params->name,
+		strscpy(client_ops->name, params->name,
 			sizeof(client_ops->name));
 		client_ops->type = params->type;
 		pr_info("registered bind ops type %u for %s\n",
@@ -1747,7 +1747,7 @@ static int __init synx_init(void)
 		goto reg_fail;
 	}
 
-	synx_dev->class = class_create(THIS_MODULE, SYNX_DEVICE_NAME);
+	synx_dev->class = class_create(SYNX_DEVICE_NAME);
 	device_create(synx_dev->class, NULL, synx_dev->dev,
 		NULL, SYNX_DEVICE_NAME);
 

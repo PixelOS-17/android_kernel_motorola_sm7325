@@ -34,7 +34,7 @@
 #include "mmi_info.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-#define PDE_DATA(x) pde_data(x)
+#define pde_data(x) pde_data(x)
 #endif
 /*
  * EMIT_BOOTINFO and EMIT_BOOTINFO_STR are used to emit the bootinfo
@@ -79,10 +79,10 @@ static void mmi_bootarg_setup(void)
 	char *s;
 
 	if (mmi_get_bootarg("androidboot.bootreason=", &s) == 0)
-		strlcpy(bootreason, s, BOOTREASON_MAX_LEN);
+		strscpy(bootreason, s, BOOTREASON_MAX_LEN);
 
 	if (mmi_get_bootarg("androidboot.mode=", &s) == 0)
-		strlcpy(bootmode, s, BOOTMODE_MAX_LEN);
+		strscpy(bootmode, s, BOOTMODE_MAX_LEN);
 }
 
 /*
@@ -177,11 +177,11 @@ void bi_add_bl_build_sig(char *bld_sig)
 	pos = value - bld_sig;
 
 	ptr = bl_build_sigs[bl_build_sig_count].item;
-	strlcpy(ptr, bld_sig, pos+1);
+	strscpy(ptr, bld_sig, pos+1);
 	convert_to_upper(ptr);
 
 	ptr = bl_build_sigs[bl_build_sig_count].value;
-	strlcpy(ptr, value+1, MAX_BLD_SIG_VALUE);
+	strscpy(ptr, value+1, MAX_BLD_SIG_VALUE);
 
 	bl_build_sig_count++;
 }
@@ -288,7 +288,7 @@ static struct proc_dir_entry *proc_bootinfo;
 
 static int bootinfo_proc_open(struct inode *inode, struct file *file)
 {
-	return single_open(file, get_bootinfo, PDE_DATA(inode));
+	return single_open(file, get_bootinfo, pde_data(inode));
 }
 
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE

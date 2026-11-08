@@ -243,7 +243,7 @@ out:
 
 static const struct file_operations nfc_i2c_dev_fops = {
 	.owner = THIS_MODULE,
-	.llseek = no_llseek,
+	.llseek = noop_llseek,
 	.read = nfc_i2c_dev_read,
 	.write = nfc_i2c_dev_write,
 	.open = nfc_dev_open,

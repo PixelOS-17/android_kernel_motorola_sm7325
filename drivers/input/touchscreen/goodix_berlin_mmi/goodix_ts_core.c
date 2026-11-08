@@ -33,7 +33,7 @@
 #define GOOIDX_INPUT_PHYS			"goodix_ts/input0"
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0))
-#define PDE_DATA(x) pde_data(x)
+#define pde_data(x) pde_data(x)
 #endif
 
 struct goodix_module goodix_modules;
@@ -843,9 +843,9 @@ exit:
 static int rawdata_proc_open(struct inode *inode, struct file *file)
 {
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
-	return single_open_size(file, rawdata_proc_show, PDE_DATA(inode), PAGE_SIZE * 10);
+	return single_open_size(file, rawdata_proc_show, pde_data(inode), PAGE_SIZE * 10);
 #else
-	return single_open(file, rawdata_proc_show, PDE_DATA(inode));
+	return single_open(file, rawdata_proc_show, pde_data(inode));
 #endif
 }
 
@@ -2531,7 +2531,7 @@ static int goodix_start_later_init(struct goodix_ts_core *ts_core)
 #ifdef GOODIX_PALM_SENSOR_EN
 static void goodix_palm_sensor_release_timer_handler(struct timer_list *t)
 {
-	struct goodix_ts_core *cd = from_timer(cd, t, palm_release_timer);
+	struct goodix_ts_core *cd = timer_container_of(cd, t, palm_release_timer);
 
 	if (cd->imports && cd->imports->report_palm && atomic_read(&cd->palm_status)) {
 		cd->imports->report_palm(false);

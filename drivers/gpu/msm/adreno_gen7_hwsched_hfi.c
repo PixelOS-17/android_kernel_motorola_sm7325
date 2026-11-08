@@ -1219,7 +1219,7 @@ static void process_hw_fence_ack(struct adreno_device *adreno_dev, u32 received_
 
 	spin_unlock(&hfi->hw_fence.lock);
 
-	del_timer_sync(&hfi->hw_fence_timer);
+	timer_delete_sync(&hfi->hw_fence_timer);
 
 	/*
 	 * We need to handle the deferred context in another thread so that we can unblock the f2h
@@ -2708,7 +2708,7 @@ static void gen7_hwsched_hw_fence_timeout(struct work_struct *work)
 
 static void gen7_hwsched_hw_fence_timer(struct timer_list *t)
 {
-	struct gen7_hwsched_hfi *hfi = from_timer(hfi, t, hw_fence_timer);
+	struct gen7_hwsched_hfi *hfi = timer_container_of(hfi, t, hw_fence_timer);
 
 	kgsl_schedule_work(&hfi->hw_fence_ws);
 }
@@ -3946,7 +3946,7 @@ int gen7_hwsched_send_recurring_cmdobj(struct adreno_device *adreno_dev,
 
 	if (test_bit(CMDOBJ_RECURRING_STOP, &cmdobj->priv)) {
 		adreno_hwsched_retire_cmdobj(hwsched, hwsched->recurring_cmdobj);
-		del_timer_sync(&hwsched->lsr_timer);
+		timer_delete_sync(&hwsched->lsr_timer);
 		hwsched->recurring_cmdobj = NULL;
 		if (active)
 			adreno_active_count_put(adreno_dev);

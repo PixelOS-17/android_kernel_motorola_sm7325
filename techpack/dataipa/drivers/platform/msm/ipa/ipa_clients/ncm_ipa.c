@@ -628,7 +628,7 @@ int ncm_ipa_init(struct ipa_ncm_init_params *params)
 		NCM_IPA_DEBUG("LAN RX NAPI enabled = True");
 	} else {
 #if (KERNEL_VERSION(5, 18, 0) > LINUX_VERSION_CODE)
-		ncm_ipa_ctx->netif_rx_function = netif_rx_ni;
+		ncm_ipa_ctx->netif_rx_function = netif_rx;
 #else
 		ncm_ipa_ctx->netif_rx_function = netif_rx;
 #endif

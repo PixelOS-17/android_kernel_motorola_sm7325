@@ -359,9 +359,9 @@ static int ipa3_nat_ipv6ct_init_device(
 		goto bail;
 	}
 
-	strlcpy(dev->name, name, IPA_DEV_NAME_MAX_LEN);
+	strscpy(dev->name, name, IPA_DEV_NAME_MAX_LEN);
 
-	dev->class = class_create(THIS_MODULE, name);
+	dev->class = class_create(name);
 
 	if (IS_ERR(dev->class)) {
 		IPAERR("unable to create the class for %s\n", name);

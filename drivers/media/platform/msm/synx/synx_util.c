@@ -32,7 +32,7 @@ int synx_util_init_coredata(struct synx_coredata *synx_obj,
 	mutex_init(&synx_obj->obj_lock);
 	INIT_LIST_HEAD(&synx_obj->reg_cbs_list);
 	if (params->name)
-		strlcpy(synx_obj->name, params->name, sizeof(synx_obj->name));
+		strscpy(synx_obj->name, params->name, sizeof(synx_obj->name));
 
 	if (!synx_util_is_external_object(synx_obj)) {
 		/*

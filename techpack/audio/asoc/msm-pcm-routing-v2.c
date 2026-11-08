@@ -4508,7 +4508,7 @@ static int msm_pcm_get_ctl_enum_info(struct snd_ctl_elem_info *uinfo,
 		sizeof(uinfo->value.enumerated.name),
 		"ALSA: too long item name '%s'\n",
 		names[uinfo->value.enumerated.item]);
-	strlcpy(uinfo->value.enumerated.name,
+	strscpy(uinfo->value.enumerated.name,
 		names[uinfo->value.enumerated.item],
 		sizeof(uinfo->value.enumerated.name));
 	return 0;
@@ -43322,7 +43322,7 @@ static int msm_routing_be_dai_name_table_tlv_get(struct snd_kcontrol *kcontrol,
 	 */
 	for (i = 0; i < MSM_BACKEND_DAI_MAX; i++) {
 		be_dai_name_table[i].be_id = i;
-		strlcpy(be_dai_name_table[i].be_name,
+		strscpy(be_dai_name_table[i].be_name,
 			msm_bedais[i].name,
 			LPASS_BE_NAME_MAX_LENGTH);
 	}

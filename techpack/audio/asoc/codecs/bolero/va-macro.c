@@ -2934,10 +2934,10 @@ static void va_macro_add_child_devices(struct work_struct *work)
 			va_swr_master_node = true;
 
 		if (va_swr_master_node)
-			strlcpy(plat_dev_name, "va_swr_ctrl",
+			strscpy(plat_dev_name, "va_swr_ctrl",
 				(VA_MACRO_SWR_STRING_LEN - 1));
 		else
-			strlcpy(plat_dev_name, node->name,
+			strscpy(plat_dev_name, node->name,
 				(VA_MACRO_SWR_STRING_LEN - 1));
 
 		pdev = platform_device_alloc(plat_dev_name, -1);

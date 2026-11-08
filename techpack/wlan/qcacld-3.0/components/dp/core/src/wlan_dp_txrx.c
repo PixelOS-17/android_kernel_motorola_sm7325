@@ -1530,7 +1530,7 @@ QDF_STATUS wlan_dp_rx_deliver_to_stack(struct wlan_dp_intf *dp_intf,
 		 * Frames before peer is registered to avoid contention with
 		 * NAPI softirq.
 		 * Refer fix:
-		 * qcacld-3.0: Do netif_rx_ni() for frames received before
+		 * qcacld-3.0: Do netif_rx() for frames received before
 		 * peer assoc
 		 */
 		push_type = DP_NBUF_PUSH_NI;
@@ -1586,7 +1586,7 @@ QDF_STATUS wlan_dp_rx_deliver_to_stack(struct wlan_dp_intf *dp_intf,
 		 * Frames before peer is registered to avoid contention with
 		 * NAPI softirq.
 		 * Refer fix:
-		 * qcacld-3.0: Do netif_rx_ni() for frames received before
+		 * qcacld-3.0: Do netif_rx() for frames received before
 		 * peer assoc
 		 */
 		push_type = DP_NBUF_PUSH_NI;

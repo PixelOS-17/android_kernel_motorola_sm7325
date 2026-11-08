@@ -9,7 +9,7 @@
 #include <linux/firmware.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/slab.h>
 
 #include "adreno.h"
@@ -2383,7 +2383,7 @@ static bool a5xx_is_hw_collapsible(struct adreno_device *adreno_dev)
 static void a5xx_remove(struct adreno_device *adreno_dev)
 {
 	if (adreno_preemption_feature_set(adreno_dev))
-		del_timer(&adreno_dev->preempt.timer);
+		timer_delete(&adreno_dev->preempt.timer);
 }
 
 static void a5xx_power_stats(struct adreno_device *adreno_dev,

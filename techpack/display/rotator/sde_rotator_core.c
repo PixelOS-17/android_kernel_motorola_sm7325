@@ -16,7 +16,7 @@
 #include <linux/debugfs.h>
 #include <linux/regulator/consumer.h>
 #include <linux/dma-direction.h>
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 #include <soc/qcom/secure_buffer.h>
 #include <asm/cacheflush.h>
 #include <uapi/linux/sched/types.h>
@@ -2992,7 +2992,7 @@ static inline int sde_rotator_search_dt_clk(struct platform_device *pdev,
 		rc = PTR_ERR(tmp);
 	}
 
-	strlcpy(mgr->rot_clk[clk_idx].clk_name, clk_name,
+	strscpy(mgr->rot_clk[clk_idx].clk_name, clk_name,
 			sizeof(mgr->rot_clk[clk_idx].clk_name));
 
 	mgr->rot_clk[clk_idx].clk = tmp;

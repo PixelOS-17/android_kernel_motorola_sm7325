@@ -957,7 +957,7 @@ const char *get_dsi_display_name(void)
 		end = strpbrk(idx, " ");
 		idx = strpbrk(idx, "=");
 		if (idx && end > idx)
-			strlcpy(display, idx + 1,
+			strscpy(display, idx + 1,
 				min_t(size_t, end - idx, sizeof(display)));
 	}
 
