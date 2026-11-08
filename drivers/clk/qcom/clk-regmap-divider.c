@@ -16,8 +16,8 @@ static inline struct clk_regmap_div *to_clk_regmap_div(struct clk_hw *hw)
 	return container_of(to_clk_regmap(hw), struct clk_regmap_div, clkr);
 }
 
-static int div_ro_determine_rate(struct clk_hw *hw,
-				 struct clk_rate_request *req)
+static long div_round_ro_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long *prate)
 {
 	struct clk_regmap_div *divider = to_clk_regmap_div(hw);
 	struct clk_regmap *clkr = &divider->clkr;
@@ -38,7 +38,8 @@ static int div_ro_determine_rate(struct clk_hw *hw,
 				     CLK_DIVIDER_ROUND_CLOSEST, val);
 }
 
-static int div_determine_rate(struct clk_hw *hw, struct clk_rate_request *req)
+static long div_round_rate(struct clk_hw *hw, unsigned long rate,
+			   unsigned long *prate)
 {
 	struct clk_regmap_div *divider = to_clk_regmap_div(hw);
 
@@ -123,14 +124,14 @@ static int clk_regmap_div_init(struct clk_hw *hw)
 }
 
 const struct clk_ops clk_regmap_div_ops = {
-	.determine_rate = div_determine_rate,
+	.round_rate = div_round_rate,
 	.set_rate = div_set_rate,
 	.recalc_rate = div_recalc_rate,
 };
 EXPORT_SYMBOL_GPL(clk_regmap_div_ops);
 
 const struct clk_ops clk_regmap_div_ro_ops = {
-	.determine_rate = div_ro_determine_rate,
+	.round_rate = div_round_ro_rate,
 	.recalc_rate = div_recalc_rate,
 	.init = clk_regmap_div_init,
 	.debug_init = clk_common_debug_init,

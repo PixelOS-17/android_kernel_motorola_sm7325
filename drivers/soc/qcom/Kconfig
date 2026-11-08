@@ -326,6 +326,25 @@ config IPA3
 	  Kernel and user-space processes can call the IPA driver
 	  to configure IPA core.
 
+config PDR_INDICATION_NOTIF_TIMEOUT
+	int "Pdr notifications timeout in ms"
+	default 3000
+	help
+	  The amount of time, in milliseconds, that should elapse between
+	  the start and end of notifications, before a warning
+	  is emitted.
+
+source "drivers/soc/qcom/hab/Kconfig"
+
+config QCOM_RPMH_TIMEOUT
+	int "Timeout for RPMH and CRM communication"
+	default 5000
+	depends on QCOM_RPMH
+	help
+	  The amount of time, in milliseconds, that should be sufficient to
+	  receive a response from RPMh for the resource request from APSS.
+	  Wait for this duration before emitting a warning.
+
 config QCOM_GLINK
 	tristate "GLINK Probe Helper"
 	depends on RPMSG_QCOM_GLINK_SMEM
@@ -377,6 +396,25 @@ config QCOM_IRQ_STAT
 	  watchdog bark and kernel panics.
 	  This provides additional debug information
 	  for irq counts.
+
+config QCOM_WATCHDOG_BARK_TIME
+	depends on QCOM_WDT_CORE
+	int "Qualcomm Technologies, Inc. Watchdog bark time in ms"
+	default 11000
+	range 11000 11000
+	help
+	  The amount of time, in milliseconds, that should elapse after
+	  a watchdog timer reset before a bark interrupt is sent from the
+	  watchdog.
+
+config QCOM_WATCHDOG_PET_TIME
+	depends on QCOM_WDT_CORE
+	int "Qualcomm Technologies, Inc. Watchdog pet time in ms"
+	default 9360
+	range 9360 9360
+	help
+	  The amount of time, in milliseconds, that should elapse before
+	  a watchdog pet is initiated to reset the watchdog timer to 0.
 
 config QCOM_WATCHDOG_IPI_PING
 	depends on QCOM_WDT_CORE

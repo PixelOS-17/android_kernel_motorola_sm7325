@@ -192,7 +192,7 @@ static void qcom_epss_l3_remove(struct platform_device *pdev)
 		icc_node_destroy(n->id);
 	}
 
-	icc_provider_del(provider);
+	icc_provider_deregister(provider);
 }
 
 static int qcom_epss_l3_probe(struct platform_device *pdev)
@@ -282,11 +282,7 @@ static int qcom_epss_l3_probe(struct platform_device *pdev)
 	if (!compat || (compatlen <= 0))
 		return -EINVAL;
 
-	ret = icc_provider_add(provider);
-	if (ret) {
-		dev_err(&pdev->dev, "error adding interconnect provider\n");
-		return ret;
-	}
+	icc_provider_init(provider);
 
 	for (i = 0; i < num_nodes; i++) {
 		size_t j;
@@ -314,9 +310,15 @@ static int qcom_epss_l3_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, qp);
 
+	ret = icc_provider_register(provider);
+	if (ret) {
+		dev_err(&pdev->dev, "error adding interconnect provider\n");
+		icc_nodes_remove(provider);
+	}
+
 	return ret;
 err:
-	qcom_epss_l3_remove(pdev);
+	icc_nodes_remove(provider);
 	return ret;
 }
 

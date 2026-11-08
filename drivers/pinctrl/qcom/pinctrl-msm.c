@@ -379,7 +379,7 @@ static int msm_config_reg(struct msm_pinctrl *pctrl,
 		*bit = g->drv_bit;
 		*mask = 7;
 		break;
-	case PIN_CONFIG_OUTPUT:
+	case PIN_CONFIG_LEVEL:
 	case PIN_CONFIG_INPUT_ENABLE:
 		*bit = g->oe_bit;
 		*mask = 1;
@@ -473,7 +473,7 @@ static int msm_config_group_get(struct pinctrl_dev *pctldev,
 	case PIN_CONFIG_DRIVE_STRENGTH:
 		arg = msm_regval_to_drive(arg);
 		break;
-	case PIN_CONFIG_OUTPUT:
+	case PIN_CONFIG_LEVEL:
 		/* Pin is not output */
 		if (!arg)
 			return -EINVAL;
@@ -570,7 +570,7 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
 			else
 				arg = (arg / 2) - 1;
 			break;
-		case PIN_CONFIG_OUTPUT:
+		case PIN_CONFIG_LEVEL:
 			/* set output value */
 			raw_spin_lock_irqsave(&pctrl->lock, flags);
 			val = msm_readl_io(pctrl, g);
@@ -1888,7 +1888,7 @@ static int msm_pinctrl_hibernation_suspend(void)
 
 	/* All normal gpios will have common registers, first save them */
 	for (i = 0; i < soc->ngpios; i++) {
-		if (!chip && !test_bit(i, chip->valid_mask))
+		if (!gpiochip_line_is_valid(chip, i))
 			continue;
 
 		pgroup = &soc->groups[i];
@@ -1907,7 +1907,7 @@ static int msm_pinctrl_hibernation_suspend(void)
 	}
 
 	for ( ; i < soc->ngroups; i++) {
-		if (!chip && !test_bit(i, chip->valid_mask))
+		if (!gpiochip_line_is_valid(chip, i))
 			continue;
 
 		pgroup = &soc->groups[i];
@@ -1949,7 +1949,7 @@ static void msm_pinctrl_hibernation_resume(void)
 
     /* Restore normal gpios */
 	for (i = 0; i < soc->ngpios; i++) {
-		if (!chip && !test_bit(i, chip->valid_mask))
+		if (!gpiochip_line_is_valid(chip, i))
 			continue;
 
 		pgroup = &soc->groups[i];
@@ -1964,7 +1964,7 @@ static void msm_pinctrl_hibernation_resume(void)
 	}
 
 	for ( ; i < soc->ngroups; i++) {
-		if (!chip && !test_bit(i, chip->valid_mask))
+		if (!gpiochip_line_is_valid(chip, i))
 			continue;
 
 		pgroup = &soc->groups[i];
@@ -2303,15 +2303,13 @@ int msm_pinctrl_probe(struct platform_device *pdev,
 }
 EXPORT_SYMBOL(msm_pinctrl_probe);
 
-int msm_pinctrl_remove(struct platform_device *pdev)
+void msm_pinctrl_remove(struct platform_device *pdev)
 {
 	struct msm_pinctrl *pctrl = platform_get_drvdata(pdev);
 
 	gpiochip_remove(&pctrl->chip);
 
 	unregister_restart_handler(&pctrl->restart_nb);
-
-	return 0;
 }
 EXPORT_SYMBOL(msm_pinctrl_remove);
 

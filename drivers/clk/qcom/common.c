@@ -292,7 +292,7 @@ static void qcom_cc_drop_protected(struct device *dev, struct qcom_cc *cc)
 	const __be32 *p;
 	u32 i;
 
-	of_property_for_each_u32(np, "protected-clocks", prop, p, i) {
+	of_property_for_each_u32(np, "protected-clocks", i) {
 		if (i >= cc->num_rclks)
 			continue;
 

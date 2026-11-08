@@ -12,7 +12,6 @@
 #include <linux/of_address.h>
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
-#include <linux/soc/qcom/qcom_hwspinlock.h>
 #include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/smem.h>
@@ -393,7 +392,7 @@ int qcom_smem_bust_hwspin_lock_by_host(unsigned int host)
 	if (host == SMEM_HOST_APPS || host >= SMEM_HOST_COUNT)
 		return -EINVAL;
 
-	return qcom_hwspinlock_bust(__smem->hwlock, SMEM_HOST_ID_TO_HWSPINLOCK_ID(host));
+	return hwspin_lock_bust(__smem->hwlock, SMEM_HOST_ID_TO_HWSPINLOCK_ID(host));
 }
 EXPORT_SYMBOL_GPL(qcom_smem_bust_hwspin_lock_by_host);
 

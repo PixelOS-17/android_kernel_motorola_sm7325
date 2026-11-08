@@ -856,7 +856,7 @@ static int geni_icc_get_legacy(struct geni_se *se)
 		return -ENODATA;
 
 	for (i = 0; i < ARRAY_SIZE(paths); i++) {
-		path = icc_get(se->dev, ids[2 * i], ids[2 * i + 1]);
+		path = icc_get_by_id(se->dev, ids[2 * i], ids[2 * i + 1]);
 		if (IS_ERR(path))
 			return PTR_ERR(path);
 

@@ -331,7 +331,7 @@ static int lpi_config_get(struct pinctrl_dev *pctldev,
 		arg = pad->pullup == LPI_GPIO_PULL_UP;
 		break;
 	case PIN_CONFIG_INPUT_ENABLE:
-	case PIN_CONFIG_OUTPUT:
+	case PIN_CONFIG_LEVEL:
 		arg = pad->output_enabled;
 		break;
 	default:
@@ -381,7 +381,7 @@ static int lpi_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 		case PIN_CONFIG_INPUT_ENABLE:
 			pad->output_enabled = false;
 			break;
-		case PIN_CONFIG_OUTPUT:
+		case PIN_CONFIG_LEVEL:
 			pad->output_enabled = true;
 			pad->value = arg;
 			break;
@@ -471,7 +471,7 @@ static int lpi_gpio_direction_output(struct gpio_chip *chip,
 	struct lpi_gpio_state *state = gpiochip_get_data(chip);
 	unsigned long config;
 
-	config = pinconf_to_config_packed(PIN_CONFIG_OUTPUT, val);
+	config = pinconf_to_config_packed(PIN_CONFIG_LEVEL, val);
 
 	return lpi_config_set(state->ctrl, pin, &config, 1);
 }
@@ -493,7 +493,7 @@ static void lpi_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
 	struct lpi_gpio_state *state = gpiochip_get_data(chip);
 	unsigned long config;
 
-	config = pinconf_to_config_packed(PIN_CONFIG_OUTPUT, value);
+	config = pinconf_to_config_packed(PIN_CONFIG_LEVEL, value);
 
 	lpi_config_set(state->ctrl, pin, &config, 1);
 }

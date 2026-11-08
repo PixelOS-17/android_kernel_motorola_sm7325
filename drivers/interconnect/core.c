@@ -778,6 +778,46 @@ int icc_disable(struct icc_path *path)
 EXPORT_SYMBOL_GPL(icc_disable);
 
 /**
+ * icc_get_by_id() - get a path between two interconnect nodes by node id
+ * @dev: the device requesting the path
+ * @src_id: source node id
+ * @dst_id: destination node id
+ *
+ * Kept for the lahaina consumers whose 5.4 DT binding names endpoints by id.
+ */
+struct icc_path *icc_get_by_id(struct device *dev, const int src_id, const int dst_id)
+{
+	struct icc_node *src, *dst;
+	struct icc_path *path = ERR_PTR(-EPROBE_DEFER);
+
+	mutex_lock(&icc_lock);
+
+	src = node_find(src_id);
+	if (!src)
+		goto out;
+
+	dst = node_find(dst_id);
+	if (!dst)
+		goto out;
+
+	path = path_find(dev, src, dst);
+	if (IS_ERR(path)) {
+		dev_err(dev, "%s: invalid path=%ld\n", __func__, PTR_ERR(path));
+		goto out;
+	}
+
+	path->name = kasprintf(GFP_KERNEL, "%s-%s", src->name, dst->name);
+	if (!path->name) {
+		kfree(path);
+		path = ERR_PTR(-ENOMEM);
+	}
+out:
+	mutex_unlock(&icc_lock);
+	return path;
+}
+EXPORT_SYMBOL_GPL(icc_get_by_id);
+
+/**
  * icc_put() - release the reference to the icc_path
  * @path: interconnect path
  *
