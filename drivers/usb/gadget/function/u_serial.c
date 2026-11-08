@@ -82,7 +82,8 @@
  */
 #define QUEUE_SIZE		16
 #define WRITE_BUF_SIZE		8192		/* TX only */
-#define GS_CONSOLE_BUF_SIZE	8192
+/* DEBUG (k61 bring-up): hold the whole boot log until the host opens the port */
+#define GS_CONSOLE_BUF_SIZE	(256 * 1024)
 
 /* Prevents race conditions while accessing gser->ioport */
 static DEFINE_SPINLOCK(serial_port_lock);
@@ -1074,6 +1075,22 @@ static void gs_console_disconnect(struct gs_port *port)
 	gs_free_req(ep, req);
 }
 
+/*
+ * DEBUG (k61 bring-up): "k61.usbcon" enables the ttyGS0 console without a
+ * console= argument, which ABL rewrites to console=null. Without it,
+ * g_serial does not bind, so the UDC stays free for the configfs gadget
+ * (adb).
+ */
+bool k61_usbcon;
+EXPORT_SYMBOL_GPL(k61_usbcon);
+
+static int __init k61_usbcon_setup(char *str)
+{
+	k61_usbcon = true;
+	return 1;
+}
+__setup("k61.usbcon", k61_usbcon_setup);
+
 static int gs_console_init(struct gs_port *port)
 {
 	struct gs_console *cons;
@@ -1091,6 +1108,8 @@ static int gs_console_init(struct gs_port *port)
 	cons->console.device = gs_console_device;
 	cons->console.flags = CON_PRINTBUFFER;
 	cons->console.index = port->port_num;
+	if (k61_usbcon)
+		cons->console.flags |= CON_ENABLED;
 
 	INIT_WORK(&cons->work, gs_console_work);
 	spin_lock_init(&cons->lock);

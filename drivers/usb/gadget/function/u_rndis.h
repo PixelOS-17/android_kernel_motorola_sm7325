@@ -54,6 +54,9 @@ struct f_rndis_opts {
 	u8				protocol;
 	struct mutex			lock;
 	int				refcnt;
+
+	/* "Wireless" RNDIS; auto-detected by Windows */
+	bool	wceis;
 };
 
 void rndis_borrow_net(struct usb_function_instance *f, struct net_device *net);
