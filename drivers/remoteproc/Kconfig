@@ -167,6 +167,15 @@ config QCOM_PIL_INFO
 config QCOM_RPROC_COMMON
 	tristate
 	select AUXILIARY_BUS
+	tristate "Qualcomm Technologies, Inc. Remote Proc Common Framework"
+
+config QCOM_Q6V5_PAS_SOCCP_V1
+	bool "SOCCP V1"
+	help
+	  Support to enable power state transition control of SoC Control Processor
+	  V1 via an API which can be used by clients to vote for the subsystem to
+	  be either in active or dormant states.
+	  If unsure say N.
 
 config QCOM_Q6V5_COMMON
 	tristate
@@ -234,6 +243,44 @@ config QCOM_Q6V5_PAS
 	  subsystems such as ADSP (Audio DSP), CDSP (Compute DSP), MPSS (Modem
 	  Peripheral SubSystem), and SLPI (Sensor Low Power Island).
 
+config QCOM_ADSP_LOADER_LEGACY
+	tristate "DSP loaders for the 5.4 lahaina loader bindings"
+	depends on QCOM_Q6V5_PAS
+	help
+	  Provides /sys/kernel/boot_{adsp,cdsp,slpi}/boot for the 5.4
+	  qcom,adsp-loader, qcom,cdsp-loader and qcom,msm-ssc-sensors DT
+	  nodes, which have no qcom,rproc-handle. Writing 1 boots the rproc
+	  of the qcom,pil-tz-generic node with the matching firmware name.
+
+config QCOM_SUBSYS_LEGACY
+	tristate "5.4 msm_subsys interface for lahaina PIL remoteprocs"
+	depends on QCOM_Q6V5_PAS
+	help
+	  Provides /sys/bus/msm_subsys/devices/subsys<N>/{name,state,...}
+	  and /dev/subsys_<name> for the rprocs of the 5.4 lahaina PIL nodes
+	  (qcom,pil-tz-generic) that the stock peripheral manager
+	  (pm-service) starts: the first open of /dev/subsys_<name> boots
+	  the rproc, the last close shuts it down.
+
+config QCOM_SPSS
+	tristate "QTI Secure Subsystem Peripheral loading support"
+	depends on OF && ARCH_QCOM
+	depends on QCOM_SMEM
+	depends on RPMSG_QCOM_SMD || (COMPILE_TEST && RPMSG_QCOM_SMD=n)
+	depends on RPMSG_QCOM_GLINK_SMEM || RPMSG_QCOM_GLINK_SMEM=n
+	depends on QCOM_SYSMON || QCOM_SYSMON=n
+	select MFD_SYSCON
+	select QCOM_MDT_LOADER
+	select QCOM_Q6V5_COMMON
+	select QCOM_RPROC_COMMON
+	select QCOM_SCM
+	help
+	  Say y here to support the TrustZone based Peripheral Image
+	  Loader for the Qualcomm Technologies, Inc. Secure Subsystem
+	  remote processor. This also supports remote processors that
+	  are booted before kernel comes up.
+
+
 config QCOM_Q6V5_WCSS
 	tristate "Qualcomm Hexagon based WCSS Peripheral Image Loader"
 	depends on OF && ARCH_QCOM
@@ -297,6 +344,53 @@ config RCAR_REMOTEPROC
 	  can be started and stopped.
 	  This can be either built-in or a loadable module.
 	  If compiled as module (M), the module name is rcar_rproc.
+
+config QCOM_PANIC_ON_NOTIF_TIMEOUT
+	bool "Trigger kernel panic when notification timeout expires"
+	help
+	  This is a debug feature where a kernel panic is triggered when
+	  communication between subsystems through sysmon is taking too
+	  long. This scneario can happen if the peripheral has died and
+	  is no longer responsive.
+	  Also trigger a kernel panic if invoking the callbacks registered
+	  with a particular subsystem's notifications by the subsystem
+	  notifier framework is taking too long.
+
+config RPROC_SYSMON_NOTIF_TIMEOUT
+	int "Sysmon notifications timeout in ms"
+	default 10000
+	help
+	  The amount of time, in milliseconds, that should elapse between
+	  the start and end of sysmon notifications, before a warning
+	  is emitted.
+
+config RPROC_SYSMON_SHUTDOWN_NOTIF_TIMEOUT
+	int "Sysmon notifications timeout in ms"
+	default 10000
+	help
+	  This is a debug feature where a kernel panic is triggered when
+	  there is no acknowledgment there from the subsystem shutdown
+	  request.
+
+	  The amount of time, in milliseconds, that should elapse between
+	  the start and end of sysmon notifications, before a warning
+	  is emitted.
+
+config RPROC_SSR_NOTIF_TIMEOUT
+	int "SSR notifier timeout in ms"
+	default 10000
+	help
+	  The amount of time, in milliseconds, that should elapse between
+	  the start and end of SSR notifications through the subsystem
+	  notifier, before a warning is emitted.
+
+config QCOM_RPROC_BOTH_DUMPS
+	bool "Collect both minidump and fulldump for subsystem crash"
+	help
+	  Say y here to allow dumping both fulldump and minidump for the
+	  case where subsystem minidump is enabled by policy and the feature
+	  is enabled for a client. The case where minidump is not enabled,
+	  and fulldump is collected by default remains unaffected.
 
 config ST_REMOTEPROC
 	tristate "ST remoteproc support"
@@ -377,6 +471,27 @@ config XLNX_R5_REMOTEPROC
 	  processor framework.
 
 	  It's safe to say N if not interested in using RPU r5f cores.
+config MSM_QUIN_SUBSYSTEM_NOTIF_VIRT
+	tristate "MSM QUIN Subsystem Notif Virt"
+	depends on RPMSG_QCOM_GLINK || RPMSG_QCOM_GLINK=n
+	select QCOM_RPROC_COMMON
+	help
+	  This option enables the virtual MSM subsystem notification
+	  framework for the QUIN platform.
+
+	  The virtual MSM subsystem notif framework provides support for
+	  a subsystem to notify its clients of its state, when the clients
+	  are in a different virtual machine domain than the subsystem.
+
+config QCOM_CRASH_SYMBOL_MATCH
+	bool "Enable symbol matching for crash stack addresses"
+	default n
+	help
+	  Say Y here to enable symbol matching for crash stack addresses
+	  using a symbol map to convert raw addresses into readable symbols.
+
+	  If disabled, only raw stack addresses are printed.
+	  Helps improve clarity and debugging of crash logs.
 
 endif # REMOTEPROC
 
