@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+ccflags-y += \
+	-I$(srctree)/$(src)/../../dataipa/drivers/platform/msm/include \
+	-I$(srctree)/$(src)/../../dataipa/drivers/platform/msm/include/uapi \
+	-I$(srctree)/$(src)/../../datarmnet-ext/mem \
+	-DRMNET_TRACE_INCLUDE_PATH=../../techpack/datarmnet/core
+
+obj-$(CONFIG_QTI_DATARMNET_LAHAINA) += rmnet_core.o
+
+#core sources
+rmnet_core-y := \
+	rmnet_config.o \
+	rmnet_handlers.o \
+	rmnet_descriptor.o \
+	rmnet_genl.o \
+	rmnet_map_command.o \
+	rmnet_map_data.o \
+	rmnet_module.o \
+	rmnet_vnd.o
+
+rmnet_core-y += \
+	rmnet_ll.o \
+	rmnet_ll_ipa.o
+
+#DFC sources
+rmnet_core-y += \
+	qmi_rmnet.o \
+	wda_qmi.o \
+	dfc_qmi.o \
+	dfc_qmap.o \
+	rmnet_qmap.o \
+	rmnet_ll_qmap.o
+
+#QMAP control channel over IPA (rmnet_ctl_if() for rmnet_qmap)
+obj-$(CONFIG_QTI_DATARMNET_LAHAINA) += rmnet_ctl.o
+rmnet_ctl-y := \
+	rmnet_ctl_client.o \
+	rmnet_ctl_ipa.o
