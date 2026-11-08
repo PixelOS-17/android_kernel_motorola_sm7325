@@ -4296,7 +4296,11 @@ static int selinux_kernel_read_file(struct file *file,
 
 	switch (id) {
 	case READING_FIRMWARE:
-		rc = selinux_kernel_load_from_file(file, SYSTEM__FIRMWARE_LOAD);
+		/*
+		 * tundra: the ROM's policy has no firmware_load rule for
+		 * firmware_file, and the WLAN firmware has no sysfs fallback.
+		 * Direct loads were not checked on 6.1 either.
+		 */
 		break;
 	case READING_MODULE:
 		rc = selinux_kernel_load_from_file(file, SYSTEM__MODULE_LOAD);
