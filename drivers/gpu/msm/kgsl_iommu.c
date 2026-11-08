@@ -5,6 +5,7 @@
  */
 
 #include <linux/bitfield.h>
+#include <linux/of_device.h>
 #include <linux/compat.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

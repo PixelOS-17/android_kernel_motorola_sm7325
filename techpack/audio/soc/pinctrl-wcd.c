@@ -4,6 +4,7 @@
  */
 
 #include <linux/gpio.h>
+#include <linux/gpio/driver.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/pinctrl/pinconf-generic.h>

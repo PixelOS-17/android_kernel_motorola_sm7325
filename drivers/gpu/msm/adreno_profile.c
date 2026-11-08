@@ -5,6 +5,7 @@
  */
 
 #include <linux/ctype.h>
+#include <linux/vmalloc.h>
 #include <linux/debugfs.h>
 #include <linux/sched/signal.h>
 

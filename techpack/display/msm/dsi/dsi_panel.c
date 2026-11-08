@@ -5,6 +5,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/firmware.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

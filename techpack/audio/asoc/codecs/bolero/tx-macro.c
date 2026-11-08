@@ -3511,7 +3511,7 @@ static void tx_macro_remove(struct platform_device *pdev)
 	tx_priv = platform_get_drvdata(pdev);
 
 	if (!tx_priv)
-		return -EINVAL;
+		return;
 
 	if (tx_priv->is_used_tx_swr_gpio) {
 		if (tx_priv->swr_ctrl_data)

@@ -39,6 +39,7 @@
  */
 
 #include <linux/of_address.h>
+#include <linux/of_platform.h>
 #include <linux/kthread.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>

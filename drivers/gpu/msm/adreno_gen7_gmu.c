@@ -5,6 +5,7 @@
  */
 
 #include <dt-bindings/regulator/qcom,rpmh-regulator-levels.h>
+#include <linux/vmalloc.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/delay.h>

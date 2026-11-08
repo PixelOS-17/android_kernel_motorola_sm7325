@@ -5,6 +5,7 @@
  */
 
 #include <dt-bindings/interconnect/qcom,epss-l3.h>
+#include <linux/of.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/interconnect-provider.h>

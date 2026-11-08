@@ -3255,7 +3255,7 @@ static void va_macro_remove(struct platform_device *pdev)
 	va_priv = dev_get_drvdata(&pdev->dev);
 
 	if (!va_priv)
-		return -EINVAL;
+		return;
 	if (va_priv->is_used_va_swr_gpio) {
 		if (va_priv->swr_ctrl_data)
 			kfree(va_priv->swr_ctrl_data);

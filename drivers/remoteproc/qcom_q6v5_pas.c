@@ -9,6 +9,7 @@
  */
 
 #include <linux/clk.h>
+#include <linux/of_platform.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/interrupt.h>

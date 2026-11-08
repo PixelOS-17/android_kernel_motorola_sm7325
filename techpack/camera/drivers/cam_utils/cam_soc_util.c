@@ -5,6 +5,7 @@
  */
 
 #include <linux/of.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/clk.h>
 #include <linux/slab.h>
 #include <linux/gpio.h>

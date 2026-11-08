@@ -37,6 +37,7 @@
 *
 **/
 #include <linux/version.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/interrupt.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

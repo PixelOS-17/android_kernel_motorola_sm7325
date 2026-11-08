@@ -723,7 +723,7 @@ static void ucsi_remove(struct platform_device *pdev)
 	ipc_log_context_destroy(ucsi_ipc_log);
 	ucsi_ipc_log = NULL;
 
-	return rc;
+	return;
 }
 
 static const struct of_device_id ucsi_match_table[] = {

@@ -5,6 +5,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/of_platform.h>
 #include <linux/devcoredump.h>
 #include <linux/elf.h>
 #include <linux/jiffies.h>

@@ -5,6 +5,7 @@
  */
 
 #include <linux/atomic.h>
+#include <linux/vmalloc.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>
 #include <linux/err.h>

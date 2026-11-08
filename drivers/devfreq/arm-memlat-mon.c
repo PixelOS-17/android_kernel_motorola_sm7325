@@ -6,6 +6,7 @@
 #define pr_fmt(fmt) "arm-memlat-mon: " fmt
 
 #include <linux/kernel.h>
+#include <linux/of_platform.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/io.h>

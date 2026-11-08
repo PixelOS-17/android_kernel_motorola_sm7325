@@ -6,6 +6,7 @@
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
 #include <linux/clk-provider.h>
+#include <linux/platform_device.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

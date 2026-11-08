@@ -12,6 +12,7 @@
  *
  */
 #include <linux/uaccess.h>
+#include <linux/vmalloc.h>
 #include <linux/proc_fs.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

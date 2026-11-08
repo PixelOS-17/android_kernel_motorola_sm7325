@@ -5,6 +5,7 @@
  */
 
 #include <linux/of.h>
+#include <linux/vmalloc.h>
 #include <linux/panic_notifier.h>
 #include <linux/slab.h>
 #include <linux/utsname.h>

@@ -5,6 +5,7 @@
  */
 
 #include <asm/cacheflush.h>
+#include <linux/vmalloc.h>
 #include <linux/of_platform.h>
 #include <linux/highmem.h>
 #include <linux/slab.h>

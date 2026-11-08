@@ -676,7 +676,7 @@ static void bm_ulog_remove(struct platform_device *pdev)
 	rc = pmic_glink_unregister_client(bmdev->client);
 	if (rc < 0) {
 		pr_err("Error unregistering from pmic_glink, rc=%d\n", rc);
-		return rc;
+		return;
 	}
 	g_bmdev = NULL;
 }

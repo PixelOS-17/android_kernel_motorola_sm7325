@@ -5,6 +5,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/circ_buf.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>

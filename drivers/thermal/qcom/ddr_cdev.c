@@ -4,6 +4,7 @@
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/module.h>
+#include <linux/platform_device.h>
 #include <linux/thermal.h>
 #include <linux/err.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
  */
 
 #include <linux/debugfs.h>
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include "ipa_i.h"

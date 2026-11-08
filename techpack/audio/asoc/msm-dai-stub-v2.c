@@ -3,6 +3,7 @@
  * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/init.h>
+#include <linux/of_platform.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/of_device.h>

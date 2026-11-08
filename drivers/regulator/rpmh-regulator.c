@@ -5,6 +5,7 @@
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
 #include <linux/bitops.h>
+#include <linux/of_platform.h>
 #include <linux/err.h>
 #include <linux/ipc_logging.h>
 #include <linux/kernel.h>

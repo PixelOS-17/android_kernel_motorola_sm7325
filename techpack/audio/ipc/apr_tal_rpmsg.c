@@ -4,6 +4,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/of.h>
 #include <linux/spinlock.h>
 #include <linux/mutex.h>
 #include <linux/wait.h>

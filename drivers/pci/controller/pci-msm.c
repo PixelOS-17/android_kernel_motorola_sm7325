@@ -2,6 +2,7 @@
 /* Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries. */
 
 #include <dt-bindings/regulator/qcom,rpmh-regulator-levels.h>
+#include <linux/pinctrl/consumer.h>
 #include <dt-bindings/interconnect/qcom,icc.h>
 #include <linux/aer.h>
 #include <linux/bitops.h>

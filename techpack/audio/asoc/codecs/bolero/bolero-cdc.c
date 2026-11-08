@@ -1436,7 +1436,7 @@ static void bolero_remove(struct platform_device *pdev)
 	struct bolero_priv *priv = dev_get_drvdata(&pdev->dev);
 
 	if (!priv)
-		return -EINVAL;
+		return;
 
 	of_platform_depopulate(&pdev->dev);
 	mutex_destroy(&priv->macro_lock);

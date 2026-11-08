@@ -4324,7 +4324,7 @@ static void rx_macro_remove(struct platform_device *pdev)
 	rx_priv = dev_get_drvdata(&pdev->dev);
 
 	if (!rx_priv)
-		return -EINVAL;
+		return;
 
 	for (count = 0; count < rx_priv->child_count &&
 		count < RX_MACRO_CHILD_DEVICES_MAX; count++)

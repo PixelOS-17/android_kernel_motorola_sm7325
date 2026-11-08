@@ -5,6 +5,7 @@
  */
 
 #include <linux/bitfield.h>
+#include <linux/platform_device.h>
 #include <linux/cpufreq.h>
 #include <linux/init.h>
 #include <linux/interconnect.h>

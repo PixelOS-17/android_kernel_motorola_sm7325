@@ -5,6 +5,7 @@
  */
 
 #include <linux/bitmap.h>
+#include <linux/of_platform.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/io.h>

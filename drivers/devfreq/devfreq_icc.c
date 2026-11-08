@@ -336,7 +336,7 @@ static int devfreq_icc_probe(struct platform_device *pdev)
 
 static void devfreq_icc_remove(struct platform_device *pdev)
 {
-	return devfreq_remove_icc(&pdev->dev);
+	devfreq_remove_icc(&pdev->dev);
 }
 
 static const struct devfreq_icc_spec spec[] = {

@@ -15,6 +15,7 @@
   *
   */
 #include <linux/fs.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>

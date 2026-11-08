@@ -642,13 +642,13 @@ static void msm_vidc_remove(struct platform_device *pdev)
 
 	if (!pdev) {
 		d_vpr_e("%s: invalid input %pK", __func__, pdev);
-		return -EINVAL;
+		return;
 	}
 
 	core = dev_get_drvdata(&pdev->dev);
 	if (!core) {
 		d_vpr_e("%s: invalid core", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	if (core->vidc_core_workq)
@@ -669,7 +669,7 @@ static void msm_vidc_remove(struct platform_device *pdev)
 	mutex_destroy(&core->lock);
 	kfree(core);
 	kfree(vidc_driver->ctxt);
-	return rc;
+	return;
 }
 
 static int msm_vidc_pm_suspend(struct device *dev)

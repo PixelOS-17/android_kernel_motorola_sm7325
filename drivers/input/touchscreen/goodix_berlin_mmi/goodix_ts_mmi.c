@@ -12,6 +12,7 @@
  */
 
 #include "goodix_ts_mmi.h"
+#include <linux/pinctrl/consumer.h>
 #include <linux/delay.h>
 #include <linux/input/mt.h>
 #include "goodix_ts_config.h"

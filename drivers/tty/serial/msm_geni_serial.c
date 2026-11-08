@@ -5,6 +5,7 @@
  */
 
 #include <linux/bitmap.h>
+#include <linux/circ_buf.h>
 #include <linux/bitops.h>
 #include <linux/console.h>
 #include <linux/debugfs.h>

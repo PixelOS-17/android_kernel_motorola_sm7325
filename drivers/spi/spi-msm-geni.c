@@ -5,6 +5,7 @@
  */
 
 #include <linux/clk.h>
+#include <linux/platform_device.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>

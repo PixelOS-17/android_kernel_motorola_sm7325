@@ -3216,7 +3216,7 @@ static void geni_i2c_remove(struct platform_device *pdev)
 	if (atomic_read(&gi2c->is_xfer_in_progress)) {
 		I2C_LOG_ERR(gi2c->ipcl, true, gi2c->dev,
 			    "%s: Xfer is in progress\n", __func__);
-		return -EBUSY;
+		return;
 	}
 
 	if (!pm_runtime_status_suspended(gi2c->dev)) {

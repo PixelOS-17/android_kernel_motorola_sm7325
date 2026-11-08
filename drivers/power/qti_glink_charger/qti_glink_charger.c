@@ -3941,7 +3941,7 @@ static void qti_charger_remove(struct platform_device *pdev)
 		mmi_err(chg, "pmic_glink_unregister_client failed rc=%d\n",
 			rc);
 
-	return rc;
+	return;
 }
 
 static const struct of_device_id qti_charger_match_table[] = {

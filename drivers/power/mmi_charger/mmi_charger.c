@@ -3200,7 +3200,7 @@ static void mmi_charger_remove(struct platform_device *pdev)
 	struct mmi_charger_chip *chip = platform_get_drvdata(pdev);
 
 	if (!list_empty(&chip->charger_list)) {
-		return -EBUSY;
+		return;
 	}
 
 	cancel_delayed_work(&chip->heartbeat_work);

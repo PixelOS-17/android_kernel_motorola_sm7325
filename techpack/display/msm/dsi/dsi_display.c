@@ -6186,13 +6186,13 @@ void dsi_display_dev_remove(struct platform_device *pdev)
 
 	if (!pdev) {
 		DSI_ERR("Invalid device\n");
-		return -EINVAL;
+		return;
 	}
 
 	display = platform_get_drvdata(pdev);
 	if (!display || !display->panel_node) {
 		DSI_ERR("invalid display\n");
-		return -EINVAL;
+		return;
 	}
 
 	/* decrement ref count */
@@ -6214,7 +6214,7 @@ void dsi_display_dev_remove(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, NULL);
 	devm_kfree(&pdev->dev, display);
-	return rc;
+	return;
 }
 
 int dsi_display_get_num_of_displays(void)

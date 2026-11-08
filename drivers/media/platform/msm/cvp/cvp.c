@@ -491,7 +491,7 @@ static void msm_cvp_remove(struct platform_device *pdev)
 
 	if (!pdev) {
 		dprintk(CVP_ERR, "%s invalid input %pK", __func__, pdev);
-		return -EINVAL;
+		return;
 	}
 
 	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-cvp"))
@@ -501,7 +501,7 @@ static void msm_cvp_remove(struct platform_device *pdev)
 
 	if (!core) {
 		dprintk(CVP_ERR, "%s invalid core", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	cvp_hfi_deinitialize(core->hfi_type, core->device);
@@ -513,7 +513,7 @@ static void msm_cvp_remove(struct platform_device *pdev)
 	mutex_destroy(&core->lock);
 	mutex_destroy(&core->clk_lock);
 	kfree(core);
-	return rc;
+	return;
 }
 
 static int msm_cvp_pm_suspend(struct device *dev)

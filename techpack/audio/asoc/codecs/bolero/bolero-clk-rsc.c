@@ -731,7 +731,7 @@ static void bolero_clk_rsc_remove(struct platform_device *pdev)
 	bolero_unregister_res_clk(&pdev->dev);
 	of_platform_depopulate(&pdev->dev);
 	if (!priv)
-		return -EINVAL;
+		return;
 	mutex_destroy(&priv->rsc_clk_lock);
 	mutex_destroy(&priv->fs_gen_lock);
 }

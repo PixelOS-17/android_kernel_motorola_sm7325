@@ -5,6 +5,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/vmalloc.h>
 #include <linux/crc32.h>
 #include <media/cam_sensor.h>
 

@@ -7,6 +7,7 @@
 #define pr_fmt(fmt)	"sde_dbg:[%s] " fmt, __func__
 
 #include <linux/delay.h>
+#include <linux/vmalloc.h>
 #include <linux/spinlock.h>
 #include <linux/ktime.h>
 #include <linux/debugfs.h>
