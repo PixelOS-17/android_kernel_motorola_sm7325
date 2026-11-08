@@ -566,7 +566,7 @@ static int ucsi_qti_sync_control(struct ucsi *ucsi, u64 command, u32 *cci,
 			return rc;
 	}
 
-	if (data && (!cci || !(*cci & UCSI_CCI_ERROR)))
+	if (data && (!cci || (*cci & UCSI_CCI_COMMAND_COMPLETE)))
 		rc = ucsi_qti_read_message_in(ucsi, data, size);
 
 	return rc;
@@ -575,6 +575,7 @@ static int ucsi_qti_sync_control(struct ucsi *ucsi, u64 command, u32 *cci,
 static const struct ucsi_operations ucsi_qti_ops = {
 	.read_version = ucsi_qti_read_version,
 	.read_cci = ucsi_qti_read_cci,
+	.poll_cci = ucsi_qti_read_cci,
 	.read_message_in = ucsi_qti_read_message_in,
 	.sync_control = ucsi_qti_sync_control,
 	.async_control = ucsi_qti_async_control,
