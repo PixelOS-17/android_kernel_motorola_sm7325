@@ -31,3 +31,7 @@ arm_smmu_v3_kvm_pv-objs += pkvm/pv/kvm_nvhe.o
 endif
 
 obj-$(CONFIG_ARM_SMMU_V3_KUNIT_TEST) += arm-smmu-v3-test.o
+arm_smmu_v3-objs-y += arm-smmu-v3.o
+arm_smmu_v3-objs-$(CONFIG_ARM_SMMU_V3_SVA) += arm-smmu-v3-sva.o
+arm_smmu_v3-objs := $(arm_smmu_v3-objs-y)
+obj-$(CONFIG_ARM_PARAVIRT_SMMU_V3) += virt-arm-smmu-v3.o
