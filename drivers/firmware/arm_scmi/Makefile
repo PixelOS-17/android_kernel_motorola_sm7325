@@ -16,5 +16,12 @@ obj-$(CONFIG_ARM_SCMI_PROTOCOL) += vendors/imx/
 
 obj-$(CONFIG_ARM_SCMI_PROTOCOL) += scmi-core.o
 obj-$(CONFIG_ARM_SCMI_PROTOCOL) += scmi-module.o
+obj-$(CONFIG_ARM_SCMI_POWER_DOMAIN) += scmi_pm_domain.o
+obj-$(CONFIG_ARM_SCMI_PERF_DOMAIN) += scmi_perf_domain.o
+obj-$(CONFIG_ARM_SCMI_POWER_CONTROL) += scmi_power_control.o
+obj-$(CONFIG_QTI_SCMI_PMU_PROTOCOL) += pmu_vendor.o
+obj-$(CONFIG_QTI_SCMI_C1DCVS_PROTOCOL) += c1dcvs_vendor.o
+obj-$(CONFIG_QTI_SCMI_VENDOR_PROTOCOL) += qcom_scmi_vendor.o
+obj-$(CONFIG_QTI_SCMI_PLH_PROTOCOL) += plh_vendor.o
 
 obj-$(CONFIG_ARM_SCMI_POWER_CONTROL) += scmi_power_control.o
