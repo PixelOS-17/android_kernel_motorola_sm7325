@@ -410,6 +410,12 @@ struct snd_soc_dai_driver {
 
 	/* ops */
 	const struct snd_soc_dai_ops *ops;
+	/* DAI driver callbacks as the 5.4/6.1 era vendor drivers declare them */
+	int (*probe)(struct snd_soc_dai *dai);
+	int (*remove)(struct snd_soc_dai *dai);
+	int (*compress_new)(struct snd_soc_pcm_runtime *rtd);
+	int probe_order;
+	int remove_order;
 	const struct snd_soc_cdai_ops *cops;
 
 	/* DAI capabilities */
