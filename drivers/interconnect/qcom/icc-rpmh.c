@@ -561,6 +561,8 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 	for (i = 0; i < qp->num_bcms; i++)
 		qcom_icc_bcm_init(qp, qp->bcms[i], dev);
 
+	/* nodes[] is __counted_by(num_nodes), so set it before the first write */
+	data->num_nodes = num_nodes;
 	for (i = 0; i < num_nodes; i++) {
 		qn = qnodes[i];
 		if (!qn || qn->disabled)
@@ -594,8 +596,6 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 
 		data->nodes[i] = node;
 	}
-
-	data->num_nodes = num_nodes;
 
 	if (!qp->skip_qos) {
 		ret = qcom_icc_rpmh_configure_qos(qp);
