@@ -1500,8 +1500,10 @@ static void walt_cfs_replace_next_task_fair(void *unused, struct rq *rq, struct 
 
 	/* TODO: check with team if it is fine in case clock is not updated */
 	/* Mark arrival of MVP task */
-	if (!wrq->mvp_arrival_time)
+	if (!wrq->mvp_arrival_time) {
+		update_rq_clock(rq);
 		wrq->mvp_arrival_time = rq->clock;
+	}
 
 	if ((*p) && (*p) != prev && ((*p)->on_cpu == 1 || (*p)->on_rq == 0 ||
 				     (*p)->on_rq == TASK_ON_RQ_MIGRATING ||
