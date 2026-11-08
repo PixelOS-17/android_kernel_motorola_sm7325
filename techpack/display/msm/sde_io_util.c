@@ -185,8 +185,7 @@ int msm_dss_get_pmic_io_mem(struct platform_device *pdev,
 	if (!res)
 		return -ENOMEM;
 
-	of_property_for_each_u32(pdev->dev.of_node, "qcom,pmic-arb-address",
-			prop, cur, val) {
+	of_property_for_each_u32(pdev->dev.of_node, "qcom,pmic-arb-address", val) {
 		rc = spmi_pmic_arb_map_address(&pdev->dev, val, res);
 		if (rc < 0) {
 			DEV_ERR("%pS - failed to map pmic address, rc:%d\n",

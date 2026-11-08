@@ -25,7 +25,7 @@
 #include <linux/of_reserved_mem.h>
 #include <linux/firmware/qcom/qcom_scm.h>
 
-MODULE_IMPORT_NS(DMA_BUF);
+MODULE_IMPORT_NS("DMA_BUF");
 
 #define ION_FLAG_CACHED 1
 #define MSM_AUDIO_ION_PROBED (1 << 0)

@@ -274,7 +274,7 @@ static int mem_buf_vm_add_self(void)
 	return 0;
 }
 
-static char *mem_buf_vm_devnode(struct device *dev, umode_t *mode)
+static char *mem_buf_vm_devnode(const struct device *dev, umode_t *mode)
 {
 	return kasprintf(GFP_KERNEL, "mem_buf_vm/%s", dev_name(dev));
 }

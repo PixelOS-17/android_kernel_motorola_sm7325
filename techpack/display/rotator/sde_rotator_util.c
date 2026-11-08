@@ -1217,5 +1217,5 @@ struct dma_buf *sde_rot_get_dmabuf(struct sde_mdp_img_data *data)
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0))
-MODULE_IMPORT_NS(DMA_BUF);
+MODULE_IMPORT_NS("DMA_BUF");
 #endif

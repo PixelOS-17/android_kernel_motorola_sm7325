@@ -720,7 +720,7 @@ static int msm_gpio_get(struct gpio_chip *chip, unsigned offset)
 	return !!(val & BIT(g->in_bit));
 }
 
-static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+static int msm_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
 {
 	const struct msm_pingroup *g;
 	struct msm_pinctrl *pctrl = gpiochip_get_data(chip);
@@ -739,6 +739,8 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
 	msm_writel_io(val, pctrl, g);
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
+
+	return 0;
 }
 
 static void msm_gpio_pin_status_get(struct msm_pinctrl *pctrl, const struct msm_pingroup *g,
@@ -878,7 +880,7 @@ static int msm_gpio_init_valid_mask(struct gpio_chip *gc,
 
 	if (of_property_count_u32_elems(pctrl->dev->of_node, "qcom,gpios-reserved") > 0) {
 		bitmap_fill(valid_mask, ngpios);
-		of_property_for_each_u32(pctrl->dev->of_node, "qcom,gpios-reserved", prop, p, i) {
+		of_property_for_each_u32(pctrl->dev->of_node, "qcom,gpios-reserved", i) {
 			if (i >= ngpios) {
 				dev_err(pctrl->dev, "invalid list of reserved GPIOs\n");
 				return -EINVAL;

@@ -16581,10 +16581,9 @@ static int msm_dai_cdc_dma_q6_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int msm_dai_cdc_dma_q6_remove(struct platform_device *pdev)
+static void msm_dai_cdc_dma_q6_remove(struct platform_device *pdev)
 {
 	of_platform_depopulate(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_dai_cdc_dma_dt_match[] = {

@@ -3871,5 +3871,5 @@ MODULE_DESCRIPTION("3D Graphics driver");
 MODULE_LICENSE("GPL v2");
 MODULE_SOFTDEP("pre: arm_smmu nvmem_qfprom socinfo");
 #if (KERNEL_VERSION(5, 18, 0) <= LINUX_VERSION_CODE)
-MODULE_IMPORT_NS(DMA_BUF);
+MODULE_IMPORT_NS("DMA_BUF");
 #endif

@@ -293,7 +293,7 @@ enum fastrpc_remote_subsys_state {
 #define DSPSIGNAL_VERBOSE(x, ...)
 /*#define DSPSIGNAL_VERBOSE ADSPRPC_INFO*/
 
-MODULE_IMPORT_NS(DMA_BUF);
+MODULE_IMPORT_NS("DMA_BUF");
 
 static struct dentry *debugfs_root;
 static struct dentry *debugfs_global_file;

@@ -23,7 +23,7 @@
 #include <ipc/apr.h>
 #include <dsp/msm_audio_ion.h>
 #include <linux/habmm.h>
-MODULE_IMPORT_NS(DMA_BUF);
+MODULE_IMPORT_NS("DMA_BUF");
 
 #define MSM_AUDIO_ION_PROBED (1 << 0)
 
