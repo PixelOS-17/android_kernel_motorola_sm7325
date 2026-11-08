@@ -38,7 +38,6 @@ obj-$(CONFIG_APPLE_DART) += apple-dart.o
 obj-$(CONFIG_PKVM_PVIOMMU) += pkvm-pviommu.o
 
 # tundra (from seventeen-6.1)
-obj-y += amd/ intel/ arm/
 obj-$(CONFIG_QCOM_LAZY_MAPPING) += msm_dma_iommu_mapping.o
 obj-$(CONFIG_QCOM_IOMMU_UTIL) += qcom_iommu_util.o
 qcom_iommu_util-y += qcom-iommu-util.o
