@@ -201,8 +201,4 @@ config CFG80211_KUNIT_TEST
 
 	  If unsure, say N.
 
-
-config WEXT_SPY
-	bool
-
 endif # CFG80211

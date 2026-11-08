@@ -5213,7 +5213,6 @@ struct mgmt_frame_regs {
  * @mod_link_station: Modify a link of a station.
  * @del_link_station: Remove a link of a station.
  *
- * @set_ttlm: set the TID to link mapping.
  * @set_hw_timestamp: Enable/disable HW timestamping of TM/FTM frames.
  * @set_ttlm: set the TID to link mapping.
  * @set_epcs: Enable/Disable EPCS for station mode.
@@ -5598,10 +5597,17 @@ struct cfg80211_ops {
 				    struct link_station_parameters *params);
 	int	(*del_link_station)(struct wiphy *wiphy, struct net_device *dev,
 				    struct link_station_del_parameters *params);
+	int	(*set_hw_timestamp)(struct wiphy *wiphy, struct net_device *dev,
+				    struct cfg80211_set_hw_timestamp *hwts);
 	int	(*set_ttlm)(struct wiphy *wiphy, struct net_device *dev,
 			    struct cfg80211_ttlm_params *params);
-	ANDROID_KABI_USE(1, int (*set_hw_timestamp)(struct wiphy *wiphy, struct net_device *dev,
-						    struct cfg80211_set_hw_timestamp *hwts));
+	u32	(*get_radio_mask)(struct wiphy *wiphy, struct net_device *dev);
+	int     (*assoc_ml_reconf)(struct wiphy *wiphy, struct net_device *dev,
+				   struct cfg80211_ml_reconf_req *req);
+	int	(*set_epcs)(struct wiphy *wiphy, struct net_device *dev,
+			    bool val);
+	int     (*start_pd)(struct wiphy *wiphy, struct wireless_dev *wdev);
+	void    (*stop_pd)(struct wiphy *wiphy, struct wireless_dev *wdev);
 
 	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);
