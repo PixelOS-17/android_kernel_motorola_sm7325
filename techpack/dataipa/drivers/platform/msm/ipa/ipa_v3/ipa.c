@@ -9214,16 +9214,18 @@ static int ipa3_lan_poll(struct napi_struct *napi, int budget)
 static inline void ipa3_enable_napi_netdev(void)
 {
 	if (ipa3_ctx->lan_rx_napi_enable || ipa3_ctx->tx_napi_enable) {
-		init_dummy_netdev(&ipa3_ctx->generic_ndev);
+		ipa3_ctx->generic_ndev = alloc_netdev_dummy(0);
+		if (!ipa3_ctx->generic_ndev)
+			return -ENOMEM;
 		if(ipa3_ctx->lan_rx_napi_enable) {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(6, 0, 14))
 			netif_napi_add(
-				&ipa3_ctx->generic_ndev,
+				ipa3_ctx->generic_ndev,
 				&ipa3_ctx->napi_lan_rx,
 				ipa3_lan_poll);
 #else
 			netif_napi_add(
-				&ipa3_ctx->generic_ndev,
+				ipa3_ctx->generic_ndev,
 				&ipa3_ctx->napi_lan_rx,
 				ipa3_lan_poll,
 				NAPI_WEIGHT);
@@ -12504,7 +12506,7 @@ int ipa3_iommu_map(struct iommu_domain *domain,
 	if (cb->is_cache_coherent)
 		prot |= IOMMU_CACHE;
 
-	return iommu_map_atomic(domain, iova, paddr, size, prot);
+	return iommu_map(domain, iova, paddr, size, prot, GFP_ATOMIC);
 }
 
 /**

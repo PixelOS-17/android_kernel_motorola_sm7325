@@ -1456,7 +1456,7 @@ static int __get_qdss_iommu_virtual_addr(struct venus_hfi_device *dev,
 			rc = iommu_map(domain, iova,
 					qdss_addr_tbl[i].start,
 					qdss_addr_tbl[i].size,
-					IOMMU_READ | IOMMU_WRITE);
+					IOMMU_READ | IOMMU_WRITE, GFP_KERNEL);
 
 			if (rc) {
 				d_vpr_e(

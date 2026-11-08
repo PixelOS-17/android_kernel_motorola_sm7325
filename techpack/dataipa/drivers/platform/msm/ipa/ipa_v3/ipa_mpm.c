@@ -675,7 +675,7 @@ static dma_addr_t ipa_mpm_smmu_map(void *va_addr,
 			IPA_MPM_ERR("invalid pcie smmu domain\n");
 			ipa_assert();
 		}
-		ret = iommu_map(pcie_smmu_domain, iova_p, pa_p, size_p, prot);
+		ret = iommu_map(pcie_smmu_domain, iova_p, pa_p, size_p, prot, GFP_KERNEL);
 
 		if (ret) {
 			IPA_MPM_ERR("PCIe IOMMU returned failure, ret = %d\n",
@@ -835,7 +835,7 @@ static u32 ipa_mpm_smmu_map_doorbell(enum mhip_smmu_domain_type smmu_domain,
 				ipa_assert();
 			}
 			ret = iommu_map(pcie_smmu_domain,
-					iova_p, pa_p, size_p, prot);
+					iova_p, pa_p, size_p, prot, GFP_KERNEL);
 			if (ret) {
 				IPA_MPM_ERR("PCIe doorbell mapping failed\n");
 				ipa_assert();

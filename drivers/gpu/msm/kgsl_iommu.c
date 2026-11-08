@@ -573,7 +573,7 @@ static size_t _iommu_map_page_to_range(struct iommu_domain *domain,
 				    PAGE_SIZE, prot, GFP_KERNEL);
 #else
 		int ret = iommu_map(domain, addr, page_to_phys(page),
-				    PAGE_SIZE, prot);
+				    PAGE_SIZE, prot, GFP_KERNEL);
 #endif
 		if (ret) {
 			iommu_unmap(domain, gpuaddr, mapped);
@@ -2373,8 +2373,8 @@ static int kgsl_iommu_setup_context(struct kgsl_mmu *mmu,
 	dev_set_drvdata(&pdev->dev, &context->adreno_smmu);
 
 	/* Create a new context */
-	context->domain = iommu_domain_alloc(&platform_bus_type);
-	if (!context->domain) {
+	context->domain = iommu_paging_domain_alloc(&pdev->dev);
+	if (IS_ERR(context->domain)) {
 		/*FIXME: Put back the pdev here? */
 		return -ENODEV;
 	}
@@ -2514,8 +2514,8 @@ static int iommu_probe_secure_context(struct kgsl_device *device,
 	context->pdev = pdev;
 	ratelimit_default_init(&context->ratelimit);
 
-	context->domain = iommu_domain_alloc(&platform_bus_type);
-	if (!context->domain) {
+	context->domain = iommu_paging_domain_alloc(&pdev->dev);
+	if (IS_ERR(context->domain)) {
 		/* FIXME: put away the device */
 		return -ENODEV;
 	}

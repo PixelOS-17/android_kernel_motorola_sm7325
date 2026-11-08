@@ -2951,7 +2951,7 @@ static int memdesc_sg_virt(struct kgsl_device *device, struct kgsl_memdesc *memd
 		goto out;
 	}
 
-	npages = get_user_pages(useraddr, sglen, write, pages, NULL);
+	npages = get_user_pages(useraddr, sglen, write, pages);
 	mmap_read_unlock(current->mm);
 
 	ret = (npages < 0) ? (int)npages : 0;
@@ -4746,7 +4746,7 @@ static unsigned long set_svm_area(struct file *file,
 	 * Do additoinal constraints checking on the address. Passing MAP_FIXED
 	 * ensures that the address we want gets checked
 	 */
-	ret = current->mm->get_unmapped_area(file, addr, len, 0,
+	ret = mm_get_unmapped_area(current->mm, file, addr, len, 0,
 		flags & MAP_FIXED);
 
 	/* If it passes, attempt to set the region in the SVM */
@@ -4847,7 +4847,7 @@ kgsl_get_unmapped_area(struct file *file, unsigned long addr,
 	}
 
 	if (!kgsl_memdesc_use_cpu_map(&entry->memdesc)) {
-		val = current->mm->get_unmapped_area(file, addr, len, 0, flags);
+		val = mm_get_unmapped_area(current->mm, file, addr, len, 0, flags);
 		if (IS_ERR_VALUE(val))
 			dev_err_ratelimited(device->dev,
 					       "get_unmapped_area: pid %d addr %lx pgoff %lx len %ld failed error %d\n",

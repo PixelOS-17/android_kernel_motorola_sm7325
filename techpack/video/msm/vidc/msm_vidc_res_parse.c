@@ -990,7 +990,7 @@ static int msm_vidc_setup_context_bank(struct msm_vidc_platform_resources *res,
 		struct context_bank_info *cb, struct device *dev)
 {
 	int rc = 0;
-	struct bus_type *bus;
+	const struct bus_type *bus;
 
 	if (!dev || !cb || !res) {
 		d_vpr_e("%s: Invalid Input params\n", __func__);

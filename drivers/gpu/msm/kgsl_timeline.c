@@ -195,8 +195,7 @@ static bool timeline_fence_signaled(struct dma_fence *fence)
 {
 	struct kgsl_timeline_fence *f = to_timeline_fence(fence);
 
-	return !__dma_fence_is_later(fence->seqno, f->timeline->value,
-		fence->ops);
+	return !__dma_fence_is_later(fence, fence->seqno, f->timeline->value);
 }
 
 static bool timeline_fence_enable_signaling(struct dma_fence *fence)
@@ -235,8 +234,6 @@ static const struct dma_fence_ops timeline_fence_ops = {
 	.signaled = timeline_fence_signaled,
 	.release = timeline_fence_release,
 	.enable_signaling = timeline_fence_enable_signaling,
-	.timeline_value_str = timeline_get_value_str,
-	.use_64bit_seqno = true,
 };
 
 static void kgsl_timeline_add_fence(struct kgsl_timeline *timeline,

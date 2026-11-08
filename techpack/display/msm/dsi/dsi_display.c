@@ -576,9 +576,9 @@ free_aspace_cb:
 	msm_gem_address_space_unregister_cb(display->aspace,
 			dsi_display_aspace_cb_locked, display);
 free_gem:
-	mutex_lock(&display->drm_dev->struct_mutex);
+	mutex_lock(&msm_gem_struct_mutex);
 	msm_gem_free_object(display->tx_cmd_buf);
-	mutex_unlock(&display->drm_dev->struct_mutex);
+	mutex_unlock(&msm_gem_struct_mutex);
 error:
 	return rc;
 }
@@ -6367,7 +6367,7 @@ static int dsi_display_drm_ext_get_modes(
 
 static enum drm_mode_status dsi_display_drm_ext_mode_valid(
 		struct drm_connector *connector,
-		struct drm_display_mode *mode,
+		const struct drm_display_mode *mode,
 		void *disp, const struct msm_resource_caps_info *avail_res)
 {
 	struct dsi_display *display = disp;

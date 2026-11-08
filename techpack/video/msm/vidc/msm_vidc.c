@@ -1313,7 +1313,6 @@ static int setup_event_queue(void *inst,
 	struct msm_vidc_inst *vidc_inst = (struct msm_vidc_inst *)inst;
 
 	v4l2_fh_init(&vidc_inst->event_handler, pvdev);
-	v4l2_fh_add(&vidc_inst->event_handler);
 
 	return 0;
 }
@@ -1761,7 +1760,6 @@ int msm_vidc_destroy(struct msm_vidc_inst *inst)
 
 	msm_comm_ctrl_deinit(inst);
 
-	v4l2_fh_del(&inst->event_handler);
 	v4l2_fh_exit(&inst->event_handler);
 
 	DEINIT_MSM_VIDC_LIST(&inst->scratchbufs);

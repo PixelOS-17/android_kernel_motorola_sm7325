@@ -87,14 +87,14 @@ static int32_t cam_get_source_node_info(
 		soc_private->flash_type = CAM_FLASH_TYPE_PMIC; // default to PMIC flash
 #ifdef CONFIG_CAMERA_FLASH_PWM
 	} else if(soc_private->flash_type == CAM_FLASH_TYPE_GPIO) {
-		gpio_array_size = of_gpio_count(of_node);
+		gpio_array_size = of_gpio_named_count(of_node, "gpios");
 		if (gpio_array_size == 1){
 			gpio_array = kcalloc(gpio_array_size, sizeof(uint16_t), GFP_KERNEL);
 			if (!gpio_array) {
 				CAM_ERR(CAM_FLASH, "flash gpio array alloc fail");
 			} else {
 				for (i = 0; i < gpio_array_size; i++) {
-					gpio_array[i] = of_get_gpio(of_node, i);
+					gpio_array[i] = of_get_named_gpio(of_node, "gpios", i);
 					CAM_DBG(CAM_FLASH, "flash dts gpio_array[%d] = %d name is %s %s", i, gpio_array[i], of_node->name, of_node->full_name);
 				}
 				soc_private->flash_gpio_enable = gpio_array[0];

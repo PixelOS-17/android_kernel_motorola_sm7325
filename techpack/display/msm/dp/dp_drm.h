@@ -96,7 +96,7 @@ int dp_connector_get_modes(struct drm_connector *connector,
  * Returns: Validity status for specified mode
  */
 enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
-		struct drm_display_mode *mode,
+		const struct drm_display_mode *mode,
 		void *display, const struct msm_resource_caps_info *avail_res);
 
 /**
@@ -236,7 +236,7 @@ static inline int dp_connector_get_modes(struct drm_connector *connector,
 
 static inline enum drm_mode_status dp_connector_mode_valid(
 		struct drm_connector *connector,
-		struct drm_display_mode *mode,
+		const struct drm_display_mode *mode,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	return MODE_OK;

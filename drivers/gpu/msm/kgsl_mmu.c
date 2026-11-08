@@ -615,7 +615,7 @@ ssize_t kgsl_mmu_map_sg(struct iommu_domain *domain,
 #if (KERNEL_VERSION(6, 2, 0) <= LINUX_VERSION_CODE)
 	return iommu_map_sg(domain, iova, sg, nents, prot, GFP_KERNEL);
 #else
-	return iommu_map_sg(domain, iova, sg, nents, prot);
+	return iommu_map_sg(domain, iova, sg, nents, prot, GFP_KERNEL);
 #endif
 }
 

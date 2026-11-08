@@ -386,7 +386,7 @@ struct sk_buff *rmnet_map_deaggregate(struct sk_buff *skb,
 		if (!skbn)
 			return NULL;
 
-		skb_append_pagefrags(skbn, page, frag0->bv_offset,
+		skb_append_pagefrags(skbn, page, frag0->offset,
 				     packet_len);
 		skbn->data_len += packet_len;
 		skbn->len += packet_len;
@@ -677,7 +677,7 @@ static void rmnet_map_nonlinear_copy(struct sk_buff *coal_skb,
 		struct page *page = skb_frag_page(frag0);
 
 		skb_append_pagefrags(dest, page,
-				     frag0->bv_offset + coal_meta->ip_len +
+				     frag0->offset + coal_meta->ip_len +
 				     coal_meta->trans_len +
 				     coal_meta->data_offset,
 				     copy_len);

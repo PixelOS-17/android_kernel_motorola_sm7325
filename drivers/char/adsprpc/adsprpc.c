@@ -8358,7 +8358,7 @@ static int fastrpc_cb_probe(struct device *dev)
 		}
 		/* Map the allocated memory with fixed IOVA and is shared to remote subsystem */
 		err = iommu_map_sg(domain, frpc_gen_addr_pool[0], sgt.sgl,
-					sgt.nents, IOMMU_READ | IOMMU_WRITE | IOMMU_CACHE);
+					sgt.nents, IOMMU_READ | IOMMU_WRITE | IOMMU_CACHE, GFP_KERNEL);
 		if (err < 0) {
 			ADSPRPC_ERR("iommu_map_sg failed with err %d", err);
 			goto iommu_map_bail;

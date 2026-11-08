@@ -193,7 +193,7 @@ static int msm_smmu_one_to_one_map(struct msm_mmu *mmu, uint32_t iova,
 		return -ENODEV;
 
 	ret = iommu_map(client->domain, iova, dest_address,
-			size, prot);
+			size, prot, GFP_KERNEL);
 	if (ret)
 		pr_err("smmu map failed\n");
 
@@ -209,7 +209,7 @@ static int msm_smmu_map(struct msm_mmu *mmu, uint64_t iova,
 
 	if (sgt && sgt->sgl) {
 		ret = iommu_map_sg(client->domain, iova, sgt->sgl,
-				sgt->orig_nents, prot);
+				sgt->orig_nents, prot, GFP_KERNEL);
 		WARN_ON((int)ret < 0);
 		DRM_DEBUG("%pad/0x%x/0x%x/\n", &sgt->sgl->dma_address,
 				sgt->sgl->dma_length, prot);

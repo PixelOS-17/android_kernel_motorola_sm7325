@@ -862,7 +862,7 @@ EXPORT_SYMBOL(cnss_wlan_disable);
 int cnss_iommu_map(struct iommu_domain *domain,
 		   unsigned long iova, phys_addr_t paddr, size_t size, int prot)
 {
-	return iommu_map(domain, iova, paddr, size, prot);
+	return iommu_map(domain, iova, paddr, size, prot, GFP_KERNEL);
 }
 #else
 int cnss_iommu_map(struct iommu_domain *domain,

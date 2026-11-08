@@ -1281,7 +1281,7 @@ end:
 
 enum drm_mode_status dp_mst_connector_mode_valid(
 		struct drm_connector *connector,
-		struct drm_display_mode *mode,
+		const struct drm_display_mode *mode,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	struct dp_display *dp_display = display;

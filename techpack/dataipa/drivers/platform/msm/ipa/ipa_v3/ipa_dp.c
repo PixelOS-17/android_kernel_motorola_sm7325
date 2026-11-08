@@ -468,7 +468,7 @@ static int ipa3_aux_napi_poll_tx_complete(struct napi_struct *napi_tx,
 		ret = ipa3_tx_switch_to_intr_mode(sys);
 
 		/* if we got an EOT while we marked NAPI as complete */
-		if (ret == -GSI_STATUS_PENDING_IRQ && napi_reschedule(napi_tx)) {
+		if (ret == -GSI_STATUS_PENDING_IRQ && napi_schedule(napi_tx)) {
 			/* rescheduale will perform poll again, don't dec vote twice*/
 			napi_rescheduled = true;
 		}
@@ -520,7 +520,7 @@ poll_tx:
 		/*if we got an EOT while we marked NAPI as complete*/
 		if (atomic_read(&sys->xmit_eot_cnt) > 0 &&
 		    !atomic_cmpxchg(&sys->in_napi_context, 0, 1)
-		    && napi_reschedule(napi_tx)) {
+		    && napi_schedule(napi_tx)) {
 			goto poll_tx;
 		}
 	}
@@ -1602,11 +1602,11 @@ int ipa_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		ipa3_ctx->tx_napi_enable) {
 		if (sys_in->client == IPA_CLIENT_APPS_LAN_PROD) {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(6, 0, 14))
-			netif_napi_add_tx_weight(&ipa3_ctx->generic_ndev,
+			netif_napi_add_tx_weight(ipa3_ctx->generic_ndev,
 			&ep->sys->napi_tx, tx_completion_func,
 			NAPI_TX_WEIGHT);
 #else
-			netif_tx_napi_add(&ipa3_ctx->generic_ndev,
+			netif_tx_napi_add(ipa3_ctx->generic_ndev,
 			&ep->sys->napi_tx, tx_completion_func,
 			NAPI_TX_WEIGHT);
 
@@ -7220,7 +7220,7 @@ start_poll:
 		napi_complete(ep->sys->napi_obj);
 		ret = ipa3_rx_switch_to_intr_mode(ep->sys);
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
-				napi_reschedule(ep->sys->napi_obj))
+				napi_schedule(ep->sys->napi_obj))
 			goto start_poll;
 
 		IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(ep->client);
@@ -7310,7 +7310,7 @@ start_poll:
 		}
 	}
 	cnt += weight - remain_aggr_weight * ipa3_ctx->ipa_wan_aggr_pkt_cnt;
-	/* call repl_hdlr before napi_reschedule / napi_complete */
+	/* call repl_hdlr before napi_schedule / napi_complete */
 	ep->sys->repl_hdlr(ep->sys);
 	wan_def_sys->repl_hdlr(wan_def_sys);
 	/* Scheduling WAN and COAL collect stats work wueue */
@@ -7324,7 +7324,7 @@ start_poll:
 		napi_complete(ep->sys->napi_obj);
 		ret = ipa3_rx_switch_to_intr_mode(ep->sys);
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
-				napi_reschedule(ep->sys->napi_obj))
+				napi_schedule(ep->sys->napi_obj))
 			goto start_poll;
 		IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(ep->client);
 	} else {
@@ -7541,7 +7541,7 @@ start_poll:
 		}
 	}
 	cnt += budget - remain_aggr_weight * ipa3_ctx->ipa_wan_aggr_pkt_cnt;
-	/* call repl_hdlr before napi_reschedule / napi_complete */
+	/* call repl_hdlr before napi_schedule / napi_complete */
 	sys->repl_hdlr(sys);
 	/* Scheduling RMNET LOW LAT DATA collect stats work queue */
 	queue_delayed_work(ipa3_ctx->collect_recycle_stats_wq,
@@ -7553,7 +7553,7 @@ start_poll:
 		napi_complete(napi_rx);
 		ret = ipa3_rx_switch_to_intr_mode(sys);
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
-				napi_reschedule(napi_rx))
+				napi_schedule(napi_rx))
 			goto start_poll;
 		IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(sys->ep->client);
 	} else {

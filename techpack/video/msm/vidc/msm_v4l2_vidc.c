@@ -43,7 +43,7 @@ static int msm_v4l2_open(struct file *filp)
 		return -ENOMEM;
 	}
 	clear_bit(V4L2_FL_USES_V4L2_FH, &vdev->flags);
-	filp->private_data = &(vidc_inst->event_handler);
+	v4l2_fh_add(&vidc_inst->event_handler, filp);
 	trace_msm_v4l2_vidc_open_end("msm v4l2_open end");
 	return 0;
 }
@@ -56,8 +56,8 @@ static int msm_v4l2_close(struct file *filp)
 	trace_msm_v4l2_vidc_close_start("msm v4l2_close start");
 	vidc_inst = get_vidc_inst(filp, NULL);
 
+	v4l2_fh_del(&vidc_inst->event_handler, filp);
 	rc = msm_vidc_close(vidc_inst);
-	filp->private_data = NULL;
 	trace_msm_v4l2_vidc_close_end("msm v4l2_close end");
 	return rc;
 }

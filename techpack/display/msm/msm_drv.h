@@ -63,6 +63,9 @@
 #define GET_MINOR_REV(rev)		(((rev) >> 16) & 0xFFF)
 #define GET_STEP_REV(rev)		((rev) & 0xFFFF)
 
+/* Replaces drm_device.struct_mutex, which 6.18 removed */
+extern struct mutex msm_gem_struct_mutex;
+
 struct msm_kms;
 struct msm_gpu;
 struct msm_mmu;

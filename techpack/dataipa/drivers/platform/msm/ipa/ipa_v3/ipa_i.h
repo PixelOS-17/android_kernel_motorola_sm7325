@@ -2562,7 +2562,7 @@ struct ipa3_context {
 	bool lan_rx_napi_enable;
 	bool tx_napi_enable;
 	bool tx_poll;
-	struct net_device generic_ndev;
+	struct net_device *generic_ndev;
 	struct napi_struct napi_lan_rx;
 	u32 icc_num_cases;
 	u32 icc_num_paths;

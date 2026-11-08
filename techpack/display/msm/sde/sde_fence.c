@@ -757,10 +757,7 @@ void sde_sync_put(void *fence)
 
 void sde_fence_dump(struct dma_fence *fence)
 {
-	char timeline_str[TIMELINE_VAL_LENGTH];
-
-	if (fence->ops->timeline_value_str)
-		fence->ops->timeline_value_str(fence, timeline_str, TIMELINE_VAL_LENGTH);
+	char timeline_str[TIMELINE_VAL_LENGTH] = "";
 
 	SDE_ERROR(
 		"fence drv name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x status:%d flags:0x%x\n",
@@ -936,8 +933,6 @@ static struct dma_fence_ops sde_fence_ops = {
 	.signaled = sde_fence_signaled,
 	.wait = dma_fence_default_wait,
 	.release = sde_fence_release,
-	.fence_value_str = sde_fence_value_str,
-	.timeline_value_str = sde_fence_timeline_value_str,
 };
 
 /**
@@ -1233,11 +1228,7 @@ void sde_fence_timeline_status(struct sde_fence_context *ctx,
 
 void sde_fence_list_dump(struct dma_fence *fence, struct seq_file **s)
 {
-	char timeline_str[TIMELINE_VAL_LENGTH];
-
-	if (fence->ops->timeline_value_str)
-		fence->ops->timeline_value_str(fence,
-		timeline_str, TIMELINE_VAL_LENGTH);
+	char timeline_str[TIMELINE_VAL_LENGTH] = "";
 
 	seq_printf(*s, "fence name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x\n",
 		fence->ops->get_driver_name(fence),

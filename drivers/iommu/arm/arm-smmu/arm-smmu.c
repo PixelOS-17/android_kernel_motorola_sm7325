@@ -3589,7 +3589,7 @@ static void arm_smmu_rmr_install_bypass_smr(struct arm_smmu_device *smmu)
 /* skip pcie iommu bus probe if smmuv2 and smmuv3 both enabled. */
 #if IS_ENABLED(CONFIG_ARM_PARAVIRT_SMMU_V3)
 static void arm_smmu_iommu_pcie_device_probe(void *data, struct iommu_device *iommu,
-					struct bus_type *bus, bool *skip)
+					const struct bus_type *bus, bool *skip)
 {
 	if (iommu != (struct iommu_device *)data)
 		return;

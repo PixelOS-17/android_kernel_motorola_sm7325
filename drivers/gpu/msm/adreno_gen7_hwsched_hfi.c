@@ -815,9 +815,6 @@ static void set_fence_signal_bit(struct adreno_device *adreno_dev,
 	u64 flags = ADRENO_HW_FENCE_SW_STATUS_PENDING;
 	char value[32] = "unknown";
 
-	if (fence->ops->timeline_value_str)
-		fence->ops->timeline_value_str(fence, value, sizeof(value));
-
 	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
 		dev_err(&gmu->pdev->dev,
 			"GMU is waiting for signaled fence(ctx:%llu seqno:%llu value:%s)\n",

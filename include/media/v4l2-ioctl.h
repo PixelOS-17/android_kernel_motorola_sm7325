@@ -455,6 +455,13 @@ struct v4l2_ioctl_ops {
 	int (*vidioc_s_output)(struct file *file, void *priv, unsigned int i);
 
 		/* Control handling */
+	/* Single control ops, as the msm_vidc driver declares them */
+	int (*vidioc_queryctrl)(struct file *file, void *fh,
+				struct v4l2_queryctrl *a);
+	int (*vidioc_g_ctrl)(struct file *file, void *fh,
+			     struct v4l2_control *a);
+	int (*vidioc_s_ctrl)(struct file *file, void *fh,
+			     struct v4l2_control *a);
 	int (*vidioc_query_ext_ctrl)(struct file *file, void *priv,
 				     struct v4l2_query_ext_ctrl *a);
 	int (*vidioc_g_ext_ctrls)(struct file *file, void *priv,

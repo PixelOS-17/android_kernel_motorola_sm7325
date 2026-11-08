@@ -315,7 +315,7 @@ static enum drm_connector_status lt9611uxc_connector_detect(struct drm_connector
 }
 
 static enum drm_mode_status lt9611uxc_connector_mode_valid(struct drm_connector *connector,
-							   struct drm_display_mode *mode)
+							   const struct drm_display_mode *mode)
 {
 	struct lt9611uxc_mode *lt9611uxc_mode = lt9611uxc_find_mode(mode);
 

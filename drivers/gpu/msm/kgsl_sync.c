@@ -413,9 +413,6 @@ static const struct dma_fence_ops kgsl_sync_fence_ops = {
 	.signaled = kgsl_sync_fence_has_signaled,
 	.wait = dma_fence_default_wait,
 	.release = kgsl_sync_fence_release,
-
-	.fence_value_str = kgsl_sync_fence_value_str,
-	.timeline_value_str = kgsl_sync_timeline_value_str,
 };
 
 static void kgsl_sync_fence_callback(struct dma_fence *fence,
@@ -489,13 +486,6 @@ void kgsl_get_fence_info(struct kgsl_drawobj_sync_event *event)
 		len =  scnprintf(fi->name, sizeof(fi->name), "%s %s",
 			f->ops->get_driver_name(f),
 			f->ops->get_timeline_name(f));
-
-		if (f->ops->fence_value_str) {
-			len += scnprintf(fi->name + len, sizeof(fi->name) - len,
-				": ");
-			f->ops->fence_value_str(f, fi->name + len,
-				sizeof(fi->name) - len);
-		}
 
 		kgsl_count_hw_fences(event, f);
 	}
@@ -906,7 +896,5 @@ static const struct dma_fence_ops kgsl_syncsource_fence_ops = {
 	.enable_signaling = kgsl_syncsource_enable_signaling,
 	.wait = dma_fence_default_wait,
 	.release = kgsl_syncsource_fence_release,
-
-	.fence_value_str = kgsl_syncsource_fence_value_str,
 };
 

@@ -32,6 +32,10 @@
  */
 #define DMA_ATTR_QTI_SMMU_PROXY_MAP	(1UL << 18)
 
+/* 6.18 uses bits 10 and 11 for DMA_ATTR_MMIO and DMA_ATTR_CPU_CACHE_CLEAN */
+#define DMA_ATTR_SYS_CACHE		(1UL << 20)
+#define DMA_ATTR_SYS_CACHE_NWA		(1UL << 21)
+
 #ifndef DMA_ATTR_SYS_CACHE_ONLY
 /* Attributes are not supported, so render them ineffective. */
 #define DMA_ATTR_SYS_CACHE_ONLY		(0UL)

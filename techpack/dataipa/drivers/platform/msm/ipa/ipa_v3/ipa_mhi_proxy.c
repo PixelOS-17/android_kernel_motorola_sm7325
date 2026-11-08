@@ -389,7 +389,7 @@ static void __map_smmu_info(struct device *dev,
 			IMP_DBG("mapping 0x%lx to 0x%pa size %d\n",
 				iova_p, &pa_p, size_p);
 			iommu_map(domain,
-				iova_p, pa_p, size_p, prot);
+				iova_p, pa_p, size_p, prot, GFP_KERNEL);
 		} else {
 			IMP_DBG("unmapping 0x%lx to 0x%pa size %d\n",
 				iova_p, &pa_p, size_p);

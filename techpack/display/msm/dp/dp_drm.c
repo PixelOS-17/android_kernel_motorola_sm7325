@@ -732,7 +732,7 @@ void dp_drm_bridge_deinit(void *data)
 }
 
 enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
-		struct drm_display_mode *mode, void *display,
+		const struct drm_display_mode *mode, void *display,
 		const struct msm_resource_caps_info *avail_res)
 {
 	int rc = 0, vrefresh;

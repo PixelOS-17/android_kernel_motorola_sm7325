@@ -172,8 +172,6 @@ static struct dma_fence_ops sde_rot_fence_ops = {
 	.signaled = sde_rot_fence_signaled,
 	.wait = dma_fence_default_wait,
 	.release = sde_rot_fence_release,
-	.fence_value_str = sde_rot_fence_value_str,
-	.timeline_value_str = sde_rot_fence_timeline_value_str,
 };
 
 /*

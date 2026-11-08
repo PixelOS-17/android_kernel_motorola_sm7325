@@ -2554,8 +2554,8 @@ static int gen7_gmu_iommu_init(struct gen7_gmu_device *gmu)
 {
 	int ret;
 
-	gmu->domain = iommu_domain_alloc(&platform_bus_type);
-	if (gmu->domain == NULL) {
+	gmu->domain = iommu_paging_domain_alloc(&gmu->pdev->dev);
+	if (IS_ERR(gmu->domain)) {
 		dev_err(&gmu->pdev->dev, "Unable to allocate GMU IOMMU domain\n");
 		return -ENODEV;
 	}

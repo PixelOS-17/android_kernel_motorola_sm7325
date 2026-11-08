@@ -30,6 +30,8 @@
 
 #include "msm_drv.h"
 #include "msm_gem.h"
+
+DEFINE_MUTEX(msm_gem_struct_mutex);
 #include "msm_mmu.h"
 #include "sde_dbg.h"
 
@@ -792,7 +794,7 @@ int msm_gem_madvise(struct drm_gem_object *obj, unsigned madv)
 
 	mutex_lock(&msm_obj->lock);
 
-	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
+	WARN_ON(!mutex_is_locked(&msm_gem_struct_mutex));
 
 	if (msm_obj->madv != __MSM_MADV_PURGED)
 		msm_obj->madv = madv;

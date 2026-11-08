@@ -90,7 +90,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
  * Returns: Validity status for specified mode
  */
 enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
-		struct drm_display_mode *mode,
+		const struct drm_display_mode *mode,
 		void *display, const struct msm_resource_caps_info *avail_res);
 
 /**

@@ -1129,10 +1129,10 @@ static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 	if (kms->funcs && kms->funcs->postclose)
 		kms->funcs->postclose(kms, file);
 
-	mutex_lock(&dev->struct_mutex);
+	mutex_lock(&msm_gem_struct_mutex);
 	if (ctx == priv->lastctx)
 		priv->lastctx = NULL;
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&msm_gem_struct_mutex);
 
 	mutex_lock(&ctx->power_lock);
 	if (ctx->enable_refcnt) {
@@ -1296,7 +1296,7 @@ static int msm_ioctl_gem_madvise(struct drm_device *dev, void *data,
 		return -EINVAL;
 	}
 
-	ret = mutex_lock_interruptible(&dev->struct_mutex);
+	ret = mutex_lock_interruptible(&msm_gem_struct_mutex);
 	if (ret)
 		return ret;
 
@@ -1315,7 +1315,7 @@ static int msm_ioctl_gem_madvise(struct drm_device *dev, void *data,
 	drm_gem_object_put(obj);
 
 unlock:
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&msm_gem_struct_mutex);
 	return ret;
 }
 
