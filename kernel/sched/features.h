@@ -55,7 +55,8 @@ SCHED_FEAT(CACHE_HOT_BUDDY, true)
  *
  * DELAY_ZERO clips the lag on dequeue (or wakeup) to 0.
  */
-SCHED_FEAT(DELAY_DEQUEUE, true)
+/* tundra: WALT pairs every enqueue with one dequeue, delayed dequeue breaks that */
+SCHED_FEAT(DELAY_DEQUEUE, false)
 SCHED_FEAT(DELAY_ZERO, true)
 
 /*
