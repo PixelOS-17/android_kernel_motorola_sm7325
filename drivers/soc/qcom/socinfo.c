@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2009-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2009-2017, 2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2017-2019, Linaro Ltd.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/debugfs.h>
@@ -16,14 +17,161 @@
 #include <linux/stringify.h>
 #include <linux/sys_soc.h>
 #include <linux/types.h>
+#include <soc/qcom/socinfo.h>
 
 #include <linux/unaligned.h>
 
 #include <dt-bindings/arm/qcom,ids.h>
 
-/* Helper macros to create soc_id table */
-#define qcom_board_id(id) QCOM_ID_ ## id, __stringify(id)
-#define qcom_board_id_named(id, name) QCOM_ID_ ## id, (name)
+#define SMEM_SOCINFO_BUILD_ID_LENGTH           32
+#define SMEM_SOCINFO_CHIP_ID_LENGTH            32
+
+static uint32_t socinfo_format;
+static const char *sku;
+
+enum {
+	HW_PLATFORM_UNKNOWN = 0,
+	HW_PLATFORM_SURF    = 1,
+	HW_PLATFORM_FFA     = 2,
+	HW_PLATFORM_FLUID   = 3,
+	HW_PLATFORM_SVLTE_FFA   = 4,
+	HW_PLATFORM_SVLTE_SURF  = 5,
+	HW_PLATFORM_MTP_MDM = 7,
+	HW_PLATFORM_MTP  = 8,
+	HW_PLATFORM_LIQUID  = 9,
+	/* Dragonboard platform id is assigned as 10 in CDT */
+	HW_PLATFORM_DRAGON      = 10,
+	HW_PLATFORM_QRD = 11,
+	HW_PLATFORM_HRD = 13,
+	HW_PLATFORM_DTV = 14,
+	HW_PLATFORM_RCM = 21,
+	HW_PLATFORM_STP = 23,
+	HW_PLATFORM_SBC = 24,
+	HW_PLATFORM_ADP = 25,
+	HW_PLATFORM_HDK = 31,
+	HW_PLATFORM_ATP = 33,
+	HW_PLATFORM_IDP = 34,
+	HW_PLATFORM_WDP = 36,
+	HW_PLATFORM_QXR = 38,
+	HW_PLATFORM_QAR = 44,
+	HW_PLATFORM_INVALID
+};
+
+static const char * const hw_platform[] = {
+	[HW_PLATFORM_UNKNOWN] = "Unknown",
+	[HW_PLATFORM_SURF] = "Surf",
+	[HW_PLATFORM_FFA] = "FFA",
+	[HW_PLATFORM_FLUID] = "Fluid",
+	[HW_PLATFORM_SVLTE_FFA] = "SVLTE_FFA",
+	[HW_PLATFORM_SVLTE_SURF] = "SLVTE_SURF",
+	[HW_PLATFORM_MTP_MDM] = "MDM_MTP_NO_DISPLAY",
+	[HW_PLATFORM_MTP] = "MTP",
+	[HW_PLATFORM_RCM] = "RCM",
+	[HW_PLATFORM_LIQUID] = "Liquid",
+	[HW_PLATFORM_DRAGON] = "Dragon",
+	[HW_PLATFORM_QRD] = "QRD",
+	[HW_PLATFORM_HRD] = "HRD",
+	[HW_PLATFORM_DTV] = "DTV",
+	[HW_PLATFORM_STP] = "STP",
+	[HW_PLATFORM_SBC] = "SBC",
+	[HW_PLATFORM_ADP] = "ADP",
+	[HW_PLATFORM_HDK] = "HDK",
+	[HW_PLATFORM_ATP] = "ATP",
+	[HW_PLATFORM_IDP] = "IDP",
+	[HW_PLATFORM_WDP] = "WDP",
+	[HW_PLATFORM_QXR] = "QXR",
+	[HW_PLATFORM_QAR] = "QAR",
+};
+
+enum {
+	PLATFORM_SUBTYPE_QRD = 0x0,
+	PLATFORM_SUBTYPE_SKUAA = 0x1,
+	PLATFORM_SUBTYPE_SKUF = 0x2,
+	PLATFORM_SUBTYPE_SKUAB = 0x3,
+	PLATFORM_SUBTYPE_SKUG = 0x5,
+	PLATFORM_SUBTYPE_QRD_INVALID,
+};
+
+static const char * const qrd_hw_platform_subtype[] = {
+	[PLATFORM_SUBTYPE_QRD] = "QRD",
+	[PLATFORM_SUBTYPE_SKUAA] = "SKUAA",
+	[PLATFORM_SUBTYPE_SKUF] = "SKUF",
+	[PLATFORM_SUBTYPE_SKUAB] = "SKUAB",
+	[PLATFORM_SUBTYPE_SKUG] = "SKUG",
+	[PLATFORM_SUBTYPE_QRD_INVALID] = "INVALID",
+};
+
+enum {
+	PLATFORM_SUBTYPE_UNKNOWN = 0x0,
+	PLATFORM_SUBTYPE_CHARM = 0x1,
+	PLATFORM_SUBTYPE_STRANGE = 0x2,
+	PLATFORM_SUBTYPE_STRANGE_2A = 0x3,
+	PLATFORM_SUBTYPE_INVALID,
+};
+
+static const char * const hw_platform_subtype[] = {
+	[PLATFORM_SUBTYPE_UNKNOWN] = "Unknown",
+	[PLATFORM_SUBTYPE_CHARM] = "charm",
+	[PLATFORM_SUBTYPE_STRANGE] = "strange",
+	[PLATFORM_SUBTYPE_STRANGE_2A] = "strange_2a",
+	[PLATFORM_SUBTYPE_INVALID] = "Invalid",
+};
+
+static const char * const hw_platform_feature_code[] = {
+	[SOCINFO_FC_UNKNOWN] = "Unknown",
+	[SOCINFO_FC_AA] = "AA",
+	[SOCINFO_FC_AB] = "AB",
+	[SOCINFO_FC_AC] = "AC",
+	[SOCINFO_FC_AD] = "AD",
+	[SOCINFO_FC_AE] = "AE",
+	[SOCINFO_FC_AF] = "AF",
+	[SOCINFO_FC_AG] = "AG",
+	[SOCINFO_FC_AH] = "AH",
+};
+
+static const char * const hw_platform_wfeature_code[] = {
+	[SOCINFO_FC_W0 - SOCINFO_FC_W0] = "W0",
+	[SOCINFO_FC_W1 - SOCINFO_FC_W0] = "W1",
+	[SOCINFO_FC_W2 - SOCINFO_FC_W0] = "W2",
+	[SOCINFO_FC_W3 - SOCINFO_FC_W0] = "W3",
+	[SOCINFO_FC_W4 - SOCINFO_FC_W0] = "W4",
+	[SOCINFO_FC_W5 - SOCINFO_FC_W0] = "W5",
+	[SOCINFO_FC_W6 - SOCINFO_FC_W0] = "W6",
+	[SOCINFO_FC_W7 - SOCINFO_FC_W0] = "W7",
+	[SOCINFO_FC_W8 - SOCINFO_FC_W0] = "W8",
+	[SOCINFO_FC_W9 - SOCINFO_FC_W0] = "W9",
+	[SOCINFO_FC_WA - SOCINFO_FC_W0] = "WA",
+	[SOCINFO_FC_WB - SOCINFO_FC_W0] = "WB",
+	[SOCINFO_FC_WC - SOCINFO_FC_W0] = "WC",
+	[SOCINFO_FC_WD - SOCINFO_FC_W0] = "WD",
+	[SOCINFO_FC_WE - SOCINFO_FC_W0] = "WE",
+	[SOCINFO_FC_WF - SOCINFO_FC_W0] = "WF",
+};
+
+static const char * const hw_platform_ifeature_code[] = {
+	[SOCINFO_FC_Y0 - SOCINFO_FC_Y0] = "Y0",
+	[SOCINFO_FC_Y1 - SOCINFO_FC_Y0] = "Y1",
+	[SOCINFO_FC_Y2 - SOCINFO_FC_Y0] = "Y2",
+	[SOCINFO_FC_Y3 - SOCINFO_FC_Y0] = "Y3",
+	[SOCINFO_FC_Y4 - SOCINFO_FC_Y0] = "Y4",
+	[SOCINFO_FC_Y5 - SOCINFO_FC_Y0] = "Y5",
+	[SOCINFO_FC_Y6 - SOCINFO_FC_Y0] = "Y6",
+	[SOCINFO_FC_Y7 - SOCINFO_FC_Y0] = "Y7",
+	[SOCINFO_FC_Y8 - SOCINFO_FC_Y0] = "Y8",
+	[SOCINFO_FC_Y9 - SOCINFO_FC_Y0] = "Y9",
+	[SOCINFO_FC_YA - SOCINFO_FC_Y0] = "YA",
+	[SOCINFO_FC_YB - SOCINFO_FC_Y0] = "YB",
+	[SOCINFO_FC_YC - SOCINFO_FC_Y0] = "YC",
+	[SOCINFO_FC_YD - SOCINFO_FC_Y0] = "YD",
+	[SOCINFO_FC_YE - SOCINFO_FC_Y0] = "YE",
+	[SOCINFO_FC_YF - SOCINFO_FC_Y0] = "YF",
+};
+
+/*
+ * SMEM item id, used to acquire handles to respective
+ * SMEM region.
+ */
+#define SMEM_HW_SW_BUILD_ID            137
 
 #ifdef CONFIG_DEBUG_FS
 #define SMEM_IMAGE_VERSION_BLOCKS_COUNT        32
@@ -49,7 +197,6 @@
 #define SMEM_IMAGE_TABLE_CDSP1_INDEX    19
 #define SMEM_IMAGE_TABLE_GPDSP_INDEX    20
 #define SMEM_IMAGE_TABLE_GPDSP1_INDEX   21
-#define SMEM_IMAGE_TABLE_TME_INDEX	28
 #define SMEM_IMAGE_VERSION_TABLE       469
 
 /*
@@ -70,7 +217,6 @@ static const char *const socinfo_image_names[] = {
 	[SMEM_IMAGE_TABLE_CDSP1_INDEX] = "cdsp1",
 	[SMEM_IMAGE_TABLE_GPDSP_INDEX] = "gpdsp",
 	[SMEM_IMAGE_TABLE_GPDSP1_INDEX] = "gpdsp1",
-	[SMEM_IMAGE_TABLE_TME_INDEX] = "tme",
 };
 
 static const char *const pmic_models[] = {
@@ -124,19 +270,80 @@ static const char *const pmic_models[] = {
 	[55] = "PM4125",
 	[58] = "PM8450",
 	[65] = "PM8010",
-	[69] = "PM8550VS",
-	[70] = "PM8550VE",
-	[71] = "PM8550B",
-	[72] = "PMR735D",
-	[73] = "PM8550",
-	[74] = "PMK8550",
-	[78] = "PMM8650AU",
-	[79] = "PMM8650AU_PSAIL",
-	[80] = "PM7550",
-	[82] = "PMC8380",
-	[83] = "SMB2360",
-	[91] = "PMIV0108",
+	[78] = "PMM8650",
+	[79] = "PMM8650",
+	[99] = "PMAR2230",
 };
+#endif /* CONFIG_DEBUG_FS */
+
+/* Socinfo SMEM item structure */
+struct socinfo {
+	__le32 fmt;
+	__le32 id;
+	__le32 ver;
+	char build_id[SMEM_SOCINFO_BUILD_ID_LENGTH];
+	/* Version 2 */
+	__le32 raw_id;
+	__le32 raw_ver;
+	/* Version 3 */
+	__le32 hw_plat;
+	/* Version 4 */
+	__le32 plat_ver;
+	/* Version 5 */
+	__le32 accessory_chip;
+	/* Version 6 */
+	__le32 hw_plat_subtype;
+	/* Version 7 */
+	__le32 pmic_model;
+	__le32 pmic_die_rev;
+	/* Version 8 */
+	__le32 pmic_model_1;
+	__le32 pmic_die_rev_1;
+	__le32 pmic_model_2;
+	__le32 pmic_die_rev_2;
+	/* Version 9 */
+	__le32 foundry_id;
+	/* Version 10 */
+	__le32 serial_num;
+	/* Version 11 */
+	__le32 num_pmics;
+	__le32 pmic_array_offset;
+	/* Version 12 */
+	__le32 chip_family;
+	__le32 raw_device_family;
+	__le32 raw_device_num;
+	/* Version 13 */
+	__le32 nproduct_id;
+	char chip_id[SMEM_SOCINFO_CHIP_ID_LENGTH];
+	/* Version 14 */
+	__le32 num_clusters;
+	__le32 ncluster_array_offset;
+	__le32 num_subset_parts;
+	__le32 nsubset_parts_array_offset;
+	/* Version 15 */
+	__le32 nmodem_supported;
+	/* Version 16 */
+	__le32  feature_code;
+	__le32  pcode;
+	__le32  npartnamemap_offset;
+	__le32  nnum_partname_mapping;
+	/* Version 17 */
+	__le32 oem_variant;
+	/* Version 18 */
+	__le32 num_kvps;
+	__le32 kvps_offset;
+	/* Version 19 */
+	__le32 num_func_clusters;
+	__le32 boot_cluster;
+	__le32 boot_core;
+	/* Version 20 */
+	__le32 raw_package_type;
+	/* Version 21 */
+	__le32 nsubpart_feat_array_offset;
+	/* Version 23 */
+	__le32 part_instances_offset;
+	__le32 num_part_instances;
+} *socinfo;
 
 struct socinfo_params {
 	u32 raw_device_family;
@@ -161,6 +368,8 @@ struct socinfo_params {
 	u32 num_func_clusters;
 	u32 boot_cluster;
 	u32 boot_core;
+	u32 raw_package_type;
+	u32 nsubpart_feat_array_offset;
 };
 
 struct smem_image_version {
@@ -170,6 +379,42 @@ struct smem_image_version {
 	char oem[SMEM_IMAGE_VERSION_OEM_SIZE];
 };
 #endif /* CONFIG_DEBUG_FS */
+
+#define MAX_SOCINFO_ATTRS 50
+/* sysfs attributes */
+#define ATTR_DEFINE(param)      \
+	static DEVICE_ATTR(param, 0444, msm_get_##param, NULL)
+
+/* sysfs attributes for subpart information */
+#define CREATE_PART_FUNCTION(part, part_enum)  \
+	static ssize_t \
+	msm_get_##part(struct device *dev, \
+			struct device_attribute *attr, \
+			char *buf) \
+	{ \
+		u32 *part_info; \
+		int num_parts = 0; \
+		int str_pos = 0, i = 0, ret = 0; \
+		num_parts = socinfo_get_part_count(part_enum); \
+		if (num_parts <= 0) \
+			return -EINVAL;  \
+		part_info = kmalloc_array(num_parts, sizeof(*part_info), GFP_KERNEL); \
+		ret = socinfo_get_subpart_info(part_enum, part_info, num_parts); \
+		if (ret < 0) { \
+			kfree(part_info); \
+			return -EINVAL;  \
+		} \
+		for (i = 0; i < num_parts; i++) { \
+			str_pos += scnprintf(buf+str_pos, PAGE_SIZE-str_pos, "0x%x", \
+					part_info[i]); \
+			if (i != num_parts-1) \
+				str_pos += scnprintf(buf+str_pos, PAGE_SIZE-str_pos, ","); \
+		} \
+		str_pos += scnprintf(buf+str_pos, PAGE_SIZE-str_pos, "\n"); \
+		kfree(part_info); \
+		return str_pos; \
+	} \
+	ATTR_DEFINE(part) \
 
 struct qcom_socinfo {
 	struct soc_device *soc_dev;
@@ -185,289 +430,200 @@ struct soc_id {
 	const char *name;
 };
 
-static const struct soc_id soc_id[] = {
-	{ qcom_board_id(MSM8260) },
-	{ qcom_board_id(MSM8660) },
-	{ qcom_board_id(APQ8060) },
-	{ qcom_board_id(MSM8960) },
-	{ qcom_board_id(APQ8064) },
-	{ qcom_board_id(MSM8930) },
-	{ qcom_board_id(MSM8630) },
-	{ qcom_board_id(MSM8230) },
-	{ qcom_board_id(APQ8030) },
-	{ qcom_board_id(MSM8627) },
-	{ qcom_board_id(MSM8227) },
-	{ qcom_board_id(MSM8660A) },
-	{ qcom_board_id(MSM8260A) },
-	{ qcom_board_id(APQ8060A) },
-	{ qcom_board_id(MSM8974) },
-	{ qcom_board_id(MSM8225) },
-	{ qcom_board_id(MSM8625) },
-	{ qcom_board_id(MPQ8064) },
-	{ qcom_board_id(MSM8960AB) },
-	{ qcom_board_id(APQ8060AB) },
-	{ qcom_board_id(MSM8260AB) },
-	{ qcom_board_id(MSM8660AB) },
-	{ qcom_board_id(MSM8930AA) },
-	{ qcom_board_id(MSM8630AA) },
-	{ qcom_board_id(MSM8230AA) },
-	{ qcom_board_id(MSM8626) },
-	{ qcom_board_id(MSM8610) },
-	{ qcom_board_id(APQ8064AB) },
-	{ qcom_board_id(MSM8930AB) },
-	{ qcom_board_id(MSM8630AB) },
-	{ qcom_board_id(MSM8230AB) },
-	{ qcom_board_id(APQ8030AB) },
-	{ qcom_board_id(MSM8226) },
-	{ qcom_board_id(MSM8526) },
-	{ qcom_board_id(APQ8030AA) },
-	{ qcom_board_id(MSM8110) },
-	{ qcom_board_id(MSM8210) },
-	{ qcom_board_id(MSM8810) },
-	{ qcom_board_id(MSM8212) },
-	{ qcom_board_id(MSM8612) },
-	{ qcom_board_id(MSM8112) },
-	{ qcom_board_id(MSM8125) },
-	{ qcom_board_id(MSM8225Q) },
-	{ qcom_board_id(MSM8625Q) },
-	{ qcom_board_id(MSM8125Q) },
-	{ qcom_board_id(APQ8064AA) },
-	{ qcom_board_id(APQ8084) },
-	{ qcom_board_id(MSM8130) },
-	{ qcom_board_id(MSM8130AA) },
-	{ qcom_board_id(MSM8130AB) },
-	{ qcom_board_id(MSM8627AA) },
-	{ qcom_board_id(MSM8227AA) },
-	{ qcom_board_id(APQ8074) },
-	{ qcom_board_id(MSM8274) },
-	{ qcom_board_id(MSM8674) },
-	{ qcom_board_id(MDM9635) },
-	{ qcom_board_id_named(MSM8974PRO_AC, "MSM8974PRO-AC") },
-	{ qcom_board_id(MSM8126) },
-	{ qcom_board_id(APQ8026) },
-	{ qcom_board_id(MSM8926) },
-	{ qcom_board_id(IPQ8062) },
-	{ qcom_board_id(IPQ8064) },
-	{ qcom_board_id(IPQ8066) },
-	{ qcom_board_id(IPQ8068) },
-	{ qcom_board_id(MSM8326) },
-	{ qcom_board_id(MSM8916) },
-	{ qcom_board_id(MSM8994) },
-	{ qcom_board_id_named(APQ8074PRO_AA, "APQ8074PRO-AA") },
-	{ qcom_board_id_named(APQ8074PRO_AB, "APQ8074PRO-AB") },
-	{ qcom_board_id_named(APQ8074PRO_AC, "APQ8074PRO-AC") },
-	{ qcom_board_id_named(MSM8274PRO_AA, "MSM8274PRO-AA") },
-	{ qcom_board_id_named(MSM8274PRO_AB, "MSM8274PRO-AB") },
-	{ qcom_board_id_named(MSM8274PRO_AC, "MSM8274PRO-AC") },
-	{ qcom_board_id_named(MSM8674PRO_AA, "MSM8674PRO-AA") },
-	{ qcom_board_id_named(MSM8674PRO_AB, "MSM8674PRO-AB") },
-	{ qcom_board_id_named(MSM8674PRO_AC, "MSM8674PRO-AC") },
-	{ qcom_board_id_named(MSM8974PRO_AA, "MSM8974PRO-AA") },
-	{ qcom_board_id_named(MSM8974PRO_AB, "MSM8974PRO-AB") },
-	{ qcom_board_id(APQ8028) },
-	{ qcom_board_id(MSM8128) },
-	{ qcom_board_id(MSM8228) },
-	{ qcom_board_id(MSM8528) },
-	{ qcom_board_id(MSM8628) },
-	{ qcom_board_id(MSM8928) },
-	{ qcom_board_id(MSM8510) },
-	{ qcom_board_id(MSM8512) },
-	{ qcom_board_id(MSM8936) },
-	{ qcom_board_id(MDM9640) },
-	{ qcom_board_id(MSM8939) },
-	{ qcom_board_id(APQ8036) },
-	{ qcom_board_id(APQ8039) },
-	{ qcom_board_id(MSM8236) },
-	{ qcom_board_id(MSM8636) },
-	{ qcom_board_id(MSM8909) },
-	{ qcom_board_id(MSM8996) },
-	{ qcom_board_id(APQ8016) },
-	{ qcom_board_id(MSM8216) },
-	{ qcom_board_id(MSM8116) },
-	{ qcom_board_id(MSM8616) },
-	{ qcom_board_id(MSM8992) },
-	{ qcom_board_id(APQ8092) },
-	{ qcom_board_id(APQ8094) },
-	{ qcom_board_id(MSM8209) },
-	{ qcom_board_id(MSM8208) },
-	{ qcom_board_id(MDM9209) },
-	{ qcom_board_id(MDM9309) },
-	{ qcom_board_id(MDM9609) },
-	{ qcom_board_id(MSM8239) },
-	{ qcom_board_id(MSM8952) },
-	{ qcom_board_id(APQ8009) },
-	{ qcom_board_id(MSM8956) },
-	{ qcom_board_id(MSM8929) },
-	{ qcom_board_id(MSM8629) },
-	{ qcom_board_id(MSM8229) },
-	{ qcom_board_id(APQ8029) },
-	{ qcom_board_id(APQ8056) },
-	{ qcom_board_id(MSM8609) },
-	{ qcom_board_id(APQ8076) },
-	{ qcom_board_id(MSM8976) },
-	{ qcom_board_id(IPQ8065) },
-	{ qcom_board_id(IPQ8069) },
-	{ qcom_board_id(MDM9650) },
-	{ qcom_board_id(MDM9655) },
-	{ qcom_board_id(MDM9250) },
-	{ qcom_board_id(MDM9255) },
-	{ qcom_board_id(MDM9350) },
-	{ qcom_board_id(APQ8052) },
-	{ qcom_board_id(MDM9607) },
-	{ qcom_board_id(APQ8096) },
-	{ qcom_board_id(MSM8998) },
-	{ qcom_board_id(MSM8953) },
-	{ qcom_board_id(MSM8937) },
-	{ qcom_board_id(APQ8037) },
-	{ qcom_board_id(MDM8207) },
-	{ qcom_board_id(MDM9207) },
-	{ qcom_board_id(MDM9307) },
-	{ qcom_board_id(MDM9628) },
-	{ qcom_board_id(MSM8909W) },
-	{ qcom_board_id(APQ8009W) },
-	{ qcom_board_id(MSM8996L) },
-	{ qcom_board_id(MSM8917) },
-	{ qcom_board_id(APQ8053) },
-	{ qcom_board_id(MSM8996SG) },
-	{ qcom_board_id(APQ8017) },
-	{ qcom_board_id(MSM8217) },
-	{ qcom_board_id(MSM8617) },
-	{ qcom_board_id(MSM8996AU) },
-	{ qcom_board_id(APQ8096AU) },
-	{ qcom_board_id(APQ8096SG) },
-	{ qcom_board_id(MSM8940) },
-	{ qcom_board_id(SDX201) },
-	{ qcom_board_id(SDM660) },
-	{ qcom_board_id(SDM630) },
-	{ qcom_board_id(APQ8098) },
-	{ qcom_board_id(MSM8920) },
-	{ qcom_board_id(SDM845) },
-	{ qcom_board_id(MDM9206) },
-	{ qcom_board_id(IPQ8074) },
-	{ qcom_board_id(SDA660) },
-	{ qcom_board_id(SDM658) },
-	{ qcom_board_id(SDA658) },
-	{ qcom_board_id(SDA630) },
-	{ qcom_board_id(MSM8905) },
-	{ qcom_board_id(SDX202) },
-	{ qcom_board_id(SDM670) },
-	{ qcom_board_id(SDM450) },
-	{ qcom_board_id(SM8150) },
-	{ qcom_board_id(SDA845) },
-	{ qcom_board_id(IPQ8072) },
-	{ qcom_board_id(IPQ8076) },
-	{ qcom_board_id(IPQ8078) },
-	{ qcom_board_id(SDM636) },
-	{ qcom_board_id(SDA636) },
-	{ qcom_board_id(SDM632) },
-	{ qcom_board_id(SDA632) },
-	{ qcom_board_id(SDA450) },
-	{ qcom_board_id(SDM439) },
-	{ qcom_board_id(SDM429) },
-	{ qcom_board_id(SM8250) },
-	{ qcom_board_id(SA8155) },
-	{ qcom_board_id(SDA439) },
-	{ qcom_board_id(SDA429) },
-	{ qcom_board_id(SM7150) },
-	{ qcom_board_id(SM7150P) },
-	{ qcom_board_id(IPQ8070) },
-	{ qcom_board_id(IPQ8071) },
-	{ qcom_board_id(QM215) },
-	{ qcom_board_id(IPQ8072A) },
-	{ qcom_board_id(IPQ8074A) },
-	{ qcom_board_id(IPQ8076A) },
-	{ qcom_board_id(IPQ8078A) },
-	{ qcom_board_id(SM6125) },
-	{ qcom_board_id(IPQ8070A) },
-	{ qcom_board_id(IPQ8071A) },
-	{ qcom_board_id(IPQ8172) },
-	{ qcom_board_id(IPQ8173) },
-	{ qcom_board_id(IPQ8174) },
-	{ qcom_board_id(IPQ6018) },
-	{ qcom_board_id(IPQ6028) },
-	{ qcom_board_id(SDM429W) },
-	{ qcom_board_id(SM4250) },
-	{ qcom_board_id(IPQ6000) },
-	{ qcom_board_id(IPQ6010) },
-	{ qcom_board_id(SC7180) },
-	{ qcom_board_id(SM6350) },
-	{ qcom_board_id(QCM2150) },
-	{ qcom_board_id(SDA429W) },
-	{ qcom_board_id(SM8350) },
-	{ qcom_board_id(QCM2290) },
-	{ qcom_board_id(SM7125) },
-	{ qcom_board_id(SM6115) },
-	{ qcom_board_id(IPQ5010) },
-	{ qcom_board_id(IPQ5018) },
-	{ qcom_board_id(IPQ5028) },
-	{ qcom_board_id(SC8280XP) },
-	{ qcom_board_id(IPQ6005) },
-	{ qcom_board_id(QRB5165) },
-	{ qcom_board_id(SM8450) },
-	{ qcom_board_id(SM7225) },
-	{ qcom_board_id(SA8295P) },
-	{ qcom_board_id(SA8540P) },
-	{ qcom_board_id(QCM4290) },
-	{ qcom_board_id(QCS4290) },
-	{ qcom_board_id(SM7325) },
-	{ qcom_board_id_named(SM8450_2, "SM8450") },
-	{ qcom_board_id_named(SM8450_3, "SM8450") },
-	{ qcom_board_id(SC7280) },
-	{ qcom_board_id(SC7180P) },
-	{ qcom_board_id(QCM6490) },
-	{ qcom_board_id(SM7325P) },
-	{ qcom_board_id(IPQ5000) },
-	{ qcom_board_id(IPQ0509) },
-	{ qcom_board_id(IPQ0518) },
-	{ qcom_board_id(SM6375) },
-	{ qcom_board_id(IPQ9514) },
-	{ qcom_board_id(IPQ9550) },
-	{ qcom_board_id(IPQ9554) },
-	{ qcom_board_id(IPQ9570) },
-	{ qcom_board_id(IPQ9574) },
-	{ qcom_board_id(SM8550) },
-	{ qcom_board_id(IPQ5016) },
-	{ qcom_board_id(IPQ9510) },
-	{ qcom_board_id(QRB4210) },
-	{ qcom_board_id(QRB2210) },
-	{ qcom_board_id(SAR2130P) },
-	{ qcom_board_id(SM8475) },
-	{ qcom_board_id(SM8475P) },
-	{ qcom_board_id(SA8255P) },
-	{ qcom_board_id(SA8775P) },
-	{ qcom_board_id(QRU1000) },
-	{ qcom_board_id(SM8475_2) },
-	{ qcom_board_id(QDU1000) },
-	{ qcom_board_id(X1E80100) },
-	{ qcom_board_id(SM8650) },
-	{ qcom_board_id(SM4450) },
-	{ qcom_board_id(SAR1130P) },
-	{ qcom_board_id(QDU1010) },
-	{ qcom_board_id(QRU1032) },
-	{ qcom_board_id(QRU1052) },
-	{ qcom_board_id(QRU1062) },
-	{ qcom_board_id(IPQ5332) },
-	{ qcom_board_id(IPQ5322) },
-	{ qcom_board_id(IPQ5312) },
-	{ qcom_board_id(IPQ5302) },
-	{ qcom_board_id(QCS8550) },
-	{ qcom_board_id(QCM8550) },
-	{ qcom_board_id(SM8750)  },
-	{ qcom_board_id(IPQ5300) },
-	{ qcom_board_id(SM7635) },
-	{ qcom_board_id(SM6650) },
-	{ qcom_board_id(SM6650P) },
-	{ qcom_board_id(IPQ5321) },
-	{ qcom_board_id(IPQ5424) },
-	{ qcom_board_id(QCM6690) },
-	{ qcom_board_id(QCS6690) },
-	{ qcom_board_id(IPQ5404) },
-	{ qcom_board_id(QCS9100) },
-	{ qcom_board_id(QCS8300) },
-	{ qcom_board_id(QCS8275) },
-	{ qcom_board_id(QCS9075) },
-	{ qcom_board_id(QCS615) },
+#define PART_NAME_MAX		32
+struct gpu_info {
+	__le32 gpu_chip_id;
+	__le32 vulkan_id;
+	char part_name[PART_NAME_MAX];
 };
+
+struct socinfo_partinfo {
+	__le32 part_type;
+	union {
+		struct gpu_info gpu_info;
+	};
+};
+struct socinfo_partinfo partinfo[SOCINFO_PART_MAX_PARTTYPE];
+
+static const struct soc_id soc_id[] = {
+	{ 87, "MSM8960" },
+	{ 109, "APQ8064" },
+	{ 122, "MSM8660A" },
+	{ 123, "MSM8260A" },
+	{ 124, "APQ8060A" },
+	{ 126, "MSM8974" },
+	{ 130, "MPQ8064" },
+	{ 138, "MSM8960AB" },
+	{ 139, "APQ8060AB" },
+	{ 140, "MSM8260AB" },
+	{ 141, "MSM8660AB" },
+	{ 145, "MSM8626" },
+	{ 147, "MSM8610" },
+	{ 153, "APQ8064AB" },
+	{ 158, "MSM8226" },
+	{ 159, "MSM8526" },
+	{ 161, "MSM8110" },
+	{ 162, "MSM8210" },
+	{ 163, "MSM8810" },
+	{ 164, "MSM8212" },
+	{ 165, "MSM8612" },
+	{ 166, "MSM8112" },
+	{ 168, "MSM8225Q" },
+	{ 169, "MSM8625Q" },
+	{ 170, "MSM8125Q" },
+	{ 172, "APQ8064AA" },
+	{ 178, "APQ8084" },
+	{ 184, "APQ8074" },
+	{ 185, "MSM8274" },
+	{ 186, "MSM8674" },
+	{ 194, "MSM8974PRO-AC" },
+	{ 198, "MSM8126" },
+	{ 199, "APQ8026" },
+	{ 200, "MSM8926" },
+	{ 205, "MSM8326" },
+	{ 206, "MSM8916" },
+	{ 207, "MSM8994" },
+	{ 208, "APQ8074PRO-AA" },
+	{ 209, "APQ8074PRO-AB" },
+	{ 210, "APQ8074PRO-AC" },
+	{ 211, "MSM8274PRO-AA" },
+	{ 212, "MSM8274PRO-AB" },
+	{ 213, "MSM8274PRO-AC" },
+	{ 214, "MSM8674PRO-AA" },
+	{ 215, "MSM8674PRO-AB" },
+	{ 216, "MSM8674PRO-AC" },
+	{ 217, "MSM8974PRO-AA" },
+	{ 218, "MSM8974PRO-AB" },
+	{ 219, "APQ8028" },
+	{ 220, "MSM8128" },
+	{ 221, "MSM8228" },
+	{ 222, "MSM8528" },
+	{ 223, "MSM8628" },
+	{ 224, "MSM8928" },
+	{ 225, "MSM8510" },
+	{ 226, "MSM8512" },
+	{ 233, "MSM8936" },
+	{ 239, "MSM8939" },
+	{ 240, "APQ8036" },
+	{ 241, "APQ8039" },
+	{ 246, "MSM8996" },
+	{ 247, "APQ8016" },
+	{ 248, "MSM8216" },
+	{ 249, "MSM8116" },
+	{ 250, "MSM8616" },
+	{ 251, "MSM8992" },
+	{ 253, "APQ8094" },
+	{ 290, "MDM9607" },
+	{ 291, "APQ8096" },
+	{ 292, "MSM8998" },
+	{ 293, "MSM8953" },
+	{ 296, "MDM8207" },
+	{ 297, "MDM9207" },
+	{ 298, "MDM9307" },
+	{ 299, "MDM9628" },
+	{ 304, "APQ8053" },
+	{ 305, "MSM8996SG" },
+	{ 310, "MSM8996AU" },
+	{ 311, "APQ8096AU" },
+	{ 312, "APQ8096SG" },
+	{ 317, "SDM660" },
+	{ 318, "SDM630" },
+	{ 319, "APQ8098" },
+	{ 321, "SDM845" },
+	{ 322, "MDM9206" },
+	{ 323, "IPQ8074" },
+	{ 324, "SDA660" },
+	{ 325, "SDM658" },
+	{ 326, "SDA658" },
+	{ 327, "SDA630" },
+	{ 338, "SDM450" },
+	{ 341, "SDA845" },
+	{ 342, "IPQ8072" },
+	{ 343, "IPQ8076" },
+	{ 344, "IPQ8078" },
+	{ 345, "SDM636" },
+	{ 346, "SDA636" },
+	{ 349, "SDM632" },
+	{ 350, "SDA632" },
+	{ 351, "SDA450" },
+	{ 356, "SM8250" },
+	{ 362, "SA8155" },
+	{ 367, "SA8155P" },
+	{ 375, "IPQ8070" },
+	{ 376, "IPQ8071" },
+	{ 377, "SA6155P" },
+	{ 384, "SA6155" },
+	{ 389, "IPQ8072A" },
+	{ 390, "IPQ8074A" },
+	{ 391, "IPQ8076A" },
+	{ 392, "IPQ8078A" },
+	{ 394, "SM6125" },
+	{ 395, "IPQ8070A" },
+	{ 396, "IPQ8071A" },
+	{ 402, "IPQ6018" },
+	{ 403, "IPQ6028" },
+	{ 405, "SA8195P" },
+	{ 421, "IPQ6000" },
+	{ 422, "IPQ6010" },
+	{ 425, "SC7180" },
+	{ 434, "SM6350" },
+	{ 439, "SM8350" },
+	{ 449, "SC8280XP" },
+	{ 453, "IPQ6005" },
+	{ 454, "HOLI" },
+	{ 455, "QRB5165" },
+	{ 457, "SM8450" },
+	{ 459, "SM7225" },
+	{ 460, "SA8295P" },
+	{ 461, "SA8540P" },
+	{ 472, "HOLIPRO" },
+	{ 480, "SM8450" },
+	{ 482, "SM8450" },
+	{ 487, "SC7280" },
+	{ 495, "SC7180P" },
+	{ 507, "BLAIR" },
+	{ 518, "KHAJE" },
+	{ 519, "KALAMA" },
+	{ 536, "KALAMAP" },
+	{ 539, "CINDERRU" },
+	{ 545, "CINDERDU" },
+	{ 557, "PINEAPPLE" },
+	{ 565, "BLAIRP" },
+	{ 629, "NIOBE" },
+	{ 652, "NIOBE" },
+	{ 672, "SERAPH" },
+	{ 673, "SERAPHP" },
+	{ 577, "PINEAPPLEP" },
+	{ 578, "BLAIR-LITE" },
+	{ 605, "SA_MONACOAU_ADAS" },
+	{ 606, "SA_MONACOAU_IVI" },
+	{ 607, "SA_MONACOAU_SRV1L" },
+	{ 614, "CLIFFS" },
+	{ 620, "SA_MONACOAU_SRV1L_FFC" },
+	{ 623, "PITTI" },
+	{ 632, "CLIFFS7" },
+	{ 636, "VOLCANO" },
+	{ 640, "VOLCANO6" },
+	{ 641, "VOLCANO6P" },
+	{ 642, "CLIFFSP" },
+	{ 643, "CLIFFS7P" },
+	{ 682, "SG_PINEAPPLE" },
+	{ 696, "PINEAPPLEQ" },
+	{ 700, "SG_CLIFFS7P" },
+	{ 549, "ANORAK" },
+	{ 554, "NEO-LA" },
+	{ 739, "ALISO-SG" },
+	{ 740, "ALISO-SG2" },
+	{ 525, "NEO-LE" },
+	{ 579, "NEO-LA-V2" },
+	{ 645, "QCM_PINEAPPLE" },
+	{ 646, "QCS_PINEAPPLE" },
+	{ 702, "QCS8625_PINEAPPLE" },
+	{ 712, "VOLCANOP" },
+	{ 788, "SNOWMASS" },
+};
+
+static struct attribute *msm_custom_socinfo_attrs[MAX_SOCINFO_ATTRS];
 
 static const char *socinfo_machine(struct device *dev, unsigned int id)
 {
@@ -479,6 +635,745 @@ static const char *socinfo_machine(struct device *dev, unsigned int id)
 	}
 
 	return NULL;
+}
+
+/* Version 3 */
+static uint32_t socinfo_get_platform_type(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 3) ?
+		 le32_to_cpu(socinfo->hw_plat) : 0)
+		: 0;
+}
+
+/* Version 4 */
+static uint32_t socinfo_get_platform_version(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 4) ?
+		 le32_to_cpu(socinfo->plat_ver) : 0)
+		: 0;
+}
+
+/* Version 6 */
+static uint32_t socinfo_get_platform_subtype(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 6) ?
+		 le32_to_cpu(socinfo->hw_plat_subtype) : 0)
+		: 0;
+}
+
+/* Version 12 */
+static uint32_t socinfo_get_chip_family(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 12) ?
+		 le32_to_cpu(socinfo->chip_family) : 0)
+		: 0;
+}
+
+static uint32_t socinfo_get_raw_device_num(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 12) ?
+		 le32_to_cpu(socinfo->raw_device_num) : 0)
+		: 0;
+}
+
+/* Version 13 */
+static char *socinfo_get_chip_name(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 13) ?
+		 socinfo->chip_id : "N/A")
+		: "N/A";
+}
+
+static uint32_t socinfo_get_nproduct_id(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 13) ?
+		 le32_to_cpu(socinfo->nproduct_id) : 0)
+		: 0;
+}
+
+/* Version 14 */
+static uint32_t socinfo_get_num_clusters(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 14) ?
+		 le32_to_cpu(socinfo->num_clusters) : 0)
+		: 0;
+}
+
+static uint32_t socinfo_get_ncluster_array_offset(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 14) ?
+		 le32_to_cpu(socinfo->ncluster_array_offset) : 0)
+		: 0;
+}
+
+static uint32_t socinfo_get_num_subset_parts(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 14) ?
+		 le32_to_cpu(socinfo->num_subset_parts) : 0)
+		: 0;
+}
+
+static uint32_t socinfo_get_nsubset_parts_array_offset(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 14) ?
+		 le32_to_cpu(socinfo->nsubset_parts_array_offset) : 0)
+		: 0;
+}
+
+static uint32_t
+socinfo_get_subset_parts(void)
+{
+	uint32_t num_parts = socinfo_get_num_subset_parts();
+	uint32_t offset = socinfo_get_nsubset_parts_array_offset();
+	uint32_t sub_parts = 0;
+	void *info = socinfo;
+	uint32_t part_entry;
+	int i;
+
+	if (!num_parts || !offset)
+		return -EINVAL;
+
+	info += offset;
+	for (i = 0; i < num_parts; i++) {
+		part_entry = get_unaligned_le32(info);
+		if (part_entry & 1)
+			sub_parts |= BIT(i);
+		info += sizeof(uint32_t);
+	}
+	return sub_parts;
+}
+
+/* Version 16 */
+static uint32_t socinfo_get_feature_code_id(void)
+{
+	uint32_t fc_id;
+
+	if (!socinfo || socinfo_format < SOCINFO_VERSION(0, 16))
+		return SOCINFO_FC_UNKNOWN;
+
+	fc_id = le32_to_cpu(socinfo->feature_code);
+	if (fc_id <= SOCINFO_FC_UNKNOWN || fc_id >= SOCINFO_FC_INT_RESERVE)
+		return SOCINFO_FC_UNKNOWN;
+
+	return fc_id;
+}
+
+static const char *socinfo_get_feature_code_mapping(void)
+{
+	uint32_t id = socinfo_get_feature_code_id();
+
+	if (id > SOCINFO_FC_UNKNOWN && id < SOCINFO_FC_EXT_RESERVE)
+		return hw_platform_feature_code[id];
+	else if (id >= SOCINFO_FC_W0 && id < SOCINFO_FC_SUBPART_RESERVE)
+		return hw_platform_wfeature_code[id - SOCINFO_FC_W0];
+	else if (id >= SOCINFO_FC_Y0 && id < SOCINFO_FC_INT_RESERVE)
+		return hw_platform_ifeature_code[id - SOCINFO_FC_Y0];
+
+	return NULL;
+}
+
+static uint32_t socinfo_get_pcode_id(void)
+{
+	uint32_t pcode;
+
+	if (!socinfo || socinfo_format < SOCINFO_VERSION(0, 16))
+		return SOCINFO_PCODE_RESERVE;
+
+	pcode = le32_to_cpu(socinfo->pcode);
+	if (pcode <= SOCINFO_PCODE_UNKNOWN || pcode >= SOCINFO_PCODE_RESERVE)
+		return SOCINFO_PCODE_UNKNOWN;
+
+	return pcode;
+}
+
+/* Version 21 */
+static uint32_t socinfo_get_nsubpart_feat_array_offset(void)
+{
+	return socinfo ?
+		(socinfo_format >= SOCINFO_VERSION(0, 21) ?
+		 le32_to_cpu(socinfo->nsubpart_feat_array_offset) : 0)
+		: 0;
+}
+
+/* Exported APIs */
+
+uint32_t socinfo_get_id(void)
+{
+	return (socinfo) ? le32_to_cpu(socinfo->id) : 0;
+}
+EXPORT_SYMBOL(socinfo_get_id);
+
+const char *socinfo_get_id_string(void)
+{
+	uint32_t id = socinfo_get_id();
+
+	return socinfo_machine(NULL, id);
+}
+EXPORT_SYMBOL(socinfo_get_id_string);
+
+uint32_t socinfo_get_serial_number(void)
+{
+	return (socinfo) ? le32_to_cpu(socinfo->serial_num) : 0;
+}
+EXPORT_SYMBOL(socinfo_get_serial_number);
+
+int socinfo_get_feature_code(void)
+{
+	if (socinfo_format < SOCINFO_VERSION(0, 16)) {
+		pr_warn("socinfo: Feature code is not supported by bootloaders\n");
+		return -EINVAL;
+	}
+
+	return socinfo_get_feature_code_id();
+}
+EXPORT_SYMBOL(socinfo_get_feature_code);
+
+int socinfo_get_pcode(void)
+{
+	if (socinfo_format < SOCINFO_VERSION(0, 16)) {
+		pr_warn("socinfo: pcode is not supported by bootloaders\n");
+		return -EINVAL;
+	}
+
+	return socinfo_get_pcode_id();
+}
+EXPORT_SYMBOL(socinfo_get_pcode);
+
+char *socinfo_get_partinfo_part_name(unsigned int part_id)
+{
+	if (socinfo_format < SOCINFO_VERSION(0, 16) || part_id >= SOCINFO_PART_MAX_PARTTYPE)
+		return NULL;
+
+	switch (part_id) {
+	case SOCINFO_PART_GPU:
+		return partinfo[part_id].gpu_info.part_name;
+	default:
+		break;
+	}
+
+	return NULL;
+}
+EXPORT_SYMBOL(socinfo_get_partinfo_part_name);
+
+uint32_t socinfo_get_partinfo_chip_id(unsigned int part_id)
+{
+	uint32_t chip_id;
+
+	if (socinfo_format < SOCINFO_VERSION(0, 16) || part_id >= SOCINFO_PART_MAX_PARTTYPE)
+		return 0;
+
+	switch (part_id) {
+	case SOCINFO_PART_GPU:
+		chip_id = partinfo[part_id].gpu_info.gpu_chip_id;
+		break;
+	default:
+		chip_id = 0;
+		break;
+	}
+
+	return chip_id;
+}
+EXPORT_SYMBOL(socinfo_get_partinfo_chip_id);
+
+uint32_t socinfo_get_partinfo_vulkan_id(unsigned int part_id)
+{
+	if (socinfo_format < SOCINFO_VERSION(0, 16) || part_id != SOCINFO_PART_GPU)
+		return  0;
+
+	return partinfo[part_id].gpu_info.vulkan_id;
+}
+EXPORT_SYMBOL(socinfo_get_partinfo_vulkan_id);
+
+uint32_t
+socinfo_get_cluster_info(enum subset_cluster_type cluster)
+{
+	uint32_t sub_cluster, num_cluster, offset;
+	void *cluster_val;
+	void *info = socinfo;
+
+	if (cluster >= NUM_CLUSTERS_MAX) {
+		pr_err("Bad cluster\n");
+		return -EINVAL;
+	}
+
+	num_cluster = socinfo_get_num_clusters();
+	offset = socinfo_get_ncluster_array_offset();
+
+	if (!num_cluster || !offset)
+		return -EINVAL;
+
+	info += offset;
+	cluster_val = info + (sizeof(uint32_t) * cluster);
+	sub_cluster = get_unaligned_le32(cluster_val);
+
+	return sub_cluster;
+}
+EXPORT_SYMBOL(socinfo_get_cluster_info);
+
+bool
+socinfo_get_part_info(enum subset_part_type part)
+{
+	uint32_t partinfo;
+	uint32_t num_parts = socinfo_get_num_subset_parts();
+
+	if ((part <= PART_UNKNOWN) || (part >= NUM_PARTS_MAX) || (part >= num_parts)) {
+		pr_err("Bad part number\n");
+		return false;
+	}
+
+	partinfo = socinfo_get_subset_parts();
+	if (partinfo < 0) {
+		pr_err("Failed to get part information\n");
+		return false;
+	}
+
+	return (partinfo & BIT(part));
+}
+EXPORT_SYMBOL(socinfo_get_part_info);
+
+/**
+ * socinfo_get_part_count - Get part count
+ * @part: The subset_part_type to be checked
+ *
+ * Return the number of instances supported by the
+ * firmware for the part on success and a negative
+ * errno will be returned in error cases.
+ */
+int
+socinfo_get_part_count(enum subset_part_type part)
+{
+	int part_count = 1;
+	uint32_t num_parts = socinfo_get_num_subset_parts();
+
+	/* TODO: part_count to be read from SMEM after firmware adds support */
+
+	if ((part <= PART_UNKNOWN) || (part >= NUM_PARTS_MAX) || (part >= num_parts)) {
+		pr_err("Bad part number\n");
+		return -EINVAL;
+	}
+
+	return part_count;
+}
+EXPORT_SYMBOL(socinfo_get_part_count);
+
+/**
+ * socinfo_get_subpart_info - Get subpart information
+ * @part: The subset_part_type to be checked
+ * @part_info: Pointer to the subpart information.
+ *             Used to store the subpart information
+ *             for num_parts instances of the part.
+ * @num_parts: Number of instances of the part for
+ *             which the subpart information is required.
+ *
+ * On success subpart information will be stored in the part_info
+ * array for minimum of the number of instances requested and
+ * the number of instances supported by the firmware.
+ *
+ * A value of zero will be returned on success and a negative
+ * errno will be returned in error cases.
+ */
+int
+socinfo_get_subpart_info(enum subset_part_type part,
+		u32 *part_info,
+		u32 num_parts)
+{
+	uint32_t num_subset_parts = 0, offset = 0;
+	void *info = socinfo;
+	u32 i = 0, count = 0;
+	int part_count = 0;
+
+	if (!part_info)
+		return -EINVAL;
+
+	part_count = socinfo_get_part_count(part);
+	if (part_count <= 0)
+		return -EINVAL;
+
+	num_subset_parts = socinfo_get_num_subset_parts();
+	offset = socinfo_get_nsubset_parts_array_offset();
+	if (socinfo_format >= SOCINFO_VERSION(0, 21))
+		offset = socinfo_get_nsubpart_feat_array_offset();
+
+	if (!num_subset_parts || !offset)
+		return -EINVAL;
+
+	info += (offset + (part * sizeof(u32)));
+	count = min_t(u32, num_parts, part_count);
+	for (i = 0; i < count; i++) {
+		part_info[i] = get_unaligned_le32(info);
+		info += sizeof(u32);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_subpart_info);
+
+/* End Exported APIs */
+
+/* Sysfs interface */
+
+/* Version 3 */
+static ssize_t
+msm_get_hw_platform(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t hw_type;
+
+	hw_type = socinfo_get_platform_type();
+
+	return scnprintf(buf, PAGE_SIZE, "%-.32s\n",
+			hw_platform[hw_type]);
+}
+ATTR_DEFINE(hw_platform);
+
+/* Version 4 */
+static ssize_t
+msm_get_platform_version(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%u\n",
+			socinfo_get_platform_version());
+}
+ATTR_DEFINE(platform_version);
+
+/* Version 6 */
+static ssize_t
+msm_get_platform_subtype_id(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t hw_subtype;
+
+	hw_subtype = socinfo_get_platform_subtype();
+	return scnprintf(buf, PAGE_SIZE, "%u\n",
+			hw_subtype);
+}
+ATTR_DEFINE(platform_subtype_id);
+
+static ssize_t
+msm_get_platform_subtype(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t hw_subtype;
+
+	hw_subtype = socinfo_get_platform_subtype();
+	if (socinfo_get_platform_type() == HW_PLATFORM_QRD) {
+		if (hw_subtype >= PLATFORM_SUBTYPE_QRD_INVALID) {
+			pr_err("Invalid hardware platform sub type for qrd found\n");
+			hw_subtype = PLATFORM_SUBTYPE_QRD_INVALID;
+		}
+		return scnprintf(buf, PAGE_SIZE, "%-.32s\n",
+				qrd_hw_platform_subtype[hw_subtype]);
+	} else {
+		if (hw_subtype >= PLATFORM_SUBTYPE_INVALID) {
+			pr_err("Invalid hardware platform subtype\n");
+			hw_subtype = PLATFORM_SUBTYPE_INVALID;
+		}
+		return scnprintf(buf, PAGE_SIZE, "%-.32s\n",
+				hw_platform_subtype[hw_subtype]);
+	}
+}
+ATTR_DEFINE(platform_subtype);
+
+/* Version 12 */
+static ssize_t
+msm_get_chip_family(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_chip_family());
+}
+ATTR_DEFINE(chip_family);
+
+static ssize_t
+msm_get_raw_device_number(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_raw_device_num());
+}
+ATTR_DEFINE(raw_device_number);
+
+/* Version 13 */
+static ssize_t
+msm_get_chip_id(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%-.32s\n",
+			socinfo_get_chip_name());
+}
+ATTR_DEFINE(chip_id);
+
+static ssize_t
+msm_get_nproduct_id(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_nproduct_id());
+}
+ATTR_DEFINE(nproduct_id);
+
+/* Version 14 */
+static ssize_t
+msm_get_num_clusters(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_num_clusters());
+}
+ATTR_DEFINE(num_clusters);
+
+static ssize_t
+msm_get_ncluster_array_offset(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_ncluster_array_offset());
+}
+ATTR_DEFINE(ncluster_array_offset);
+
+static ssize_t
+msm_get_subset_cores(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t sub_cluster = socinfo_get_cluster_info(CLUSTER_CPUSS);
+
+	return scnprintf(buf, PAGE_SIZE, "%x\n", sub_cluster);
+}
+ATTR_DEFINE(subset_cores);
+
+static ssize_t
+msm_get_num_subset_parts(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_num_subset_parts());
+}
+ATTR_DEFINE(num_subset_parts);
+
+static ssize_t
+msm_get_nsubset_parts_array_offset(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
+			socinfo_get_nsubset_parts_array_offset());
+}
+ATTR_DEFINE(nsubset_parts_array_offset);
+
+static ssize_t
+msm_get_subset_parts(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t sub_parts = socinfo_get_subset_parts();
+
+	return scnprintf(buf, PAGE_SIZE, "%x\n", sub_parts);
+}
+ATTR_DEFINE(subset_parts);
+
+CREATE_PART_FUNCTION(gpu, PART_GPU);
+CREATE_PART_FUNCTION(video, PART_VIDEO);
+CREATE_PART_FUNCTION(camera, PART_CAMERA);
+CREATE_PART_FUNCTION(display, PART_DISPLAY);
+CREATE_PART_FUNCTION(audio, PART_AUDIO);
+CREATE_PART_FUNCTION(modem, PART_MODEM);
+CREATE_PART_FUNCTION(wlan, PART_WLAN);
+CREATE_PART_FUNCTION(comp, PART_COMP);
+CREATE_PART_FUNCTION(sensors, PART_SENSORS);
+CREATE_PART_FUNCTION(npu, PART_NPU);
+CREATE_PART_FUNCTION(spss, PART_SPSS);
+CREATE_PART_FUNCTION(nav, PART_NAV);
+CREATE_PART_FUNCTION(comp1, PART_COMP1);
+CREATE_PART_FUNCTION(display1, PART_DISPLAY1);
+CREATE_PART_FUNCTION(nsp, PART_NSP);
+CREATE_PART_FUNCTION(eva, PART_EVA);
+
+/* Version 16 */
+static ssize_t
+msm_get_sku(struct device *dev,
+			struct device_attribute *attr,
+			char *buf)
+{
+	return sysfs_emit(buf, "%s\n", sku ? sku : "Unknown");
+}
+ATTR_DEFINE(sku);
+
+static ssize_t
+msm_get_pcode(struct device *dev,
+			struct device_attribute *attr,
+			char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n", socinfo_get_pcode_id());
+}
+ATTR_DEFINE(pcode);
+
+static ssize_t
+msm_get_feature_code(struct device *dev,
+			struct device_attribute *attr,
+			char *buf)
+{
+	const char *feature_code = socinfo_get_feature_code_mapping();
+
+	return sysfs_emit(buf, "%s\n", feature_code ? feature_code : "Unknown");
+}
+ATTR_DEFINE(feature_code);
+
+/* End Sysfs Interfaces */
+
+static umode_t soc_info_attribute(struct kobject *kobj,
+		struct attribute *attr,
+		int index)
+{
+	return attr->mode;
+}
+
+static const struct attribute_group custom_soc_attr_group = {
+	.attrs = msm_custom_socinfo_attrs,
+	.is_visible = soc_info_attribute,
+};
+
+static void socinfo_populate_sysfs(struct qcom_socinfo *qcom_socinfo)
+{
+	int i = 0;
+
+	switch (socinfo_format) {
+	case SOCINFO_VERSION(0, 23):
+	case SOCINFO_VERSION(0, 21):
+	case SOCINFO_VERSION(0, 20):
+	case SOCINFO_VERSION(0, 19):
+	case SOCINFO_VERSION(0, 18):
+	case SOCINFO_VERSION(0, 17):
+	case SOCINFO_VERSION(0, 16):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_sku.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_feature_code.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_pcode.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 15):
+	case SOCINFO_VERSION(0, 14):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_num_clusters.attr;
+		msm_custom_socinfo_attrs[i++] =
+			&dev_attr_ncluster_array_offset.attr;
+		msm_custom_socinfo_attrs[i++] =
+			&dev_attr_num_subset_parts.attr;
+		msm_custom_socinfo_attrs[i++] =
+			&dev_attr_nsubset_parts_array_offset.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_subset_cores.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_subset_parts.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_gpu.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_video.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_camera.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_display.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_audio.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_modem.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_wlan.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_comp.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_sensors.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_npu.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_spss.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_nav.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_comp1.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_display1.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_nsp.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_eva.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 13):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_chip_id.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_nproduct_id.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 12):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_chip_family.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_raw_device_number.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 11):
+	case SOCINFO_VERSION(0, 10):
+	case SOCINFO_VERSION(0, 9):
+	case SOCINFO_VERSION(0, 8):
+	case SOCINFO_VERSION(0, 7):
+	case SOCINFO_VERSION(0, 6):
+		msm_custom_socinfo_attrs[i++] =
+			&dev_attr_platform_subtype_id.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_platform_subtype.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 5):
+	case SOCINFO_VERSION(0, 4):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_platform_version.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 3):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_hw_platform.attr;
+		fallthrough;
+	case SOCINFO_VERSION(0, 2):
+	case SOCINFO_VERSION(0, 1):
+		break;
+	default:
+		pr_err("Unknown socinfo format: v%u.%u\n",
+				SOCINFO_MAJOR(socinfo_format),
+				SOCINFO_MINOR(socinfo_format));
+		break;
+	}
+
+	msm_custom_socinfo_attrs[i++] = NULL;
+	qcom_socinfo->attr.custom_attr_group = &custom_soc_attr_group;
+}
+
+void socinfo_enumerate_partinfo_details(void)
+{
+	unsigned int partinfo_array_offset;
+	unsigned int nnum_partname_mapping;
+	void *ptr = socinfo;
+	int i, part_type;
+
+	if (socinfo_format < SOCINFO_VERSION(0, 16))
+		return;
+
+	partinfo_array_offset = le32_to_cpu(socinfo->npartnamemap_offset);
+	nnum_partname_mapping = le32_to_cpu(socinfo->nnum_partname_mapping);
+
+	if (nnum_partname_mapping >  SOCINFO_PART_MAX_PARTTYPE) {
+		pr_warn("socinfo: Mismatch between bootloaders and hlos\n");
+		return;
+	}
+
+	ptr += partinfo_array_offset;
+	for (i = 0; i < nnum_partname_mapping; i++) {
+		part_type = get_unaligned_le32(ptr);
+		if (part_type > SOCINFO_PART_MAX_PARTTYPE)
+			pr_warn("socinfo: part type mismatch\n");
+
+		partinfo[part_type].part_type = part_type;
+		ptr += sizeof(u32);
+
+		partinfo[part_type].gpu_info.gpu_chip_id = get_unaligned_le32(ptr);
+		ptr += sizeof(u32);
+
+		partinfo[part_type].gpu_info.vulkan_id = get_unaligned_le32(ptr);
+		ptr += sizeof(u32);
+
+		strscpy(partinfo[part_type].gpu_info.part_name, ptr, PART_NAME_MAX);
+		ptr += PART_NAME_MAX;
+	}
 }
 
 #ifdef CONFIG_DEBUG_FS
@@ -621,6 +1516,13 @@ static void socinfo_debugfs_init(struct qcom_socinfo *qcom_socinfo,
 			   &qcom_socinfo->info.fmt);
 
 	switch (qcom_socinfo->info.fmt) {
+	case SOCINFO_VERSION(0, 23):
+	case SOCINFO_VERSION(0, 21):
+	case SOCINFO_VERSION(0, 20):
+		qcom_socinfo->info.raw_package_type = __le32_to_cpu(info->raw_package_type);
+		debugfs_create_u32("raw_package_type", 0444, qcom_socinfo->dbg_root,
+				   &qcom_socinfo->info.raw_package_type);
+		fallthrough;
 	case SOCINFO_VERSION(0, 19):
 		qcom_socinfo->info.num_func_clusters = __le32_to_cpu(info->num_func_clusters);
 		qcom_socinfo->info.boot_cluster = __le32_to_cpu(info->boot_cluster);
@@ -659,7 +1561,7 @@ static void socinfo_debugfs_init(struct qcom_socinfo *qcom_socinfo,
 		qcom_socinfo->info.ncluster_array_offset = __le32_to_cpu(info->ncluster_array_offset);
 		qcom_socinfo->info.num_subset_parts = __le32_to_cpu(info->num_subset_parts);
 		qcom_socinfo->info.nsubset_parts_array_offset =
-			__le32_to_cpu(info->nsubset_parts_array_offset);
+					__le32_to_cpu(info->nsubset_parts_array_offset);
 
 		debugfs_create_u32("num_clusters", 0444, qcom_socinfo->dbg_root,
 				   &qcom_socinfo->info.num_clusters);
@@ -788,6 +1690,7 @@ static int qcom_socinfo_probe(struct platform_device *pdev)
 	struct qcom_socinfo *qs;
 	struct socinfo *info;
 	size_t item_size;
+	const char *machine, *fc;
 
 	info = qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_HW_SW_BUILD_ID,
 			      &item_size);
@@ -796,6 +1699,8 @@ static int qcom_socinfo_probe(struct platform_device *pdev)
 		return PTR_ERR(info);
 	}
 
+	socinfo_format = le32_to_cpu(info->fmt);
+	socinfo = info;
 	qs = devm_kzalloc(&pdev->dev, sizeof(*qs), GFP_KERNEL);
 	if (!qs)
 		return -ENOMEM;
@@ -819,6 +1724,15 @@ static int qcom_socinfo_probe(struct platform_device *pdev)
 			return -ENOMEM;
 	}
 
+	if (socinfo_format >= SOCINFO_VERSION(0, 16)) {
+		socinfo_enumerate_partinfo_details();
+		machine = socinfo_machine(&pdev->dev, le32_to_cpu(info->id));
+		fc = socinfo_get_feature_code_mapping();
+		sku = devm_kasprintf(&pdev->dev, GFP_KERNEL, "%s-%u-%s",
+			machine, socinfo_get_pcode_id(), fc);
+	}
+
+	socinfo_populate_sysfs(qs);
 	qs->soc_dev = soc_device_register(&qs->attr);
 	if (IS_ERR(qs->soc_dev))
 		return PTR_ERR(qs->soc_dev);

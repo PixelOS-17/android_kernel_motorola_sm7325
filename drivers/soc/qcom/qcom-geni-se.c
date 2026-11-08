@@ -13,6 +13,7 @@
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
+#include <linux/interconnect.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -897,6 +898,77 @@ void geni_se_rx_dma_unprep(struct geni_se *se, dma_addr_t iova, size_t len)
 }
 EXPORT_SYMBOL_GPL(geni_se_rx_dma_unprep);
 
+/**
+ * geni_se_wrapper_dev() - get the QUP wrapper device of a serial engine
+ * @dev:	serial engine device
+ *
+ * The 5.4 binding (qcom,qupv3-geni-se, used by the stock lahaina DT) puts
+ * the serial engines next to their wrapper and links them with
+ * qcom,wrapper-core; otherwise the wrapper is the parent.
+ *
+ * Return: the wrapper device, NULL if it isn't created yet.
+ */
+struct device *geni_se_wrapper_dev(struct device *dev)
+{
+	struct platform_device *pdev;
+	struct device_node *np;
+
+	np = of_parse_phandle(dev->of_node, "qcom,wrapper-core", 0);
+	if (!np)
+		return dev->parent;
+
+	/* The reference is kept: the wrapper outlives its serial engines */
+	pdev = of_find_device_by_node(np);
+	of_node_put(np);
+
+	return pdev ? &pdev->dev : NULL;
+}
+EXPORT_SYMBOL(geni_se_wrapper_dev);
+
+static void geni_icc_put(void *path)
+{
+	icc_put(path);
+}
+
+/*
+ * 5.4 binding: no interconnects on the serial engine; the wrapper's
+ * qcom,msm-bus,vectors-bus-ids hold the QUP core and the DDR path as
+ * interconnect node IDs (the 5.4 msm-geni-se voted them).
+ */
+static int geni_icc_get_legacy(struct geni_se *se)
+{
+	static const int paths[] = { GENI_TO_CORE, GENI_TO_DDR };
+	struct device *wrapper = geni_se_wrapper_dev(se->dev);
+	struct icc_path *path;
+	u32 ids[4];
+	int i, ret;
+
+	if (!wrapper)
+		return -EPROBE_DEFER;
+
+	if (of_property_read_u32_array(wrapper->of_node,
+				       "qcom,msm-bus,vectors-bus-ids",
+				       ids, ARRAY_SIZE(ids)))
+		return -ENODATA;
+
+	for (i = 0; i < ARRAY_SIZE(paths); i++) {
+		path = icc_get(se->dev, ids[2 * i], ids[2 * i + 1]);
+		if (IS_ERR(path))
+			return PTR_ERR(path);
+
+		ret = devm_add_action_or_reset(se->dev, geni_icc_put, path);
+		if (ret)
+			return ret;
+
+		se->icc_paths[paths[i]].path = path;
+	}
+
+	dev_info(se->dev, "QUP core path %u-%u, DDR path %u-%u from %pOF\n",
+		 ids[0], ids[1], ids[2], ids[3], wrapper->of_node);
+
+	return 0;
+}
+
 int geni_icc_get(struct geni_se *se, const char *icc_ddr)
 {
 	int i, err;
@@ -904,6 +976,12 @@ int geni_icc_get(struct geni_se *se, const char *icc_ddr)
 
 	if (has_acpi_companion(se->dev))
 		return 0;
+
+	if (!of_find_property(se->dev->of_node, "interconnects", NULL)) {
+		err = geni_icc_get_legacy(se);
+		if (err != -ENODATA)
+			return err;
+	}
 
 	for (i = 0; i < ARRAY_SIZE(se->icc_paths); i++) {
 		if (!icc_names[i])
@@ -1359,6 +1437,53 @@ int geni_load_se_firmware(struct geni_se *se, enum geni_se_protocol_type protoco
 }
 EXPORT_SYMBOL_GPL(geni_load_se_firmware);
 
+static const char * const qup_clks[2];
+
+static void geni_se_put_legacy_clks(void *data)
+{
+	struct geni_wrapper *wrapper = data;
+
+	clk_bulk_put(wrapper->num_clks, wrapper->clks);
+}
+
+/*
+ * 5.4 binding: the wrapper's AHB clocks are listed on each serial engine
+ * linked to it with qcom,wrapper-core (the same clocks on every engine of
+ * a wrapper); take them from the first one.
+ */
+static int geni_se_get_legacy_clks(struct geni_wrapper *wrapper)
+{
+	struct device *dev = wrapper->dev;
+	struct device_node *np, *wnp;
+	int i, ret;
+
+	for_each_node_with_property(np, "qcom,wrapper-core") {
+		wnp = of_parse_phandle(np, "qcom,wrapper-core", 0);
+		of_node_put(wnp);
+		if (wnp != dev->of_node)
+			continue;
+
+		for (i = 0; i < ARRAY_SIZE(qup_clks); i++) {
+			wrapper->clks[i].id = qup_clks[i];
+			wrapper->clks[i].clk = of_clk_get_by_name(np, qup_clks[i]);
+			if (IS_ERR(wrapper->clks[i].clk)) {
+				ret = PTR_ERR(wrapper->clks[i].clk);
+				clk_bulk_put(i, wrapper->clks);
+				dev_err_probe(dev, ret, "no %s clock on %pOF\n",
+					      qup_clks[i], np);
+				of_node_put(np);
+				return ret;
+			}
+		}
+		of_node_put(np);
+
+		wrapper->num_clks = ARRAY_SIZE(qup_clks);
+		return devm_add_action_or_reset(dev, geni_se_put_legacy_clks, wrapper);
+	}
+
+	return 0;
+}
+
 static int geni_se_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -1385,6 +1510,13 @@ static int geni_se_probe(struct platform_device *pdev)
 		for (i = 0; i < wrapper->num_clks; ++i)
 			wrapper->clks[i].id = desc->clks[i];
 
+		if (of_device_is_compatible(dev->of_node, "qcom,qupv3-geni-se")) {
+			ret = geni_se_get_legacy_clks(wrapper);
+			if (ret)
+				return ret;
+			goto out;
+		}
+
 		ret = of_count_phandle_with_args(dev->of_node, "clocks", "#clock-cells");
 		if (ret < 0) {
 			dev_err(dev, "invalid clocks property at %pOF\n", dev->of_node);
@@ -1404,12 +1536,13 @@ static int geni_se_probe(struct platform_device *pdev)
 		}
 	}
 
+out:
 	dev_set_drvdata(dev, wrapper);
 	dev_dbg(dev, "GENI SE Driver probed\n");
 	return devm_of_platform_populate(dev);
 }
 
-static const char * const qup_clks[] = {
+static const char * const qup_clks[2] = {
 	"m-ahb",
 	"s-ahb",
 };
@@ -1419,21 +1552,14 @@ static const struct geni_se_desc qup_desc = {
 	.num_clks = ARRAY_SIZE(qup_clks),
 };
 
-static const struct geni_se_desc sa8255p_qup_desc = {};
-
-static const char * const i2c_master_hub_clks[] = {
-	"s-ahb",
-};
-
-static const struct geni_se_desc i2c_master_hub_desc = {
-	.clks = i2c_master_hub_clks,
-	.num_clks = ARRAY_SIZE(i2c_master_hub_clks),
+/* 5.4 binding: the AHB clocks are on each serial engine, not the wrapper */
+static const struct geni_se_desc qupv3_legacy_desc = {
+	.num_clks = 0,
 };
 
 static const struct of_device_id geni_se_dt_match[] = {
 	{ .compatible = "qcom,geni-se-qup", .data = &qup_desc },
-	{ .compatible = "qcom,geni-se-i2c-master-hub", .data = &i2c_master_hub_desc },
-	{ .compatible = "qcom,sa8255p-geni-se-qup", .data = &sa8255p_qup_desc },
+	{ .compatible = "qcom,qupv3-geni-se", .data = &qupv3_legacy_desc },
 	{}
 };
 MODULE_DEVICE_TABLE(of, geni_se_dt_match);
