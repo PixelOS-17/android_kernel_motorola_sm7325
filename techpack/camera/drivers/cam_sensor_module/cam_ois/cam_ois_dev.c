@@ -233,9 +233,9 @@ static int cam_ois_init_subdev_param(struct cam_ois_ctrl_t *o_ctrl)
 	return rc;
 }
 
-static int cam_ois_i2c_driver_probe(struct i2c_client *client,
-	 const struct i2c_device_id *id)
+static int cam_ois_i2c_driver_probe(struct i2c_client *client)
 {
+	const struct i2c_device_id *id = i2c_client_get_device_id(client);
 	int                          rc = 0;
 	struct cam_ois_ctrl_t       *o_ctrl = NULL;
 	struct cam_ois_soc_private  *soc_private = NULL;
@@ -782,10 +782,9 @@ static int32_t cam_ois_platform_driver_probe(
 	return rc;
 }
 
-static int cam_ois_platform_driver_remove(struct platform_device *pdev)
+static void cam_ois_platform_driver_remove(struct platform_device *pdev)
 {
 	component_del(&pdev->dev, &cam_ois_component_ops);
-	return 0;
 }
 
 static const struct of_device_id cam_ois_dt_match[] = {

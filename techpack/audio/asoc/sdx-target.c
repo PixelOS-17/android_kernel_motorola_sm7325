@@ -1437,10 +1437,10 @@ static void mdm_ext_control(struct snd_soc_dapm_context *dapm)
 static int mdm_mi2s_set_spk(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
 	struct snd_soc_dapm_context *dapm;
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	pr_debug("%s()\n", __func__);
 
@@ -2219,7 +2219,7 @@ static int mdm_mi2s_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		goto done;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 	snd_soc_dapm_new_controls(dapm, mdm9650_dapm_widgets,
 				  ARRAY_SIZE(mdm9650_dapm_widgets));
 
@@ -2315,7 +2315,7 @@ static int mdm_mi2s_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa881x_set_channel_map(component, &spkleft_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
@@ -2334,7 +2334,7 @@ static int mdm_mi2s_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa881x_set_channel_map(component, &spkright_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
@@ -3611,7 +3611,7 @@ err:
 	return ret;
 }
 
-static int mdm_asoc_machine_remove(struct platform_device *pdev)
+static void mdm_asoc_machine_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 	struct mdm_machine_data *pdata = snd_soc_card_get_drvdata(card);
@@ -3624,8 +3624,6 @@ static int mdm_asoc_machine_remove(struct platform_device *pdev)
 	iounmap(pdata->lpaif_sec_muxsel_virt_addr);
 	iounmap(pdata->lpass_mux_mic_ctl_virt_addr);
 	snd_soc_unregister_card(card);
-
-	return 0;
 }
 
 static struct platform_driver mdm_asoc_machine_driver = {

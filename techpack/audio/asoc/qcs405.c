@@ -3666,7 +3666,7 @@ static int msm_mi2s_rx_format_put(struct snd_kcontrol *kcontrol,
 	struct snd_soc_card *card = NULL;
 	int idx = mi2s_get_port_idx(kcontrol);
 
-	component = snd_soc_kcontrol_component(kcontrol);
+	component = snd_kcontrol_chip(kcontrol);
 	card = kcontrol->private_data;
 	pdata = snd_soc_card_get_drvdata(card);
 
@@ -6093,7 +6093,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	if (!strcmp(dev_name(codec_dai->dev), "tasha_codec")) {
 		component = snd_soc_rtdcom_lookup(rtd, "tasha_codec");
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 	}
 
 	ret = snd_soc_add_component_controls(component, msm_snd_sb_controls,
@@ -6176,7 +6176,7 @@ static int msm_va_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 		return -EINVAL;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_snd_va_controls,
 					 ARRAY_SIZE(msm_snd_va_controls));
@@ -6230,7 +6230,7 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_snd_wsa_controls,
 					 ARRAY_SIZE(msm_snd_wsa_controls));
@@ -9872,7 +9872,7 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 		pr_err("%s component is NULL\n", __func__);
 		return -EINVAL;
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	if (!strcmp(component->name_prefix, "SpkrLeft")) {
 		dev_dbg(component->dev, "%s: setting left ch map to codec %s\n",
@@ -10714,13 +10714,11 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	audio_notifier_deregister("qcs405");
 	msm_i2s_auxpcm_deinit();
 	msm_mdf_mem_deinit();
-
-	return 0;
 }
 
 static struct platform_driver qcs405_asoc_machine_driver = {

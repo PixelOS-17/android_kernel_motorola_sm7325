@@ -692,7 +692,7 @@ static int ucsi_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int ucsi_remove(struct platform_device *pdev)
+static void ucsi_remove(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct ucsi_dev *udev = dev_get_drvdata(dev);

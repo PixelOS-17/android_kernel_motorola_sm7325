@@ -446,7 +446,7 @@ err_thermal_unreg:
 	return ret;
 }
 
-static int mmi_sys_temp_remove(struct platform_device *pdev)
+static void mmi_sys_temp_remove(struct platform_device *pdev)
 {
 	int i;
 	struct mmi_sys_temp_dev *dev =  platform_get_drvdata(pdev);
@@ -457,7 +457,6 @@ static int mmi_sys_temp_remove(struct platform_device *pdev)
 	misc_deregister(&mmi_sys_temp_misc);
 	platform_set_drvdata(pdev, NULL);
 	devm_kfree(&pdev->dev, sys_temp_dev);
-	return 0;
 }
 
 static const struct of_device_id mmi_sys_temp_match_table[] = {

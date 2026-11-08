@@ -186,15 +186,13 @@ static int pe_sens_device_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int pe_sens_device_remove(struct platform_device *pdev)
+static void pe_sens_device_remove(struct platform_device *pdev)
 {
 	struct pe_sensor_data *pe_sens =
 		(struct pe_sensor_data *)dev_get_drvdata(&pdev->dev);
 
 	qti_update_tz_ops(pe_sens->tz_dev, false);
 	devm_thermal_of_zone_unregister(pe_sens->dev, pe_sens->tz_dev);
-
-	return 0;
 }
 
 static const struct of_device_id pe_sens_device_match[] = {

@@ -3929,7 +3929,7 @@ static int qti_charger_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int qti_charger_remove(struct platform_device *pdev)
+static void qti_charger_remove(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct qti_charger *chg= dev_get_drvdata(dev);

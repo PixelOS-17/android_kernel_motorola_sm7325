@@ -267,7 +267,7 @@ static int fe_dai_probe(struct snd_soc_dai *dai)
 		pr_err("%s invalid params\n", __func__);
 		return -EINVAL;
 	}
-	dapm = snd_soc_component_get_dapm(dai->component);
+	dapm = snd_soc_component_to_dapm(dai->component);
 	memset(&intercon, 0, sizeof(intercon));
 	if (dai->driver->playback.stream_name) {
 		dev_dbg(dai->dev, "%s add route for widget %s",
@@ -3279,10 +3279,9 @@ static int msm_fe_dai_dev_probe(struct platform_device *pdev)
 		msm_fe_dais, ARRAY_SIZE(msm_fe_dais));
 }
 
-static int msm_fe_dai_dev_remove(struct platform_device *pdev)
+static void msm_fe_dai_dev_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_dai_fe_dt_match[] = {

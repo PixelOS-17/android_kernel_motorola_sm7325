@@ -666,7 +666,7 @@ static int bm_ulog_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int bm_ulog_remove(struct platform_device *pdev)
+static void bm_ulog_remove(struct platform_device *pdev)
 {
 	struct bm_ulog_dev *bmdev = platform_get_drvdata(pdev);
 	int rc;
@@ -679,8 +679,6 @@ static int bm_ulog_remove(struct platform_device *pdev)
 		return rc;
 	}
 	g_bmdev = NULL;
-
-	return 0;
 }
 
 static const struct of_device_id bm_ulog_match_table[] = {

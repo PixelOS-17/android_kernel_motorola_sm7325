@@ -3539,7 +3539,7 @@ error_rotator_base_init:
  * sde_rotator_remove - rotator device remove method.
  * @pdev: Pointer rotator platform device.
  */
-static int sde_rotator_remove(struct platform_device *pdev)
+static void sde_rotator_remove(struct platform_device *pdev)
 {
 	struct sde_rotator_device *rot_dev;
 	int i;
@@ -3547,7 +3547,7 @@ static int sde_rotator_remove(struct platform_device *pdev)
 	rot_dev = platform_get_drvdata(pdev);
 	if (rot_dev == NULL) {
 		SDEDEV_ERR(&pdev->dev, "fail get rotator drvdata\n");
-		return 0;
+		return;
 	}
 
 	for (i = MAX_ROT_OPEN_SESSION - 1; i >= 0; i--)
@@ -3560,7 +3560,6 @@ static int sde_rotator_remove(struct platform_device *pdev)
 	sde_rotator_core_destroy(rot_dev->mgr);
 	sde_rotator_base_destroy(rot_dev->mdata);
 	kfree(rot_dev);
-	return 0;
 }
 
 static const struct dev_pm_ops sde_rotator_pm_ops = {
@@ -3597,9 +3596,8 @@ static int sde_rotator_probe(struct platform_device *pdev)
  * sde_rotator_remove - rotator device remove method.
  * @pdev: Pointer rotator platform device.
  */
-static int sde_rotator_remove(struct platform_device *pdev)
+static void sde_rotator_remove(struct platform_device *pdev)
 {
-	return 0;
 }
 
 /* SDE Rotator platform driver definition */

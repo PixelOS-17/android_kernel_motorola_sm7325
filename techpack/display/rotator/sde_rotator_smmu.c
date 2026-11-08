@@ -640,7 +640,7 @@ release_vreg:
 	return rc;
 }
 
-int sde_smmu_remove(struct platform_device *pdev)
+void sde_smmu_remove(struct platform_device *pdev)
 {
 	int i;
 	struct sde_smmu_client *sde_smmu;
@@ -662,7 +662,6 @@ int sde_smmu_remove(struct platform_device *pdev)
 		sde_smmu->mp.vreg_config = NULL;
 		sde_smmu->mp.num_vreg = 0;
 	}
-	return 0;
 }
 
 static struct platform_driver sde_smmu_driver = {

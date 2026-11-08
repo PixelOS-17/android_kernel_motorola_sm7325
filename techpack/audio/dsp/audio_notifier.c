@@ -651,10 +651,8 @@ static int audio_notify_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int audio_notify_remove(struct platform_device *pdev)
+static void audio_notify_remove(struct platform_device *pdev)
 {
-
-	return 0;
 }
 
 static const struct of_device_id adsp_notify_dt_match[] = {

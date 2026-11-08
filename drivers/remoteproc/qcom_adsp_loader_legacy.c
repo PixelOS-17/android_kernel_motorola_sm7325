@@ -193,7 +193,7 @@ put_rproc:
 	return ret;
 }
 
-static int dsp_loader_remove(struct platform_device *pdev)
+static void dsp_loader_remove(struct platform_device *pdev)
 {
 	struct dsp_loader *ldr = platform_get_drvdata(pdev);
 
@@ -203,8 +203,6 @@ static int dsp_loader_remove(struct platform_device *pdev)
 	if (ldr->booted)
 		rproc_shutdown(ldr->rproc);
 	rproc_put(ldr->rproc);
-
-	return 0;
 }
 
 static const struct dsp_loader_data adsp_loader_data = {

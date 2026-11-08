@@ -821,7 +821,7 @@ report_read_failure:
 	return -EINVAL;
 }
 
-static int qcom_smp2p_remove(struct platform_device *pdev)
+static void qcom_smp2p_remove(struct platform_device *pdev)
 {
 	struct qcom_smp2p *smp2p = platform_get_drvdata(pdev);
 	struct smp2p_entry *entry;
@@ -844,8 +844,6 @@ static int qcom_smp2p_remove(struct platform_device *pdev)
 	kfree(smp2p->irq_devname);
 
 	smp2p->out->valid_entries = 0;
-
-	return 0;
 }
 
 static int qcom_smp2p_restore(struct device *dev)

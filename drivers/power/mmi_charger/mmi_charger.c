@@ -3195,7 +3195,7 @@ exit:
 	return rc;
 }
 
-static int mmi_charger_remove(struct platform_device *pdev)
+static void mmi_charger_remove(struct platform_device *pdev)
 {
 	struct mmi_charger_chip *chip = platform_get_drvdata(pdev);
 
@@ -3238,8 +3238,6 @@ static int mmi_charger_remove(struct platform_device *pdev)
 	}
 	PM_WAKEUP_UNREGISTER(chip->mmi_hb_wake_source);
 	ipc_log_context_destroy(chip->ipc_log);
-
-	return 0;
 }
 
 static void mmi_charger_shutdown(struct platform_device *pdev)

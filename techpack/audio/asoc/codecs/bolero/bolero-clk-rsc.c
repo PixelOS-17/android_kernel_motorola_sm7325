@@ -724,7 +724,7 @@ err:
 	return ret;
 }
 
-static int bolero_clk_rsc_remove(struct platform_device *pdev)
+static void bolero_clk_rsc_remove(struct platform_device *pdev)
 {
 	struct bolero_clk_rsc *priv = dev_get_drvdata(&pdev->dev);
 
@@ -734,8 +734,6 @@ static int bolero_clk_rsc_remove(struct platform_device *pdev)
 		return -EINVAL;
 	mutex_destroy(&priv->rsc_clk_lock);
 	mutex_destroy(&priv->fs_gen_lock);
-
-	return 0;
 }
 
 static const struct of_device_id bolero_clk_rsc_dt_match[] = {

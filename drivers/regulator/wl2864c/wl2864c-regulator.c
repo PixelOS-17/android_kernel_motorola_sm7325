@@ -266,8 +266,7 @@ static int wl2864c_regulator_init(struct wl2864c *chip)
 	return 0;
 }
 
-static int wl2864c_i2c_probe(struct i2c_client *client,
-			      const struct i2c_device_id *id)
+static int wl2864c_i2c_probe(struct i2c_client *client)
 {
 	struct device *dev = &client->dev;
 	struct wl2864c *chip;

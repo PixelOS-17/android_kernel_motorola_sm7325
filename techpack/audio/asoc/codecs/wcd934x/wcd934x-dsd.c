@@ -546,7 +546,7 @@ static int tavil_dsd_vol_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(component);
 	int nv[DSD_MAX], cv[DSD_MAX];
 	int step_size, nv1;
@@ -613,7 +613,7 @@ static int tavil_dsd_vol_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(component);
 
 	if (dsd_conf) {
@@ -730,7 +730,7 @@ struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_component *component)
 	if (!component)
 		return NULL;
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	/* Read efuse register to check if DSD is supported */
 	val = snd_soc_component_read32(component,

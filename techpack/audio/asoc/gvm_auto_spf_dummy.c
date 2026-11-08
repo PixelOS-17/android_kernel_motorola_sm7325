@@ -903,10 +903,8 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
-
-	return 0;
 }
 
 static struct platform_driver gvm_asoc_machine_driver = {

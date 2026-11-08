@@ -27,7 +27,7 @@ DECLARE_EVENT_CLASS(iommu_tlbi,
 	),
 
 	TP_fast_assign(
-		__assign_str(group_name, dev_name(domain->dev));
+		__assign_str(group_name);
 	),
 
 	TP_printk("group=%s",
@@ -64,7 +64,7 @@ DECLARE_EVENT_CLASS(iommu_pgtable,
 	),
 
 	TP_fast_assign(
-		__assign_str(group_name, dev_name(domain->dev));
+		__assign_str(group_name);
 		__entry->iova = iova;
 		__entry->ipa = ipa;
 		__entry->granule = granule;
@@ -107,7 +107,7 @@ DECLARE_EVENT_CLASS(iommu_map_pages,
 	),
 
 	TP_fast_assign(
-		__assign_str(group_name, dev_name(domain->dev));
+		__assign_str(group_name);
 		__entry->iova = iova;
 		__entry->pgsize = pgsize;
 		__entry->pgcount = pgcount;
@@ -166,7 +166,7 @@ TRACE_EVENT(map_sg,
 	),
 
 	TP_fast_assign(
-		__assign_str(group_name, dev_name(domain->dev));
+		__assign_str(group_name);
 		__entry->iova = iova;
 		__entry->size = sum_scatterlist_length(sgl, nents);
 	),
@@ -188,7 +188,7 @@ TRACE_EVENT(tlbsync_timeout,
 	),
 
 	TP_fast_assign(
-		__assign_str(device, dev_name(dev));
+		__assign_str(device);
 	),
 
 	TP_printk("smmu=%s",

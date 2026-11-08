@@ -50,7 +50,7 @@ TRACE_EVENT(dfc_qmi_tc,
 	),
 
 	TP_fast_assign(
-		__assign_str(dev_name, name);
+		__assign_str(dev_name);
 		__entry->txq = txq;
 		__entry->enable = enable;
 	),

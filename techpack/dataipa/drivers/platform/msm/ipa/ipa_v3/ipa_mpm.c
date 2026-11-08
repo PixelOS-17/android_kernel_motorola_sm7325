@@ -3288,13 +3288,12 @@ fail_probe:
 	return -EFAULT;
 }
 
-static int ipa_mpm_remove(struct platform_device *pdev)
+static void ipa_mpm_remove(struct platform_device *pdev)
 {
 	IPA_MPM_FUNC_ENTRY();
 
 	mhi_driver_unregister(&mhi_driver);
 	IPA_MPM_FUNC_EXIT();
-	return 0;
 }
 
 static const struct of_device_id ipa_mpm_dt_match[] = {

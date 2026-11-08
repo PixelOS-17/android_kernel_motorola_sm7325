@@ -4541,7 +4541,7 @@ static inline void kgsl_vm_flags_set(struct vm_area_struct *vma, vm_flags_t flag
 #if (KERNEL_VERSION(6, 1, 25) <= LINUX_VERSION_CODE)
 	vm_flags_set(vma, flags);
 #else
-	vma->vm_flags |= flags;
+	vm_flags_set(vma, flags);
 #endif
 }
 

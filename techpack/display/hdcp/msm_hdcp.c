@@ -303,7 +303,7 @@ error_class_create:
 	return ret;
 }
 
-static int msm_hdcp_remove(struct platform_device *pdev)
+static void msm_hdcp_remove(struct platform_device *pdev)
 {
 	struct msm_hdcp *hdcp;
 
@@ -317,8 +317,6 @@ static int msm_hdcp_remove(struct platform_device *pdev)
 	device_destroy(hdcp->class, hdcp->dev_num);
 	class_destroy(hdcp->class);
 	unregister_chrdev_region(hdcp->dev_num, 1);
-
-	return 0;
 }
 
 static struct platform_driver msm_hdcp_driver = {

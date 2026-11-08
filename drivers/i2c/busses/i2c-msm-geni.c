@@ -3208,7 +3208,7 @@ static int geni_i2c_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int geni_i2c_remove(struct platform_device *pdev)
+static void geni_i2c_remove(struct platform_device *pdev)
 {
 	struct geni_i2c_dev *gi2c = platform_get_drvdata(pdev);
 	int i;
@@ -3254,7 +3254,6 @@ static int geni_i2c_remove(struct platform_device *pdev)
 
 	if (gi2c->ipcl)
 		ipc_log_context_destroy(gi2c->ipcl);
-	return 0;
 }
 
 /**

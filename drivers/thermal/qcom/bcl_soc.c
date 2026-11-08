@@ -147,15 +147,13 @@ static int battery_supply_callback(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
-static int bcl_soc_remove(struct platform_device *pdev)
+static void bcl_soc_remove(struct platform_device *pdev)
 {
 	power_supply_unreg_notifier(&bcl_perph->psy_nb);
 	flush_work(&bcl_perph->soc_eval_work);
 	if (bcl_perph->tz_dev) {
 		qti_update_tz_ops(bcl_perph->tz_dev, false);
 	}
-
-	return 0;
 }
 
 static int bcl_soc_probe(struct platform_device *pdev)

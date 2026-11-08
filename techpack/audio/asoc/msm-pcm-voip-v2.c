@@ -1687,10 +1687,9 @@ done:
 	return rc;
 }
 
-static int msm_pcm_remove(struct platform_device *pdev)
+static void msm_pcm_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_voip_dt_match[] = {

@@ -460,7 +460,7 @@ static int cc_cooling_probe(struct platform_device *pdev)
 	return ret;
 }
 
-static int cc_cooling_remove(struct platform_device *pdev)
+static void cc_cooling_remove(struct platform_device *pdev)
 {
 	struct cc_limits_data *cc_cdev, *cc_next;
 	int idx = 0;
@@ -477,7 +477,6 @@ static int cc_cooling_remove(struct platform_device *pdev)
 		kfree(cc_cdev);
 	}
 	mutex_unlock(&cc_list_lock);
-	return 0;
 }
 
 static const struct of_device_id cc_cooling_device_match[] = {

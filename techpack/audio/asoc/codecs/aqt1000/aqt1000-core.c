@@ -424,8 +424,7 @@ static void aqt1000_device_exit(struct aqt1000 *aqt)
 	mutex_destroy(&aqt->master_bias_lock);
 }
 
-static int aqt1000_i2c_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
+static int aqt1000_i2c_probe(struct i2c_client *client)
 {
 	struct aqt1000 *aqt1000 = NULL;
 	struct aqt1000_pdata *pdata = NULL;

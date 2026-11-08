@@ -635,7 +635,7 @@ static int msm_vidc_probe(struct platform_device *pdev)
 	return -EINVAL;
 }
 
-static int msm_vidc_remove(struct platform_device *pdev)
+static void msm_vidc_remove(struct platform_device *pdev)
 {
 	int rc = 0;
 	struct msm_vidc_core *core;

@@ -1866,11 +1866,10 @@ end:
 	return ret;
 }
 
-static int qcom_llcc_remove(struct platform_device *pdev)
+static void qcom_llcc_remove(struct platform_device *pdev)
 {
 	/* Set the global pointer to a error code to avoid referencing it */
 	drv_data = ERR_PTR(-ENODEV);
-	return 0;
 }
 
 static struct regmap *qcom_llcc_init_mmio(struct platform_device *pdev,

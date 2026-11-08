@@ -1349,10 +1349,9 @@ err_hwkm_dev:
 }
 
 
-static int qti_hwkm_remove(struct platform_device *pdev)
+static void qti_hwkm_remove(struct platform_device *pdev)
 {
 	kfree(mmio_data_ref);
-	return 0;
 }
 
 static const struct of_device_id qti_hwkm_match[] = {

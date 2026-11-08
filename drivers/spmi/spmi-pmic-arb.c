@@ -1991,7 +1991,7 @@ err_put_ctrl:
 	return err;
 }
 
-static int spmi_pmic_arb_remove(struct platform_device *pdev)
+static void spmi_pmic_arb_remove(struct platform_device *pdev)
 {
 	struct spmi_controller *ctrl = platform_get_drvdata(pdev);
 	struct spmi_pmic_arb *pmic_arb = spmi_controller_get_drvdata(ctrl);
@@ -2002,7 +2002,6 @@ static int spmi_pmic_arb_remove(struct platform_device *pdev)
 		irq_domain_remove(pmic_arb->domain);
 	}
 	spmi_controller_put(ctrl);
-	return 0;
 }
 
 static const struct of_device_id spmi_pmic_arb_match_table[] = {

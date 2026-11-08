@@ -1297,12 +1297,12 @@ err_ret:
 	return ret;
 }
 
-static int msm_hsphy_remove(struct platform_device *pdev)
+static void msm_hsphy_remove(struct platform_device *pdev)
 {
 	struct msm_hsphy *phy = platform_get_drvdata(pdev);
 
 	if (!phy)
-		return 0;
+		return;
 
 	if (phy->usb_psy)
 		power_supply_put(phy->usb_psy);
@@ -1316,7 +1316,6 @@ static int msm_hsphy_remove(struct platform_device *pdev)
 	msm_hsphy_enable_clocks(phy, false);
 	msm_hsphy_enable_power(phy, false);
 	msm_hsphy_modeled_domain_detach(phy);
-	return 0;
 }
 
 static const struct hs_phy_priv_data priv_data_lemans = {

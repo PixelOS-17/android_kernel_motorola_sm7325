@@ -2489,7 +2489,7 @@ static int qpnp_pon_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int qpnp_pon_remove(struct platform_device *pdev)
+static void qpnp_pon_remove(struct platform_device *pdev)
 {
 	struct qpnp_pon *pon = platform_get_drvdata(pdev);
 	unsigned long flags;
@@ -2507,7 +2507,6 @@ static int qpnp_pon_remove(struct platform_device *pdev)
 	mutex_destroy(&pon->restore_lock);
 
 	sysfs_remove_groups(&pon->dev->kobj, pon_groups);
-	return 0;
 }
 
 #ifdef CONFIG_PM

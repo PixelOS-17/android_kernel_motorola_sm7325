@@ -1974,7 +1974,7 @@ static int wsa_macro_get_ec_hq(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int ec_tx = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct device *wsa_dev = NULL;
@@ -1991,7 +1991,7 @@ static int wsa_macro_set_ec_hq(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int ec_tx = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	int value = ucontrol->value.integer.value[0];
@@ -2013,7 +2013,7 @@ static int wsa_macro_get_rx_mute_status(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 	int wsa_rx_shift = ((struct soc_multi_mixer_control *)
@@ -2031,7 +2031,7 @@ static int wsa_macro_set_rx_mute_status(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 	int value = ucontrol->value.integer.value[0];
@@ -2084,7 +2084,7 @@ static int wsa_macro_get_compander(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct device *wsa_dev = NULL;
@@ -2101,7 +2101,7 @@ static int wsa_macro_set_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	int value = ucontrol->value.integer.value[0];
@@ -2122,7 +2122,7 @@ static int wsa_macro_ear_spkrrecv_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 
@@ -2141,7 +2141,7 @@ static int wsa_macro_ear_spkrrecv_put(struct snd_kcontrol *kcontrol,
                                         struct snd_ctl_elem_value *ucontrol)
 {
         struct snd_soc_component *component =
-                                snd_soc_kcontrol_component(kcontrol);
+                                snd_kcontrol_chip(kcontrol);
         struct device *wsa_dev = NULL;
         struct wsa_macro_priv *wsa_priv = NULL;
 
@@ -2159,7 +2159,7 @@ static int wsa_macro_ear_spkr_pa_gain_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 
@@ -2178,7 +2178,7 @@ static int wsa_macro_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 
@@ -2198,7 +2198,7 @@ static int wsa_macro_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max = 0;
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 
 	bst_state_max = snd_soc_component_read(component,
 				BOLERO_CDC_WSA_BOOST0_BOOST_CTL);
@@ -2215,7 +2215,7 @@ static int wsa_macro_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max;
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
@@ -2230,7 +2230,7 @@ static int wsa_macro_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max = 0;
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 
 	bst_state_max = snd_soc_component_read(component,
 				BOLERO_CDC_WSA_BOOST1_BOOST_CTL);
@@ -2247,7 +2247,7 @@ static int wsa_macro_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max;
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
@@ -2342,7 +2342,7 @@ static int wsa_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	ucontrol->value.integer.value[0] =
 	    ((snd_soc_component_read(
@@ -2359,7 +2359,7 @@ static int wsa_macro_vbat_bcl_gsm_mode_func_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: value: %lu\n", __func__,
 		ucontrol->value.integer.value[0]);
@@ -2381,7 +2381,7 @@ static int wsa_macro_soft_clip_enable_get(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 	int path = ((struct soc_multi_mixer_control *)
@@ -2402,7 +2402,7 @@ static int wsa_macro_soft_clip_enable_put(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
 	int path = ((struct soc_multi_mixer_control *)
@@ -3008,7 +3008,7 @@ exit:
 static int wsa_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
-				snd_soc_component_get_dapm(component);
+				snd_soc_component_to_dapm(component);
 	int ret;
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
@@ -3320,7 +3320,7 @@ reg_macro_fail:
 	return ret;
 }
 
-static int wsa_macro_remove(struct platform_device *pdev)
+static void wsa_macro_remove(struct platform_device *pdev)
 {
 	struct wsa_macro_priv *wsa_priv;
 	u16 count = 0;
@@ -3339,7 +3339,6 @@ static int wsa_macro_remove(struct platform_device *pdev)
 	bolero_unregister_macro(&pdev->dev, WSA_MACRO);
 	mutex_destroy(&wsa_priv->mclk_lock);
 	mutex_destroy(&wsa_priv->swr_clk_lock);
-	return 0;
 }
 
 static const struct of_device_id wsa_macro_dt_match[] = {

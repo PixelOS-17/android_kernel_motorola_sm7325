@@ -226,7 +226,7 @@ int msm_gem_mmap_obj(struct drm_gem_object *obj,
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 25))
 	vma->vm_flags &= ~VM_PFNMAP;
-	vma->vm_flags |= VM_MIXEDMAP;
+	vm_flags_set(vma, VM_MIXEDMAP);
 #else
 	vm_flags_mod(vma, VM_MIXEDMAP, VM_PFNMAP);
 #endif

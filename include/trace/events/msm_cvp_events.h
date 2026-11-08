@@ -21,7 +21,7 @@ TRACE_EVENT(tracing_mark_write_cvp,
 	),
 	TP_fast_assign(
 		__entry->pid = pid;
-		__assign_str(trace_name, name);
+		__assign_str(trace_name);
 		__entry->trace_begin = trace_begin;
 		),
 	TP_printk("%s|%d|%s", __entry->trace_begin ? "B" : "E",

@@ -94,7 +94,7 @@ static int aqt_get_anc_slot(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = aqt->anc_slot;
@@ -105,7 +105,7 @@ static int aqt_put_anc_slot(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	aqt->anc_slot = ucontrol->value.integer.value[0];
@@ -116,7 +116,7 @@ static int aqt_get_anc_func(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = (aqt->anc_func == true ? 1 : 0);
@@ -127,10 +127,10 @@ static int aqt_put_anc_func(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 
 	mutex_lock(&aqt->codec_mutex);
 	aqt->anc_func = (!ucontrol->value.integer.value[0] ? false : true);
@@ -169,7 +169,7 @@ static int aqt_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = aqt->hph_mode;
@@ -180,7 +180,7 @@ static int aqt_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	u32 mode_val;
 
@@ -210,7 +210,7 @@ static int aqt_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 
@@ -228,7 +228,7 @@ static int aqt_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 	bool iir_band_en_status;
@@ -295,7 +295,7 @@ static int aqt_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 
@@ -354,7 +354,7 @@ static int aqt_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 	int coeff_idx;
@@ -397,7 +397,7 @@ static int aqt_compander_get(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
@@ -410,7 +410,7 @@ static int aqt_compander_put(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
@@ -449,7 +449,7 @@ static int aqt_hph_asrc_mode_put(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			 snd_soc_kcontrol_component(kcontrol);
+			 snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int index = -EINVAL;
 
@@ -469,7 +469,7 @@ static int aqt_hph_asrc_mode_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int val = 0;
 	int index = -EINVAL;
@@ -496,7 +496,7 @@ static int aqt_hph_idle_detect_get(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int val = 0;
 
@@ -512,7 +512,7 @@ static int aqt_hph_idle_detect_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	if (aqt)
@@ -532,7 +532,7 @@ static int aqt_amic_pwr_lvl_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u16 amic_reg = 0;
 
 	if (!strcmp(kcontrol->id.name, "AQT AMIC_1_2 PWR MODE"))
@@ -552,7 +552,7 @@ static int aqt_amic_pwr_lvl_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u32 mode_val;
 	u16 amic_reg = 0;
 
@@ -3453,7 +3453,7 @@ static int aqt_soc_codec_probe(struct snd_soc_component *component)
 	struct aqt1000 *aqt;
 	struct aqt1000_pdata *pdata;
 	struct snd_soc_dapm_context *dapm =
-				snd_soc_component_get_dapm(component);
+				snd_soc_component_to_dapm(component);
 	int i, ret = 0;
 
 	dev_dbg(component->dev, "%s()\n", __func__);

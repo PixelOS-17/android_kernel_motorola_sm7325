@@ -517,7 +517,7 @@ static int msm_dai_q6_hdmi_dai_probe(struct snd_soc_dai *dai)
 		dev_set_drvdata(dai->dev, NULL);
 		return -EINVAL;
 	}
-	dapm = snd_soc_component_get_dapm(dai->component);
+	dapm = snd_soc_component_to_dapm(dai->component);
 
 	memset(&intercon, 0, sizeof(intercon));
 	if (!rc && dai && dai->driver) {
@@ -716,10 +716,9 @@ static int msm_dai_q6_hdmi_dev_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int msm_dai_q6_hdmi_dev_remove(struct platform_device *pdev)
+static void msm_dai_q6_hdmi_dev_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_dai_q6_hdmi_dt_match[] = {

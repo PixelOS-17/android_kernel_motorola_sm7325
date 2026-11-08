@@ -638,7 +638,7 @@ end:
 	return ret;
 }
 
-static int msm_ext_disp_remove(struct platform_device *pdev)
+static void msm_ext_disp_remove(struct platform_device *pdev)
 {
 	int ret = 0, id;
 	struct msm_ext_disp *ext_disp = NULL;

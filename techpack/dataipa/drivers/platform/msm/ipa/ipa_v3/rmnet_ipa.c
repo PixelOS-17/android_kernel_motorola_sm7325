@@ -3725,7 +3725,7 @@ wan_ioctl_init_err:
 	return ret;
 }
 
-static int ipa3_wwan_remove(struct platform_device *pdev)
+static void ipa3_wwan_remove(struct platform_device *pdev)
 {
 	int ret, j;
 	int ep_wan;
@@ -3801,7 +3801,6 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 	rmnet_ipa3_ctx->dl_csum_offload_enabled = false;
 	atomic_set(&rmnet_ipa3_ctx->is_initialized, 0);
 	IPAWANINFO("rmnet_ipa completed deinitialization\n");
-	return 0;
 }
 
 /**

@@ -595,7 +595,7 @@ err_free_mbox:
 	return ret;
 }
 
-static int qmp_remove(struct platform_device *pdev)
+static void qmp_remove(struct platform_device *pdev)
 {
 	struct qmp *qmp = platform_get_drvdata(pdev);
 
@@ -608,8 +608,6 @@ static int qmp_remove(struct platform_device *pdev)
 
 	qmp_close(qmp);
 	mbox_free_channel(qmp->mbox_chan);
-
-	return 0;
 }
 
 static int aoss_qmp_mbox_freeze(struct device *dev)

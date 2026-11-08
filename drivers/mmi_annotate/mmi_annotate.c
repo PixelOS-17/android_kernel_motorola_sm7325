@@ -327,13 +327,12 @@ int mmi_annotate_persist(const char *fmt, ...)
 }
 EXPORT_SYMBOL(mmi_annotate_persist);
 
-static int mmi_annotate_remove(struct platform_device *pdev)
+static void mmi_annotate_remove(struct platform_device *pdev)
 {
 	if (procfs_file)
 		remove_proc_entry("driver/mmi_annotate", NULL);
 	if(mem_data.contents)
 		kfree(mem_data.contents);
-	return 0;
 }
 
 static const struct of_device_id mmi_annotate_match[] = {

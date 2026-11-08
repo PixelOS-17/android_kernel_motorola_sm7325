@@ -572,13 +572,12 @@ err_free:
 
 }
 
-static int voice_mhi_remove(struct platform_device *pdev)
+static void voice_mhi_remove(struct platform_device *pdev)
 {
 	if (voice_mhi_lcl.apr_mvm_handle)
 			apr_reset(voice_mhi_lcl.apr_mvm_handle);
 	mhi_driver_unregister(&voice_mhi_driver);
 	memset(&voice_mhi_lcl, 0, sizeof(voice_mhi_lcl));
-	return 0;
 }
 static const struct of_device_id voice_mhi_of_match[]  = {
 	{ .compatible = "qcom,voice-mhi-audio", },

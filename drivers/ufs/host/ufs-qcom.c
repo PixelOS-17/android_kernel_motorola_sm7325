@@ -6033,7 +6033,7 @@ static int ufs_qcom_probe(struct platform_device *pdev)
  *
  * Always returns 0
  */
-static int ufs_qcom_remove(struct platform_device *pdev)
+static void ufs_qcom_remove(struct platform_device *pdev)
 {
 	struct ufs_hba *hba;
 	struct ufs_qcom_host *host;
@@ -6043,7 +6043,7 @@ static int ufs_qcom_remove(struct platform_device *pdev)
 
 	if (!is_bootdevice_ufs) {
 		dev_info(&pdev->dev, "UFS is not boot dev.\n");
-		return 0;
+		return;
 	}
 
 	hba =  platform_get_drvdata(pdev);
@@ -6061,7 +6061,6 @@ static int ufs_qcom_remove(struct platform_device *pdev)
 
 	ufshcd_remove(hba);
 	platform_msi_domain_free_irqs(hba->dev);
-	return 0;
 }
 
 /**

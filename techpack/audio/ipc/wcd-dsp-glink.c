@@ -722,7 +722,7 @@ done:
 	return ret;
 }
 
-static int wdsp_glink_remove(struct platform_device *pdev)
+static void wdsp_glink_remove(struct platform_device *pdev)
 {
 	struct wdsp_glink_priv *wpriv = platform_get_drvdata(pdev);
 
@@ -738,8 +738,6 @@ static int wdsp_glink_remove(struct platform_device *pdev)
 			unregister_chrdev_region(0, MINOR_NUMBER_COUNT);
 		}
 	}
-
-	return 0;
 }
 
 static const struct of_device_id wdsp_glink_of_match[] = {

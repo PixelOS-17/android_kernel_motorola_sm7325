@@ -412,8 +412,8 @@ static void read_rawData(psx93XX_t this)
 	}
 }
 
-static ssize_t capsense_reset_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t capsense_reset_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	u32 temp = 0;
@@ -432,8 +432,8 @@ static ssize_t capsense_reset_store(struct class *class,
 }
 
 #ifdef CONFIG_CAPSENSE_HEADSET_STATE
-static ssize_t capsense_headset_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t capsense_headset_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	u32 reg_temp = 0;
@@ -478,8 +478,8 @@ static ssize_t capsense_headset_store(struct class *class,
 }
 #endif
 
-static ssize_t capsense_raw_data_show(struct class *class,
-		struct class_attribute *attr,
+static ssize_t capsense_raw_data_show(const struct class *class,
+		const struct class_attribute *attr,
 		char *buf)
 {
 	char *p = buf;
@@ -506,8 +506,8 @@ static ssize_t capsense_raw_data_show(struct class *class,
 	return (p-buf);
 }
 
-static ssize_t sx937x_register_write_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t sx937x_register_write_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	u32 reg_address = 0, val = 0;
@@ -527,8 +527,8 @@ static ssize_t sx937x_register_write_store(struct class *class,
 
 static int sx937x_temp_regist = 0;
 static u32 sx937x_temp_val = 0;
-static ssize_t sx937x_register_read_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t sx937x_register_read_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	int nirq_state = 0;
@@ -547,15 +547,15 @@ static ssize_t sx937x_register_read_store(struct class *class,
 	return count;
 }
 
-static ssize_t sx937x_register_read_show(struct class *class,
-		struct class_attribute *attr,
+static ssize_t sx937x_register_read_show(const struct class *class,
+		const struct class_attribute *attr,
 		char *buf)
 {
 	return sprintf(buf, "Register(0x%2x) data(0x%4x)\n", sx937x_temp_regist, sx937x_temp_val);
 }
 
-static ssize_t reg_show(struct class *class,
-		struct class_attribute *attr,
+static ssize_t reg_show(const struct class *class,
+		const struct class_attribute *attr,
 		char *buf)
 {
 	u32 *p = (u32*)buf;
@@ -585,8 +585,8 @@ static ssize_t reg_show(struct class *class,
 	0-real write,
 	1-just transfer the reg value want to be readed
 */
-static ssize_t reg_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t reg_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	psx93XX_t this = global_sx937x;
@@ -622,8 +622,8 @@ static ssize_t reg_store(struct class *class,
 	return count;
 }
 
-static ssize_t manual_offset_calibration_show(struct class *class,
-		struct class_attribute *attr,
+static ssize_t manual_offset_calibration_show(const struct class *class,
+		const struct class_attribute *attr,
 		char *buf)
 {
 	u32 reg_value = 0;
@@ -635,8 +635,8 @@ static ssize_t manual_offset_calibration_show(struct class *class,
 }
 
 
-static ssize_t manual_offset_calibration_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t manual_offset_calibration_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	unsigned long val;
@@ -654,8 +654,8 @@ static ssize_t manual_offset_calibration_store(struct class *class,
 	return count;
 }
 
-static ssize_t sx937x_int_state_show(struct class *class,
-		struct class_attribute *attr,
+static ssize_t sx937x_int_state_show(const struct class *class,
+		const struct class_attribute *attr,
 		char *buf)
 {
 	psx93XX_t this = global_sx937x;
@@ -663,8 +663,8 @@ static ssize_t sx937x_int_state_show(struct class *class,
 	return sprintf(buf, "%d\n", this->int_state);
 }
 
-static ssize_t sx937x_reinitialize_store(struct class *class,
-		struct class_attribute *attr,
+static ssize_t sx937x_reinitialize_store(const struct class *class,
+		const struct class_attribute *attr,
 		const char *buf, size_t count)
 {
 	psx93XX_t this = global_sx937x;
@@ -1445,7 +1445,7 @@ static void sx937x_i2c_watchdog_work(struct work_struct *work);
  * \param id pointer to i2c_device_id
  * \return Whether probe was successful
  */
-static int sx937x_probe(struct i2c_client *client, const struct i2c_device_id *id)
+static int sx937x_probe(struct i2c_client *client)
 {
 	int i = 0;
 	int err = 0;

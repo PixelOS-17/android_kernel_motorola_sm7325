@@ -582,7 +582,7 @@ unmap:
 
 }
 
-static int dev_avtimer_remove(struct platform_device *pdev)
+static void dev_avtimer_remove(struct platform_device *pdev)
 {
 	pr_debug("%s: dev_avtimer_remove\n", __func__);
 
@@ -595,8 +595,6 @@ static int dev_avtimer_remove(struct platform_device *pdev)
 	class_destroy(avtimer.avtimer_class);
 	unregister_chrdev_region(MKDEV(major, 0), 1);
 	avcs_set_isp_fptr(false);
-
-	return 0;
 }
 
 static const struct of_device_id avtimer_machine_of_match[]  = {

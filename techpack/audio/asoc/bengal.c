@@ -4277,7 +4277,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_int_snd_controls,
 				ARRAY_SIZE(msm_int_snd_controls));
@@ -4361,7 +4361,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		return -EINVAL;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 	card = component->card->snd_card;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
@@ -6339,15 +6339,13 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
 	snd_event_master_deregister(&pdev->dev);
 	snd_soc_unregister_card(card);
 	msm_i2s_auxpcm_deinit();
-
-	return 0;
 }
 
 static struct platform_driver bengal_asoc_machine_driver = {

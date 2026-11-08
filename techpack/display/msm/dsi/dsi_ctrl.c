@@ -2217,7 +2217,7 @@ fail:
 	return rc;
 }
 
-static int dsi_ctrl_dev_remove(struct platform_device *pdev)
+static void dsi_ctrl_dev_remove(struct platform_device *pdev)
 {
 	int rc = 0;
 	struct dsi_ctrl *dsi_ctrl;
@@ -2259,7 +2259,6 @@ static int dsi_ctrl_dev_remove(struct platform_device *pdev)
 	devm_kfree(&pdev->dev, dsi_ctrl);
 
 	platform_set_drvdata(pdev, NULL);
-	return 0;
 }
 
 static struct platform_driver dsi_ctrl_driver = {

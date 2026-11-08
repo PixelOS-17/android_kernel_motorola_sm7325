@@ -846,7 +846,7 @@ static int tavil_get_anc_slot(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = tavil->anc_slot;
@@ -857,7 +857,7 @@ static int tavil_put_anc_slot(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	tavil->anc_slot = ucontrol->value.integer.value[0];
@@ -868,7 +868,7 @@ static int tavil_get_anc_func(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = (tavil->anc_func == true ? 1 : 0);
@@ -879,10 +879,10 @@ static int tavil_put_anc_func(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 
 	mutex_lock(&tavil->codec_mutex);
 	tavil->anc_func = (!ucontrol->value.integer.value[0] ? false : true);
@@ -1139,7 +1139,7 @@ static int tavil_get_clkmode(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil_p = snd_soc_component_get_drvdata(component);
 
 	if (test_bit(CLK_MODE, &tavil_p->status_mask))
@@ -1157,7 +1157,7 @@ static int tavil_put_clkmode(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil_p = snd_soc_component_get_drvdata(component);
 
 	if (ucontrol->value.enumerated.item[0])
@@ -5295,15 +5295,15 @@ int tavil_codec_enable_standalone_micbias(struct snd_soc_component *component,
 
 	if (enable)
 		rc = snd_soc_dapm_force_enable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					micb_names[micb_index]);
 	else
 		rc = snd_soc_dapm_disable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					micb_names[micb_index]);
 
 	if (!rc)
-		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+		snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 	else
 		dev_err(component->dev, "%s: micbias%d force %s pin failed\n",
 			__func__, micb_num, (enable ? "enable" : "disable"));
@@ -5689,7 +5689,7 @@ static int tavil_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -5711,7 +5711,7 @@ static int tavil_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
@@ -5784,7 +5784,7 @@ static int tavil_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -5845,7 +5845,7 @@ static int tavil_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
@@ -5902,7 +5902,7 @@ static int tavil_compander_get(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
@@ -5915,7 +5915,7 @@ static int tavil_compander_put(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
@@ -5957,7 +5957,7 @@ static int tavil_hph_asrc_mode_put(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	int index = -EINVAL;
 
@@ -5977,7 +5977,7 @@ static int tavil_hph_asrc_mode_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	int val = 0;
 	int index = -EINVAL;
@@ -5999,7 +5999,7 @@ static int tavil_hph_idle_detect_get(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	int val = 0;
 
@@ -6015,7 +6015,7 @@ static int tavil_hph_idle_detect_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	if (tavil)
@@ -6029,7 +6029,7 @@ static int tavil_dmic_pin_mode_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u16 dmic_pin;
 	u8 reg_val, pinctl_position;
 
@@ -6049,7 +6049,7 @@ static int tavil_dmic_pin_mode_put(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	u16 ctl_reg, cfg_reg, dmic_pin;
 	u8 ctl_val, cfg_val, pinctl_position, pinctl_mode, mask;
@@ -6103,7 +6103,7 @@ static int tavil_amic_pwr_lvl_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u16 amic_reg = 0;
 
 	if (!strcmp(kcontrol->id.name, "AMIC_1_2 PWR MODE"))
@@ -6123,7 +6123,7 @@ static int tavil_amic_pwr_lvl_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u32 mode_val;
 	u16 amic_reg = 0;
 
@@ -6157,7 +6157,7 @@ static int tavil_mad_input_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u8 tavil_mad_input;
 
 	tavil_mad_input = snd_soc_component_read32(
@@ -6174,7 +6174,7 @@ static int tavil_mad_input_put(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct snd_soc_card *card = component->card;
 	u8 tavil_mad_input;
 	char mad_amic_input_widget[6];
@@ -6301,7 +6301,7 @@ static int tavil_ear_pa_gain_get(struct snd_kcontrol *kcontrol,
 {
 	u8 ear_pa_gain;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	ear_pa_gain = snd_soc_component_read32(component, WCD934X_ANA_EAR);
 
@@ -6320,7 +6320,7 @@ static int tavil_ear_pa_gain_put(struct snd_kcontrol *kcontrol,
 {
 	u8 ear_pa_gain;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -6336,7 +6336,7 @@ static int tavil_ear_spkr_pa_gain_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = tavil->ear_spkr_gain;
@@ -6351,7 +6351,7 @@ static int tavil_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	tavil->ear_spkr_gain =  ucontrol->value.integer.value[0];
@@ -6367,7 +6367,7 @@ static int tavil_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	bst_state_max = snd_soc_component_read32(
 				component, WCD934X_CDC_BOOST0_BOOST_CTL);
@@ -6384,7 +6384,7 @@ static int tavil_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -6400,7 +6400,7 @@ static int tavil_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	bst_state_max = snd_soc_component_read32(component,
 				WCD934X_CDC_BOOST1_BOOST_CTL);
@@ -6417,7 +6417,7 @@ static int tavil_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -6432,7 +6432,7 @@ static int tavil_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = tavil->hph_mode;
@@ -6443,7 +6443,7 @@ static int tavil_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tavil_priv *tavil = snd_soc_component_get_drvdata(component);
 	u32 mode_val;
 
@@ -10522,7 +10522,7 @@ static int tavil_soc_codec_probe(struct snd_soc_component *component)
 	struct tavil_priv *tavil;
 	struct wcd9xxx_pdata *pdata;
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 	int i, ret;
 	void *ptr = NULL;
 
@@ -11017,7 +11017,7 @@ static int tavil_swrm_handle_irq(void *handle,
 static void tavil_codec_add_spi_device(struct tavil_priv *tavil,
 				       struct device_node *node)
 {
-	struct spi_master *master;
+	struct spi_controller *master;
 	struct spi_device *spi;
 	u32 prop_value;
 	int rc;
@@ -11502,7 +11502,7 @@ err_resmgr:
 	return ret;
 }
 
-static int tavil_remove(struct platform_device *pdev)
+static void tavil_remove(struct platform_device *pdev)
 {
 	struct tavil_priv *tavil;
 	int count = 0;
@@ -11539,7 +11539,6 @@ static int tavil_remove(struct platform_device *pdev)
 	clk_put(tavil->wcd_ext_clk);
 	wcd_resmgr_remove(tavil->resmgr);
 	devm_kfree(&pdev->dev, tavil);
-	return 0;
 }
 
 static struct platform_driver tavil_codec_driver = {

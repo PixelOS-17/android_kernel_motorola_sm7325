@@ -615,7 +615,7 @@ static int msm_mdf_cb_probe(struct device *dev)
 	return 0;
 }
 
-static int msm_mdf_remove(struct platform_device *pdev)
+static void msm_mdf_remove(struct platform_device *pdev)
 {
 	int rc = 0, i;
 

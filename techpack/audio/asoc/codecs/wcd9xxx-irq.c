@@ -847,7 +847,7 @@ static int wcd9xxx_irq_probe(struct platform_device *pdev)
 	return ret;
 }
 
-static int wcd9xxx_irq_remove(struct platform_device *pdev)
+static void wcd9xxx_irq_remove(struct platform_device *pdev)
 {
 	struct irq_domain *domain;
 	struct wcd9xxx_irq_drv_data *data;
@@ -864,8 +864,6 @@ static int wcd9xxx_irq_remove(struct platform_device *pdev)
 	wmb();
 	irq_domain_remove(data->domain);
 	kfree(data);
-
-	return 0;
 }
 
 static const struct of_device_id of_match[] = {

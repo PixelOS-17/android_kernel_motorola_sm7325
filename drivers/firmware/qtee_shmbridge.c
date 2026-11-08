@@ -637,7 +637,7 @@ static int qtee_shmbridge_probe(struct platform_device *pdev)
 	return qtee_shmbridge_init(pdev);
 }
 
-static int qtee_shmbridge_remove(struct platform_device *pdev)
+static void qtee_shmbridge_remove(struct platform_device *pdev)
 {
 	int ret = 0;
 
@@ -653,7 +653,6 @@ static int qtee_shmbridge_remove(struct platform_device *pdev)
 			DMA_TO_DEVICE);
 	free_pages((long)default_bridge.vaddr, get_order(default_bridge.size));
 	default_bridge.vaddr = NULL;
-	return 0;
 }
 
 #ifdef CONFIG_PM

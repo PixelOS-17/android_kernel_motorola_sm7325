@@ -582,10 +582,9 @@ static int pm8xxx_rtc_freeze(struct device *dev)
 	return 0;
 }
 
-static int pm8xxx_remove(struct platform_device *pdev)
+static void pm8xxx_remove(struct platform_device *pdev)
 {
 	dev_pm_clear_wake_irq(&pdev->dev);
-	return 0;
 }
 
 static int pm8xxx_rtc_resume(struct device *dev)

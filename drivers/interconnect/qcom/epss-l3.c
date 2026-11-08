@@ -180,7 +180,7 @@ static int qcom_icc_l3_cpu_set(struct icc_node *src, struct icc_node *dst)
 	return 0;
 }
 
-static int qcom_epss_l3_remove(struct platform_device *pdev)
+static void qcom_epss_l3_remove(struct platform_device *pdev)
 {
 	struct qcom_epss_l3_icc_provider *qp = platform_get_drvdata(pdev);
 	struct icc_provider *provider = &qp->provider;
@@ -192,8 +192,6 @@ static int qcom_epss_l3_remove(struct platform_device *pdev)
 	}
 
 	icc_provider_del(provider);
-
-	return 0;
 }
 
 static int qcom_epss_l3_probe(struct platform_device *pdev)

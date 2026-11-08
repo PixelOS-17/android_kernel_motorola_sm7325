@@ -1058,7 +1058,7 @@ static int va_macro_lpi_get(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
@@ -1074,7 +1074,7 @@ static int va_macro_lpi_put(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
@@ -1508,7 +1508,7 @@ static int va_macro_dec_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct va_macro_priv *priv = NULL;
 	struct device *va_dev = NULL;
 	int ret = 0;
@@ -1530,7 +1530,7 @@ static int va_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct va_macro_priv *priv = NULL;
 	struct device *va_dev = NULL;
 	int value = ucontrol->value.integer.value[0];
@@ -2691,7 +2691,7 @@ undefined_rate:
 static int va_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
-				snd_soc_component_get_dapm(component);
+				snd_soc_component_to_dapm(component);
 	int ret, i;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
@@ -3247,7 +3247,7 @@ reg_macro_fail:
 	return ret;
 }
 
-static int va_macro_remove(struct platform_device *pdev)
+static void va_macro_remove(struct platform_device *pdev)
 {
 	struct va_macro_priv *va_priv;
 	int count = 0;
@@ -3271,7 +3271,6 @@ static int va_macro_remove(struct platform_device *pdev)
 	mutex_destroy(&va_priv->mclk_lock);
 	if (va_priv->is_used_va_swr_gpio)
 		mutex_destroy(&va_priv->swr_clk_lock);
-	return 0;
 }
 
 

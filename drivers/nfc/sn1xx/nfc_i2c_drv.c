@@ -254,7 +254,7 @@ static const struct file_operations nfc_i2c_dev_fops = {
 #endif
 };
 
-int nfc_i2c_dev_probe(struct i2c_client *client, const struct i2c_device_id *id)
+int nfc_i2c_dev_probe(struct i2c_client *client)
 {
 	int ret = 0;
 	struct nfc_dev *nfc_dev = NULL;

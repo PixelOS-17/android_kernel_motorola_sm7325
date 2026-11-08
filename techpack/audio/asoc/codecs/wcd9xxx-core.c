@@ -1034,8 +1034,7 @@ static int wcd9xxx_i2c_get_client_index(struct i2c_client *client,
 	return ret;
 }
 
-static int wcd9xxx_i2c_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
+static int wcd9xxx_i2c_probe(struct i2c_client *client)
 {
 	struct wcd9xxx *wcd9xxx = NULL;
 	struct wcd9xxx_pdata *pdata = NULL;

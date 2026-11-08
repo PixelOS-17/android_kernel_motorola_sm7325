@@ -3324,10 +3324,9 @@ static int msm_cpe_lsm_probe(struct platform_device *pdev)
  *
  * Deregister the ASoC platform driver
  */
-static int msm_cpe_lsm_remove(struct platform_device *pdev)
+static void msm_cpe_lsm_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_commponent(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_cpe_lsm_dt_match[] = {

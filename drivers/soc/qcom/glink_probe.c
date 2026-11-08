@@ -199,7 +199,7 @@ static int glink_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int glink_remove(struct platform_device *pdev)
+static void glink_remove(struct platform_device *pdev)
 {
 	struct device_node *pn = pdev->dev.of_node;
 	struct device_node *cn;
@@ -212,7 +212,6 @@ static int glink_remove(struct platform_device *pdev)
 			list_del(&einfo->list);
 		}
 	}
-	return 0;
 }
 
 static const struct of_device_id glink_match_table[] = {

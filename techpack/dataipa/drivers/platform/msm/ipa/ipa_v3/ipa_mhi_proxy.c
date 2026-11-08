@@ -1072,7 +1072,7 @@ static int imp_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int imp_remove(struct platform_device *pdev)
+static void imp_remove(struct platform_device *pdev)
 {
 	IMP_FUNC_ENTRY();
 	mhi_driver_unregister(&mhi_driver);
@@ -1089,8 +1089,6 @@ static int imp_remove(struct platform_device *pdev)
 	mutex_lock(&imp_ctx->lpm_mutex);
 	imp_ctx->in_lpm = false;
 	mutex_unlock(&imp_ctx->lpm_mutex);
-
-	return 0;
 }
 
 static const struct of_device_id imp_dt_match[] = {

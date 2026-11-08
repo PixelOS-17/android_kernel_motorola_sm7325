@@ -1260,7 +1260,7 @@ static void aw86006_firmware_update_work_routine(struct work_struct *work)
 /*******************************************************************************
  * adb debug interface
  ******************************************************************************/
-static ssize_t reg_show(struct class *class, struct class_attribute *attr,
+static ssize_t reg_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1285,7 +1285,7 @@ static ssize_t reg_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t reg_store(struct class *class, struct class_attribute *attr,
+static ssize_t reg_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1342,7 +1342,7 @@ static int aw86006_parse_reg_data(struct awrw_ctrl *awrw_ctrl, const char *buf)
 	return 0;
 }
 
-static ssize_t awrw_show(struct class *class, struct class_attribute *attr,
+static ssize_t awrw_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	struct awrw_ctrl *awrw_ctrl = g_o_ctrl->awrw_ctrl;
@@ -1381,7 +1381,7 @@ static ssize_t awrw_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t awrw_store(struct class *class, struct class_attribute *attr,
+static ssize_t awrw_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1437,7 +1437,7 @@ static ssize_t awrw_store(struct class *class, struct class_attribute *attr,
 	return count;
 }
 
-static ssize_t update_show(struct class *class, struct class_attribute *attr,
+static ssize_t update_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	ssize_t len = 0;
@@ -1448,7 +1448,7 @@ static ssize_t update_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t update_store(struct class *class, struct class_attribute *attr,
+static ssize_t update_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1476,7 +1476,7 @@ static ssize_t update_store(struct class *class, struct class_attribute *attr,
 	return count;
 }
 
-static ssize_t erase_show(struct class *class, struct class_attribute *attr,
+static ssize_t erase_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	ssize_t len = 0;
@@ -1493,7 +1493,7 @@ static ssize_t erase_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t erase_store(struct class *class, struct class_attribute *attr,
+static ssize_t erase_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1565,7 +1565,7 @@ err_exit:
 	return ret;
 }
 
-static ssize_t mode_show(struct class *class, struct class_attribute *attr,
+static ssize_t mode_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	ssize_t len = 0;
@@ -1578,7 +1578,7 @@ static ssize_t mode_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t mode_store(struct class *class, struct class_attribute *attr,
+static ssize_t mode_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1638,7 +1638,7 @@ static ssize_t mode_store(struct class *class, struct class_attribute *attr,
 	return count;
 }
 
-static ssize_t chipid_show(struct class *class, struct class_attribute *attr,
+static ssize_t chipid_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1663,13 +1663,13 @@ static ssize_t chipid_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t chipid_store(struct class *class, struct class_attribute *attr,
+static ssize_t chipid_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	return count;
 }
 
-static ssize_t version_show(struct class *class, struct class_attribute *attr,
+static ssize_t version_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1697,13 +1697,13 @@ static ssize_t version_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t version_store(struct class *class, struct class_attribute *attr,
+static ssize_t version_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	return count;
 }
 
-static ssize_t checkinfo_show(struct class *class, struct class_attribute *attr,
+static ssize_t checkinfo_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	ssize_t len = 0;
@@ -1739,14 +1739,14 @@ static ssize_t checkinfo_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t checkinfo_store(struct class *class,
-						struct class_attribute *attr,
+static ssize_t checkinfo_store(const struct class *class,
+						const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	return count;
 }
 
-static ssize_t standby_show(struct class *class, struct class_attribute *attr,
+static ssize_t standby_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1767,7 +1767,7 @@ static ssize_t standby_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t standby_store(struct class *class, struct class_attribute *attr,
+static ssize_t standby_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	/* struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl; */
@@ -1783,7 +1783,7 @@ static ssize_t standby_store(struct class *class, struct class_attribute *attr,
 	return count;
 }
 
-static ssize_t jump_show(struct class *class, struct class_attribute *attr,
+static ssize_t jump_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	ssize_t len = 0;
@@ -1798,7 +1798,7 @@ static ssize_t jump_show(struct class *class, struct class_attribute *attr,
 	return len;
 }
 
-static ssize_t jump_store(struct class *class, struct class_attribute *attr,
+static ssize_t jump_store(const struct class *class, const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -1961,8 +1961,8 @@ static int aw86006_set_normal_mode(struct cam_ois_ctrl_t *o_ctrl)
 	return OIS_SUCCESS;
 }
 
-static ssize_t gyro_offset_cali_show(struct class *class,
-					struct class_attribute *attr, char *buf)
+static ssize_t gyro_offset_cali_show(const struct class *class,
+					const struct class_attribute *attr, char *buf)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
 	struct accelgyro_dift ag_dift = {0};
@@ -1985,8 +1985,8 @@ static ssize_t gyro_offset_cali_show(struct class *class,
 	return len;
 }
 
-static ssize_t gyro_offset_cali_store(struct class *class,
-						struct class_attribute *attr,
+static ssize_t gyro_offset_cali_store(const struct class *class,
+						const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
@@ -2155,15 +2155,15 @@ static ssize_t gyro_offset_cali_store(struct class *class,
 	return count;
 }
 
-static ssize_t slave_var_show(struct class *class, struct class_attribute *attr,
+static ssize_t slave_var_show(const struct class *class, const struct class_attribute *attr,
 								char *buf)
 {
 	ssize_t len = 0;
 	return len;
 }
 
-static ssize_t slave_var_store(struct class *class,
-						struct class_attribute *attr,
+static ssize_t slave_var_store(const struct class *class,
+						const struct class_attribute *attr,
 						const char *buf, size_t count)
 {
 	struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;

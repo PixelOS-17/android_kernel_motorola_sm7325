@@ -339,14 +339,14 @@ error_return:
 	return ret;
 }
 
-static int adsp_loader_remove(struct platform_device *pdev)
+static void adsp_loader_remove(struct platform_device *pdev)
 {
 	struct adsp_loader_private *priv = NULL;
 
 	priv = platform_get_drvdata(pdev);
 
 	if (!priv)
-		return 0;
+		return;
 
 	if (priv->pil_h) {
 		rproc_shutdown(priv->pil_h);
@@ -358,8 +358,6 @@ static int adsp_loader_remove(struct platform_device *pdev)
 		kobject_del(priv->boot_adsp_obj);
 		priv->boot_adsp_obj = NULL;
 	}
-
-	return 0;
 }
 
 static int adsp_loader_probe(struct platform_device *pdev)

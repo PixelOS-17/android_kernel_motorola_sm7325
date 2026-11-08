@@ -1297,13 +1297,12 @@ static int apr_probe(struct platform_device *pdev)
 	return apr_debug_init();
 }
 
-static int apr_remove(struct platform_device *pdev)
+static void apr_remove(struct platform_device *pdev)
 {
 	snd_event_client_deregister(&pdev->dev);
 	apr_cleanup();
 	apr_tal_exit();
 	apr_priv = NULL;
-	return 0;
 }
 
 static const struct of_device_id apr_machine_of_match[]  = {

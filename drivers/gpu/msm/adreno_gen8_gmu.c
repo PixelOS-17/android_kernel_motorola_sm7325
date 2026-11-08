@@ -3313,10 +3313,9 @@ static int gen8_gmu_probe_dev(struct platform_device *pdev)
 	return component_add(&pdev->dev, &gen8_gmu_component_ops);
 }
 
-static int gen8_gmu_remove_dev(struct platform_device *pdev)
+static void gen8_gmu_remove_dev(struct platform_device *pdev)
 {
 	component_del(&pdev->dev, &gen8_gmu_component_ops);
-	return 0;
 }
 
 static const struct of_device_id gen8_gmu_match_table[] = {

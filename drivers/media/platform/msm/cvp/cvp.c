@@ -484,7 +484,7 @@ static int msm_cvp_probe(struct platform_device *pdev)
 	return -EINVAL;
 }
 
-static int msm_cvp_remove(struct platform_device *pdev)
+static void msm_cvp_remove(struct platform_device *pdev)
 {
 	int rc = 0;
 	struct msm_cvp_core *core;

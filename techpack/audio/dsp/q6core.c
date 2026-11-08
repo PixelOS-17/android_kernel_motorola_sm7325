@@ -2130,11 +2130,10 @@ err:
 	return rc;
 }
 
-static int q6core_remove(struct platform_device *pdev)
+static void q6core_remove(struct platform_device *pdev)
 {
 	snd_event_client_deregister(&pdev->dev);
 	of_platform_depopulate(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id q6core_of_match[]  = {

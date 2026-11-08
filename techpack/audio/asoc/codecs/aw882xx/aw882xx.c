@@ -770,7 +770,7 @@ static int aw882xx_volume_info(struct snd_kcontrol *kcontrol,
 static int aw882xx_volume_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 	unsigned int reg_val = 0;
 	unsigned int value = 0;
@@ -788,7 +788,7 @@ static int aw882xx_volume_put(struct snd_kcontrol *kcontrol,
 {
 	struct soc_mixer_control *mc =
 		(struct soc_mixer_control *) kcontrol->private_value;
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 	unsigned int value = 0;
 	unsigned int reg_value = 0;
@@ -843,7 +843,7 @@ static int aw882xx_spk_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_spk_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 	pr_debug("%s: ucontrol->value.integer.value[0]=%ld\n",
@@ -873,7 +873,7 @@ static int aw882xx_rcv_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_rcv_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 	pr_debug("%s: ucontrol->value.integer.value[0]=%ld\n",
@@ -952,7 +952,7 @@ static int aw882xx_tx_set(struct snd_kcontrol *kcontrol,
 static int aw882xx_profile_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 	pr_debug("%s: profile : %s \n", __func__,
@@ -1176,7 +1176,7 @@ static int aw882xx_send_profile_params_to_dsp(struct aw882xx *aw882xx, int profi
 static int aw882xx_profile_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 	unsigned int ctl_value = 0;
 	int ret;
@@ -1254,7 +1254,7 @@ static int aw882xx_skt_disable_set(struct snd_kcontrol *kcontrol,
 static int aw882xx_monitor_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 
@@ -1269,7 +1269,7 @@ static int aw882xx_monitor_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_monitor_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 	int enable = ucontrol->value.integer.value[0];
@@ -1289,7 +1289,7 @@ static int aw882xx_monitor_set(struct snd_kcontrol *kcontrol,
 static int aw882xx_fade_dealyed_time_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 
@@ -1304,7 +1304,7 @@ static int aw882xx_fade_dealyed_time_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_fade_dealyed_time_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx = snd_soc_component_get_drvdata(codec);
 
 	aw882xx->delayed_time = ucontrol->value.integer.value[0];
@@ -3457,9 +3457,9 @@ void init_aw882xx_monitor(struct aw882xx_monitor *monitor)
  * i2c driver
  *
  ******************************************************/
-static int aw882xx_i2c_probe(struct i2c_client *i2c,
-	const struct i2c_device_id *id)
+static int aw882xx_i2c_probe(struct i2c_client *i2c)
 {
+	const struct i2c_device_id *id = i2c_client_get_device_id(i2c);
 	struct snd_soc_dai_driver *dai;
 	struct aw882xx *aw882xx;
 	struct device_node *np = i2c->dev.of_node;

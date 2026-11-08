@@ -1312,7 +1312,7 @@ const struct file_operations egisfp_fops = {
 struct class *egisfp_class;
 /*-------------------------------------------------------------------------*/
 
-int egisfp_remove(struct platform_device *pdev)
+void egisfp_remove(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct egisfp_dev_t *egis_dev = dev_get_drvdata(dev);
@@ -1360,7 +1360,6 @@ int egisfp_remove(struct platform_device *pdev)
 	unregister_chrdev(EGIS_FP_MAJOR, egisfp_driver.driver.name);
 
 	g_data = NULL;
-	return 0;
 }
 
 int egisfp_probe(struct platform_device *pdev)

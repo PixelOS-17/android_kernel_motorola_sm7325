@@ -2767,7 +2767,7 @@ static int msm_aux_pcm_tx_format_put(struct snd_kcontrol *kcontrol,
 static int msm_hifi_ctrl(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 	struct snd_soc_card *card = component->card;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(card);
@@ -2806,7 +2806,7 @@ static int msm_hifi_put(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
@@ -3991,7 +3991,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_snd_controls,
 					 ARRAY_SIZE(msm_snd_controls));
@@ -6815,7 +6815,7 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 		return -EINVAL;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	if (!strcmp(component->name_prefix, "SpkrLeft")) {
 		dev_dbg(component->dev, "%s: setting left ch map to codec %s\n",
@@ -7234,13 +7234,12 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	audio_notifier_deregister("sm8150");
 	msm_i2s_auxpcm_deinit();
 
 	msm_release_pinctrl(pdev);
-	return 0;
 }
 
 static struct platform_driver sm8150_asoc_machine_driver = {

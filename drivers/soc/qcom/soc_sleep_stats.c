@@ -642,15 +642,13 @@ skip_ddr_stats:
 	return 0;
 }
 
-static int soc_sleep_stats_remove(struct platform_device *pdev)
+static void soc_sleep_stats_remove(struct platform_device *pdev)
 {
 #if IS_ENABLED(CONFIG_DEBUG_FS)
 	struct dentry *root = platform_get_drvdata(pdev);
 
 	debugfs_remove_recursive(root);
 #endif
-
-	return 0;
 }
 
 static const struct stats_config rpm_data = {

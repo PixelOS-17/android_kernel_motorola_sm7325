@@ -2142,7 +2142,7 @@ static int rx_macro_hph_idle_detect_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct rx_macro_priv *rx_priv = NULL;
 	struct device *rx_dev = NULL;
 
@@ -2159,7 +2159,7 @@ static int rx_macro_hph_idle_detect_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct rx_macro_priv *rx_priv = NULL;
 	struct device *rx_dev = NULL;
 
@@ -2176,7 +2176,7 @@ static int rx_macro_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct device *rx_dev = NULL;
@@ -2193,7 +2193,7 @@ static int rx_macro_set_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	int value = ucontrol->value.integer.value[0];
@@ -2295,7 +2295,7 @@ static int rx_macro_get_ear_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2310,7 +2310,7 @@ static int rx_macro_put_ear_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2326,7 +2326,7 @@ static int rx_macro_get_hph_hd2_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2341,7 +2341,7 @@ static int rx_macro_put_hph_hd2_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2356,7 +2356,7 @@ static int rx_macro_get_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2371,7 +2371,7 @@ static int rx_macro_put_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2386,7 +2386,7 @@ static int rx_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	ucontrol->value.integer.value[0] =
 		((snd_soc_component_read(
@@ -2403,7 +2403,7 @@ static int rx_macro_vbat_bcl_gsm_mode_func_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: value: %lu\n", __func__,
 		ucontrol->value.integer.value[0]);
@@ -2425,7 +2425,7 @@ static int rx_macro_soft_clip_enable_get(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2444,7 +2444,7 @@ static int rx_macro_soft_clip_enable_put(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2463,7 +2463,7 @@ static int rx_macro_aux_hpf_mode_get(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2482,7 +2482,7 @@ static int rx_macro_aux_hpf_mode_put(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -2874,7 +2874,7 @@ static int rx_macro_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2896,7 +2896,7 @@ static int rx_macro_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2973,7 +2973,7 @@ static int rx_macro_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -3034,7 +3034,7 @@ static int rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -3961,7 +3961,7 @@ static void rx_macro_init_bcl_pmic_reg(struct snd_soc_component *component)
 static int rx_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
-				snd_soc_component_get_dapm(component);
+				snd_soc_component_to_dapm(component);
 	int ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
@@ -4316,7 +4316,7 @@ err_reg_macro:
 	return ret;
 }
 
-static int rx_macro_remove(struct platform_device *pdev)
+static void rx_macro_remove(struct platform_device *pdev)
 {
 	struct rx_macro_priv *rx_priv = NULL;
 	u16 count = 0;
@@ -4336,7 +4336,6 @@ static int rx_macro_remove(struct platform_device *pdev)
 	mutex_destroy(&rx_priv->mclk_lock);
 	mutex_destroy(&rx_priv->swr_clk_lock);
 	kfree(rx_priv->swr_ctrl_data);
-	return 0;
 }
 
 static const struct of_device_id rx_macro_dt_match[] = {

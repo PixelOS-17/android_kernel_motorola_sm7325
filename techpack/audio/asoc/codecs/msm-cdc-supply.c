@@ -770,15 +770,15 @@ int msm_cdc_enable_wcd_supply(struct cdc_wcd_supply *cdc_supply, bool enable)
 
 	if (enable)
 		rc = snd_soc_dapm_force_enable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					cdc_supply->name);
 	else
 		rc = snd_soc_dapm_disable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					cdc_supply->name);
 
 	if (!rc)
-		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+		snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 	else
 		dev_err(component->dev, "%s: micbias %s force %s pin failed\n",
 			__func__, cdc_supply->name, (enable ? "enable" : "disable"));

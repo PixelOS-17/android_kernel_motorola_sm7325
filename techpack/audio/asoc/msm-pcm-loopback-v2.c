@@ -983,7 +983,7 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	int be_id = 0, i = 0;
 	struct msm_pcm_loopback *prtd = NULL;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct snd_pcm *pcm = NULL;
 	struct snd_pcm_substream *substream = NULL;
@@ -1115,7 +1115,7 @@ static int msm_pcm_channel_mixer_cfg_ctl_get(struct snd_kcontrol *kcontrol,
 	u64 fe_id = kcontrol->private_value & 0xFF;
 	int session_type = (kcontrol->private_value >> 8) & 0xFF;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct msm_pcm_channel_mixer *chmixer_pspd;
 
@@ -1141,7 +1141,7 @@ static int msm_pcm_channel_mixer_output_map_ctl_put(
 	int session_type = (kcontrol->private_value >> 8) & 0xFF;
 	int i = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct msm_pcm_channel_mixer *chmixer_pspd;
 
@@ -1167,7 +1167,7 @@ static int msm_pcm_channel_mixer_output_map_ctl_get(
 	int session_type = (kcontrol->private_value >> 8) & 0xFF;
 	int i = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct msm_pcm_channel_mixer *chmixer_pspd;
 
@@ -1191,7 +1191,7 @@ static int msm_pcm_channel_mixer_input_map_ctl_put(
 	int session_type = (kcontrol->private_value >> 8) & 0xFF;
 	int i = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct msm_pcm_channel_mixer *chmixer_pspd;
 
@@ -1216,7 +1216,7 @@ static int msm_pcm_channel_mixer_input_map_ctl_get(
 	int session_type = (kcontrol->private_value >> 8) & 0xFF;
 	int i = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct msm_pcm_channel_mixer *chmixer_pspd;
 
@@ -1241,7 +1241,7 @@ static int msm_pcm_channel_mixer_weight_ctl_put(
 	int channel = (kcontrol->private_value >> 16) & 0xFF;
 	int i = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	struct msm_pcm_channel_mixer *chmixer_pspd;
 
@@ -1271,7 +1271,7 @@ static int msm_pcm_channel_mixer_weight_ctl_get(
 	int session_type = (kcontrol->private_value >> 8) & 0xFF;
 	int channel = (kcontrol->private_value >> 16) & 0xFF;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_pcm_pdata *pdata = dev_get_drvdata(component->dev);
 	int i = 0;
 	struct msm_pcm_channel_mixer *chmixer_pspd;
@@ -2421,7 +2421,7 @@ static int msm_pcm_probe(struct platform_device *pdev)
 				NULL, 0);
 }
 
-static int msm_pcm_remove(struct platform_device *pdev)
+static void msm_pcm_remove(struct platform_device *pdev)
 {
 	struct msm_pcm_pdata *pdata;
 	int i = 0;
@@ -2436,7 +2436,6 @@ static int msm_pcm_remove(struct platform_device *pdev)
 	}
 	kfree(pdata);
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_pcm_loopback_dt_match[] = {

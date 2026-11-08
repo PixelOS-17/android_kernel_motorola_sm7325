@@ -1014,7 +1014,7 @@ exit:
 	return rc;
 }
 
-static int msm_audio_ion_remove(struct platform_device *pdev)
+static void msm_audio_ion_remove(struct platform_device *pdev)
 {
 	struct device *audio_cb_dev;
 
@@ -1023,7 +1023,6 @@ static int msm_audio_ion_remove(struct platform_device *pdev)
 	msm_audio_ion_data.smmu_enabled = 0;
 	msm_audio_ion_data.device_status = 0;
 	mutex_destroy(&(msm_audio_ion_data.list_mutex));
-	return 0;
 }
 
 static struct platform_driver msm_audio_ion_driver = {

@@ -1843,8 +1843,7 @@ static void ep92_sysfs_remove(struct i2c_client *client,
 	sysfs_remove_group(&client->dev.kobj, &ep92_fs_attrs_group);
 }
 
-static int ep92_i2c_probe(struct i2c_client *client,
-	const struct i2c_device_id *id)
+static int ep92_i2c_probe(struct i2c_client *client)
 {
 	struct ep92_pdata *ep92;
 	int ret;

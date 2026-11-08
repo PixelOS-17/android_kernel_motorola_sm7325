@@ -1655,7 +1655,7 @@ static int msm_pcm_adsp_stream_cmd_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct msm_plat_data *pdata = NULL;
 	struct snd_pcm_substream *substream;
 	struct msm_audio *prtd;
@@ -2016,7 +2016,7 @@ static int msm_pcm_compress_ctl_info(struct snd_kcontrol *kcontrol,
 static int msm_pcm_compress_ctl_get(struct snd_kcontrol *kcontrol,
 		      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
 	struct msm_plat_data *pdata = dev_get_drvdata(comp->dev);
 	struct snd_pcm_substream *substream;
 	struct msm_audio *prtd;
@@ -2048,7 +2048,7 @@ static int msm_pcm_compress_ctl_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	int rc = 0;
-	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
 	struct msm_plat_data *pdata = dev_get_drvdata(comp->dev);
 	struct snd_pcm_substream *substream;
 	struct msm_audio *prtd;
@@ -3886,7 +3886,7 @@ static int msm_pcm_probe(struct platform_device *pdev)
 					NULL, 0);
 }
 
-static int msm_pcm_remove(struct platform_device *pdev)
+static void msm_pcm_remove(struct platform_device *pdev)
 {
 	struct msm_plat_data *pdata;
 	int i = 0;
@@ -3902,7 +3902,6 @@ static int msm_pcm_remove(struct platform_device *pdev)
 	mutex_destroy(&pdata->lock);
 	kfree(pdata);
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 static const struct of_device_id msm_pcm_dt_match[] = {
 	{.compatible = "qcom,msm-pcm-dsp"},

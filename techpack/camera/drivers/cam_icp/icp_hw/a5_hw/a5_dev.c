@@ -235,10 +235,9 @@ int cam_a5_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int cam_a5_remove(struct platform_device *pdev)
+static void cam_a5_remove(struct platform_device *pdev)
 {
 	component_del(&pdev->dev, &cam_a5_component_ops);
-	return 0;
 }
 
 static const struct of_device_id cam_a5_dt_match[] = {

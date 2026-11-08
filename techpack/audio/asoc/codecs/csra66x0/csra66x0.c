@@ -497,7 +497,7 @@ static int csra66x0_get_volume(struct snd_kcontrol *kcontrol,
 	struct soc_mixer_control *mc =
 			(struct soc_mixer_control *)kcontrol->private_value;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	unsigned int reg_l = mc->reg;
 	unsigned int reg_r = mc->rreg;
 	unsigned int val_l, val_r;
@@ -519,7 +519,7 @@ static int csra66x0_set_volume(struct snd_kcontrol *kcontrol,
 	struct soc_mixer_control *mc =
 			(struct soc_mixer_control *)kcontrol->private_value;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct csra66x0_priv *csra66x0 =
 			snd_soc_component_get_drvdata(component);
 	unsigned int reg_l = mc->reg;
@@ -889,7 +889,7 @@ static int csra66x0_soc_probe(struct snd_soc_component *component)
 
 	csra66x0->component = component;
 	if (csra66x0->in_cluster) {
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 		dev_dbg(component->dev, "%s: assign prefix %s to component device %s\n",
 			__func__, component->name_prefix,
 			component->name);
@@ -1289,8 +1289,7 @@ static void csra66x0_sysfs_remove(struct i2c_client *client,
 }
 
 #if IS_ENABLED(CONFIG_I2C)
-static int csra66x0_i2c_probe(struct i2c_client *client_i2c,
-			const struct i2c_device_id *id)
+static int csra66x0_i2c_probe(struct i2c_client *client_i2c)
 {
 	struct csra66x0_priv *csra66x0;
 	int ret, irq_trigger;

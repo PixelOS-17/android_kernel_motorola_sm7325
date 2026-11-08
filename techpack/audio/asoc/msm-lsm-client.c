@@ -5217,7 +5217,7 @@ static int msm_lsm_probe(struct platform_device *pdev)
 					  NULL, 0);
 }
 
-static int msm_lsm_remove(struct platform_device *pdev)
+static void msm_lsm_remove(struct platform_device *pdev)
 {
 #ifdef ENABLE_SVA_MIXER_CTL
 	struct lsm_char_dev *lsm_dev;
@@ -5227,8 +5227,6 @@ static int msm_lsm_remove(struct platform_device *pdev)
 	msm_lsm_destroy_char_dev(lsm_dev);
 #endif
 	snd_soc_unregister_component(&pdev->dev);
-
-	return 0;
 }
 
 static const struct of_device_id msm_lsm_client_dt_match[] = {

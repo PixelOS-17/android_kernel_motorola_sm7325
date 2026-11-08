@@ -947,7 +947,7 @@ unreg_chardev:
 	return ret;
 }
 
-static int wcd_spi_ac_remove(struct platform_device *pdev)
+static void wcd_spi_ac_remove(struct platform_device *pdev)
 {
 	struct wcd_spi_ac_priv *ac;
 
@@ -964,8 +964,6 @@ static int wcd_spi_ac_remove(struct platform_device *pdev)
 	mutex_destroy(&ac->status_lock);
 	mutex_destroy(&ac->state_lock);
 	mutex_destroy(&ac->svc_lock);
-
-	return 0;
 }
 
 static const struct of_device_id wcd_spi_ac_of_match[] = {

@@ -243,10 +243,10 @@ static int tavil_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 	if (turn_on) {
 		if (!(supply->ondemand_supply_count)) {
 			ret = snd_soc_dapm_force_enable_pin(
-				snd_soc_component_get_dapm(component),
+				snd_soc_component_to_dapm(component),
 				"MICBIAS_REGULATOR");
 			snd_soc_dapm_sync(
-				snd_soc_component_get_dapm(component));
+				snd_soc_component_to_dapm(component));
 		}
 		supply->ondemand_supply_count++;
 	} else {
@@ -254,9 +254,9 @@ static int tavil_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 			supply->ondemand_supply_count--;
 		if (!(supply->ondemand_supply_count)) {
 			ret = snd_soc_dapm_disable_pin(
-				snd_soc_component_get_dapm(component),
+				snd_soc_component_to_dapm(component),
 				"MICBIAS_REGULATOR");
-		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+		snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 		}
 	}
 
@@ -834,13 +834,13 @@ static bool tavil_hph_register_recovery(struct wcd_mbhc *mbhc)
 		return false;
 
 	wcd934x_mbhc->is_hph_recover = false;
-	snd_soc_dapm_force_enable_pin(snd_soc_component_get_dapm(component),
+	snd_soc_dapm_force_enable_pin(snd_soc_component_to_dapm(component),
 				      "RESET_HPH_REGISTERS");
-	snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+	snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 
-	snd_soc_dapm_disable_pin(snd_soc_component_get_dapm(component),
+	snd_soc_dapm_disable_pin(snd_soc_component_to_dapm(component),
 				 "RESET_HPH_REGISTERS");
-	snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+	snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 
 	return wcd934x_mbhc->is_hph_recover;
 }
@@ -925,7 +925,7 @@ static int tavil_get_hph_type(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 	struct wcd_mbhc *mbhc;
 
@@ -951,7 +951,7 @@ static int tavil_hph_impedance_get(struct snd_kcontrol *kcontrol,
 	bool hphr;
 	struct soc_multi_mixer_control *mc;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 
 	if (!wcd934x_mbhc) {

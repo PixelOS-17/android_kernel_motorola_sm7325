@@ -4956,8 +4956,8 @@ unlock:
 	return rc;
 }
 
-static ssize_t lra_calibration_store(struct class *c,
-		struct class_attribute *attr, const char *buf, size_t count)
+static ssize_t lra_calibration_store(const struct class *c,
+		const struct class_attribute *attr, const char *buf, size_t count)
 {
 	struct haptics_chip *chip = container_of(c,
 			struct haptics_chip, hap_class);
@@ -4977,8 +4977,8 @@ static ssize_t lra_calibration_store(struct class *c,
 }
 static CLASS_ATTR_WO(lra_calibration);
 
-static ssize_t lra_frequency_hz_show(struct class *c,
-		struct class_attribute *attr, char *buf)
+static ssize_t lra_frequency_hz_show(const struct class *c,
+		const struct class_attribute *attr, char *buf)
 {
 	struct haptics_chip *chip = container_of(c,
 			struct haptics_chip, hap_class);
@@ -4992,8 +4992,8 @@ static ssize_t lra_frequency_hz_show(struct class *c,
 }
 static CLASS_ATTR_RO(lra_frequency_hz);
 
-static ssize_t lra_impedance_show(struct class *c,
-		struct class_attribute *attr, char *buf)
+static ssize_t lra_impedance_show(const struct class *c,
+		const struct class_attribute *attr, char *buf)
 {
 	struct haptics_chip *chip = container_of(c,
 			struct haptics_chip, hap_class);
@@ -5015,8 +5015,8 @@ static ssize_t lra_impedance_show(struct class *c,
 }
 static CLASS_ATTR_RO(lra_impedance);
 
-static ssize_t primitive_duration_show(struct class *c,
-		struct class_attribute *attr, char *buf)
+static ssize_t primitive_duration_show(const struct class *c,
+		const struct class_attribute *attr, char *buf)
 {
 	struct haptics_chip *chip = container_of(c,
 			struct haptics_chip, hap_class);
@@ -5024,8 +5024,8 @@ static ssize_t primitive_duration_show(struct class *c,
 	return scnprintf(buf, PAGE_SIZE, "%d\n", chip->primitive_duration);
 }
 
-static ssize_t primitive_duration_store(struct class *c,
-		struct class_attribute *attr, const char *buf, size_t count)
+static ssize_t primitive_duration_store(const struct class *c,
+		const struct class_attribute *attr, const char *buf, size_t count)
 {
 	struct haptics_chip *chip = container_of(c,
 			struct haptics_chip, hap_class);
@@ -5253,7 +5253,7 @@ destroy_ff:
 	return rc;
 }
 
-static int haptics_remove(struct platform_device *pdev)
+static void haptics_remove(struct platform_device *pdev)
 {
 	struct haptics_chip *chip = dev_get_drvdata(&pdev->dev);
 
@@ -5265,8 +5265,6 @@ static int haptics_remove(struct platform_device *pdev)
 	haptics_remove_debugfs(chip);
 	input_unregister_device(chip->input_dev);
 	dev_set_drvdata(chip->dev, NULL);
-
-	return 0;
 }
 
 static void haptics_ds_suspend_config(struct device *dev)

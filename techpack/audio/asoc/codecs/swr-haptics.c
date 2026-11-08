@@ -347,7 +347,7 @@ static int haptics_vmax_get(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct swr_haptics_dev *swr_hap =
 			snd_soc_component_get_drvdata(component);
 
@@ -361,7 +361,7 @@ static int haptics_vmax_put(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct swr_haptics_dev *swr_hap =
 			snd_soc_component_get_drvdata(component);
 
@@ -408,7 +408,7 @@ static int haptics_comp_probe(struct snd_soc_component *component)
 
 	snd_soc_component_init_regmap(component, swr_hap->regmap);
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 	if (dapm && dapm->component) {
 		snd_soc_dapm_ignore_suspend(dapm, "HAP_IN");
 		snd_soc_dapm_ignore_suspend(dapm, "HAP_OUT");

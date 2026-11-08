@@ -3426,7 +3426,7 @@ static int msm_aux_pcm_tx_format_put(struct snd_kcontrol *kcontrol,
 static int msm_hifi_ctrl(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 	struct snd_soc_card *card = component->card;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(card);
@@ -3465,7 +3465,7 @@ static int msm_hifi_put(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
@@ -4809,7 +4809,7 @@ static int msm_audrx_tavil_init(struct snd_soc_pcm_runtime *rtd)
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_ext_snd_controls,
 					 ARRAY_SIZE(msm_ext_snd_controls));
@@ -4952,7 +4952,7 @@ static int msm_audrx_tasha_init(struct snd_soc_pcm_runtime *rtd)
 		return -EINVAL;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_ext_snd_controls,
 					 ARRAY_SIZE(msm_ext_snd_controls));
@@ -5104,7 +5104,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 	} else {
 		bolero_component = component;
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_int_snd_controls,
 				ARRAY_SIZE(msm_int_snd_controls));
@@ -8256,7 +8256,7 @@ static int msm_wsa881x_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa881x_set_channel_map(component, &spkleft_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
@@ -8277,7 +8277,7 @@ static int msm_wsa881x_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa881x_set_channel_map(component, &spkright_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
@@ -8317,7 +8317,7 @@ static int msm_wcd937x_wsa881x_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa881x_set_channel_map(component, &spkleft_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
@@ -8338,7 +8338,7 @@ static int msm_wcd937x_wsa881x_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa881x_set_channel_map(component, &spkright_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
@@ -8727,12 +8727,10 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	snd_event_master_deregister(&pdev->dev);
 	msm_i2s_auxpcm_deinit();
-
-	return 0;
 }
 
 static struct platform_driver sm6150_asoc_machine_driver = {

@@ -815,7 +815,7 @@ static int aqt_get_hph_type(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	struct aqt1000_mbhc *aqt_mbhc = aqt->mbhc;
 	struct wcd_mbhc *mbhc;
@@ -842,7 +842,7 @@ static int aqt_hph_impedance_get(struct snd_kcontrol *kcontrol,
 	bool hphr;
 	struct soc_multi_mixer_control *mc;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	struct aqt1000_mbhc *aqt_mbhc = aqt->mbhc;
 

@@ -142,7 +142,7 @@ static int wsa881x_spk_pa_gain_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 			snd_soc_component_get_drvdata(component);
 
@@ -158,7 +158,7 @@ static int wsa881x_spk_pa_gain_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 			snd_soc_component_get_drvdata(component);
 
@@ -775,7 +775,7 @@ static int wsa881x_get_boost(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
+					snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 				snd_soc_component_get_drvdata(component);
 
@@ -787,7 +787,7 @@ static int wsa881x_set_boost(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
+					snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 				snd_soc_component_get_drvdata(component);
 	int value = ucontrol->value.integer.value[0];
@@ -803,7 +803,7 @@ static int wsa881x_get_visense(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
+					snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 				snd_soc_component_get_drvdata(component);
 
@@ -815,7 +815,7 @@ static int wsa881x_set_visense(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
+					snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 				snd_soc_component_get_drvdata(component);
 	int value = ucontrol->value.integer.value[0];
@@ -830,7 +830,7 @@ static int wsa881x_get_t0_init(struct snd_kcontrol *kcontrol,
 							struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
+					snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 					snd_soc_component_get_drvdata(component);
 	struct wsa881x_tz_priv *pdata = &wsa881x->tz_pdata;
@@ -845,7 +845,7 @@ static int wsa881x_set_t0_init(struct snd_kcontrol *kcontrol,
 							struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
+					snd_kcontrol_chip(kcontrol);
 	struct wsa881x_pdata *wsa881x =
 					snd_soc_component_get_drvdata(component);
 	struct wsa881x_tz_priv *pdata = &wsa881x->tz_pdata;
@@ -1200,7 +1200,7 @@ static int wsa881x_probe(struct snd_soc_component *component)
 	int retry = REGMAP_REGISTER_CHECK_RETRY;
 	int wsa881x_index = 0;
 	struct snd_soc_dapm_context *dapm =
-					snd_soc_component_get_dapm(component);
+					snd_soc_component_to_dapm(component);
 	char *widget_name = NULL;
 
 	client = dev_get_drvdata(component->dev);
@@ -1424,8 +1424,7 @@ static int wsa881x_populate_dt_pdata(struct device *dev, int wsa881x_index)
 	return ret;
 }
 
-static int wsa881x_i2c_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
+static int wsa881x_i2c_probe(struct i2c_client *client)
 {
 	int ret = 0;
 	int wsa881x_index = 0;

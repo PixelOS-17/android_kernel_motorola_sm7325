@@ -1425,7 +1425,7 @@ static int msm_pcm_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int msm_pcm_remove(struct platform_device *pdev)
+static void msm_pcm_remove(struct platform_device *pdev)
 {
 	struct msm_plat_data *pdata;
 
@@ -1434,7 +1434,6 @@ static int msm_pcm_remove(struct platform_device *pdev)
 	mutex_destroy(&pdata->lock);
 	devm_kfree(&pdev->dev, pdata);
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 static const struct of_device_id msm_pcm_noirq_dt_match[] = {
 	{.compatible = "qcom,msm-pcm-dsp-noirq"},

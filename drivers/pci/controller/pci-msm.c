@@ -9842,7 +9842,7 @@ out:
 	return ret;
 }
 
-static int msm_pcie_remove(struct platform_device *pdev)
+static void msm_pcie_remove(struct platform_device *pdev)
 {
 	int ret = 0;
 	int rc_idx;
@@ -11024,8 +11024,7 @@ static const struct of_device_id of_i2c_id_table[] = {
 };
 MODULE_DEVICE_TABLE(of, of_i2c_id_table);
 
-static int pcie_i2c_ctrl_probe(struct i2c_client *client,
-				    const struct i2c_device_id *id)
+static int pcie_i2c_ctrl_probe(struct i2c_client *client)
 {
 	int rc_index = -EINVAL;
 	enum i2c_client_id client_id = I2C_CLIENT_ID_INVALID;

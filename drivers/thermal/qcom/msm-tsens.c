@@ -284,11 +284,9 @@ static int tsens_thermal_zone_register(struct tsens_device *tmdev)
 	return 0;
 }
 
-static int tsens_tm_remove(struct platform_device *pdev)
+static void tsens_tm_remove(struct platform_device *pdev)
 {
 	platform_set_drvdata(pdev, NULL);
-
-	return 0;
 }
 
 static void tsens_therm_fwk_notify(struct work_struct *work)

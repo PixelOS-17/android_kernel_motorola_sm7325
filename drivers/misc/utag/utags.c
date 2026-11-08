@@ -2231,7 +2231,7 @@ static int utags_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int utags_remove(struct platform_device *pdev)
+static void utags_remove(struct platform_device *pdev)
 {
 	struct ctrl *ctrl = dev_get_drvdata(&pdev->dev);
 
@@ -2280,7 +2280,6 @@ static int utags_remove(struct platform_device *pdev)
 
 	devm_kfree(&pdev->dev, ctrl);
 	dev_set_drvdata(&pdev->dev, NULL);
-	return 0;
 }
 
 #ifdef CONFIG_OF

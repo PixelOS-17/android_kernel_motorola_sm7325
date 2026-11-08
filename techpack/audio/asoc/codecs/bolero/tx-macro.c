@@ -790,7 +790,7 @@ static int tx_macro_dec_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 	int ret = 0;
@@ -812,7 +812,7 @@ static int tx_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 	int value = ucontrol->value.integer.value[0];
@@ -835,7 +835,7 @@ static int tx_macro_lpi_get(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
 
@@ -851,7 +851,7 @@ static int tx_macro_lpi_put(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
 
@@ -867,7 +867,7 @@ static int tx_macro_bcs_ch_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 
@@ -883,7 +883,7 @@ static int tx_macro_bcs_ch_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 	int value = ucontrol->value.enumerated.item[0];
@@ -900,7 +900,7 @@ static int tx_macro_get_bcs(struct snd_kcontrol *kcontrol,
                             struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 
@@ -916,7 +916,7 @@ static int tx_macro_set_bcs(struct snd_kcontrol *kcontrol,
 			    struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 	int value = ucontrol->value.integer.value[0];
@@ -943,7 +943,7 @@ static int tx_macro_get_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 	int value = 0;
@@ -966,7 +966,7 @@ static int tx_macro_put_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct tx_macro_priv *tx_priv = NULL;
 	struct device *tx_dev = NULL;
 	int value;
@@ -3038,7 +3038,7 @@ static const struct tx_macro_reg_mask_val tx_macro_reg_init[] = {
 static int tx_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 	int ret = 0, i = 0;
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
@@ -3503,7 +3503,7 @@ err_reg_macro:
 	return ret;
 }
 
-static int tx_macro_remove(struct platform_device *pdev)
+static void tx_macro_remove(struct platform_device *pdev)
 {
 	struct tx_macro_priv *tx_priv = NULL;
 	u16 count = 0;
@@ -3528,7 +3528,6 @@ static int tx_macro_remove(struct platform_device *pdev)
 	if (tx_priv->is_used_tx_swr_gpio)
 		mutex_destroy(&tx_priv->swr_clk_lock);
 	bolero_unregister_macro(&pdev->dev, TX_MACRO);
-	return 0;
 }
 
 

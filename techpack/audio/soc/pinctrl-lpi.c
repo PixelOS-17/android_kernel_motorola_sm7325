@@ -832,7 +832,7 @@ err_io:
 	return ret;
 }
 
-static int lpi_pinctrl_remove(struct platform_device *pdev)
+static void lpi_pinctrl_remove(struct platform_device *pdev)
 {
 	struct lpi_gpio_state *state = platform_get_drvdata(pdev);
 
@@ -840,8 +840,6 @@ static int lpi_pinctrl_remove(struct platform_device *pdev)
 	audio_notifier_legacy_deregister("lpi_tlmm");
 	gpiochip_remove(&state->chip);
 	mutex_destroy(&state->slew_access_lock);
-
-	return 0;
 }
 
 static const struct of_device_id lpi_pinctrl_of_match[] = {

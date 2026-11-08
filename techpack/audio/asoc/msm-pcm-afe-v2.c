@@ -128,7 +128,7 @@ static enum hrtimer_restart afe_hrtimer_rec_callback(struct hrtimer *hrt)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	u32 mem_map_handle = 0;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int port_id = cpu_dai->id;
 	int ret;
 
@@ -274,7 +274,7 @@ static void pcm_afe_process_rx_pkt(uint32_t opcode,
 	substream =  prtd->substream;
 	runtime = substream->runtime;
 	rtd = substream->private_data;
-	cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	port_id = cpu_dai->id;
 	pr_debug("%s\n", __func__);
 	spin_lock_irqsave(&prtd->dsp_lock, dsp_flags);
@@ -376,7 +376,7 @@ static int msm_afe_playback_prepare(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int ret = 0;
 
 	pr_debug("%s: sample_rate=%d\n", __func__, runtime->rate);
@@ -398,7 +398,7 @@ static int msm_afe_capture_prepare(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int ret = 0;
 
 	pr_debug("%s\n", __func__);
@@ -562,7 +562,7 @@ static int msm_afe_capture_copy(struct snd_pcm_substream *substream,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int port_id = cpu_dai->id;
 	char *hwbuf = runtime->dma_area + hwoff;
 	u32 mem_map_handle = 0;
@@ -667,7 +667,7 @@ static int msm_afe_close(struct snd_soc_component *component, struct snd_pcm_sub
 		return -EINVAL;
 	}
 	rtd = substream->private_data;
-	dai = asoc_rtd_to_cpu(rtd, 0);
+	dai = snd_soc_rtd_to_cpu(rtd, 0);
 	runtime = substream->runtime;
 	prtd = runtime->private_data;
 
@@ -908,11 +908,10 @@ static int msm_afe_probe(struct platform_device *pdev)
 				   &msm_soc_component, NULL, 0);
 }
 
-static int msm_afe_remove(struct platform_device *pdev)
+static void msm_afe_remove(struct platform_device *pdev)
 {
 	pr_debug("%s\n", __func__);
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 static const struct of_device_id msm_pcm_afe_dt_match[] = {
 	{.compatible = "qcom,msm-pcm-afe"},

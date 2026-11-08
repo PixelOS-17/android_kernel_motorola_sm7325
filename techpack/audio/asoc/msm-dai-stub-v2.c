@@ -70,7 +70,7 @@ static int msm_dai_stub_add_route(struct snd_soc_dai *dai)
 	struct snd_soc_dapm_route intercon;
 	struct snd_soc_dapm_context *dapm;
 	const char *aif_name;
-	dapm = snd_soc_component_get_dapm(dai->component);
+	dapm = snd_soc_component_to_dapm(dai->component);
 
 	memset(&intercon, 0, sizeof(intercon));
 	if (dai->driver->playback.stream_name) {
@@ -315,10 +315,9 @@ static int msm_dai_stub_dev_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int msm_dai_stub_dev_remove(struct platform_device *pdev)
+static void msm_dai_stub_dev_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_dai_stub_dev_dt_match[] = {
@@ -354,11 +353,9 @@ static int msm_dai_stub_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int msm_dai_stub_remove(struct platform_device *pdev)
+static void msm_dai_stub_remove(struct platform_device *pdev)
 {
 	pr_debug("%s:\n", __func__);
-
-	return 0;
 }
 
 static const struct of_device_id msm_dai_stub_dt_match[] = {

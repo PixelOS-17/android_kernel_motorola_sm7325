@@ -2082,7 +2082,7 @@ static int tdm_slot_map_put(struct snd_kcontrol *kcontrol,
 	pr_debug("%s: interface = %d, channel = %d\n", __func__,
 		interface, channel);
 
-	component = snd_soc_kcontrol_component(kcontrol);
+	component = snd_kcontrol_chip(kcontrol);
 	pdata = snd_soc_card_get_drvdata(component->card);
 	config = ((struct tdm_dev_config *) tdm_cfg[interface / MAX_PATH]) +
 			((interface % MAX_PATH) * TDM_PORT_MAX) + channel;
@@ -5573,7 +5573,7 @@ static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 		if (!component)
 			component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.3");
 		if (component) {
-			dapm = snd_soc_component_get_dapm(component);
+			dapm = snd_soc_component_to_dapm(component);
 
 			if (strnstr(component->name, "wsa883x", sizeof(component->name))) {
 				wsa883x_set_channel_map(component, &spkleft_ports[0],
@@ -5615,7 +5615,7 @@ static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		if (strnstr(component->name, "wsa883x", sizeof(component->name))) {
 			wsa883x_set_channel_map(component, &spkright_ports[0],
@@ -5662,7 +5662,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 		bolero_component = component;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_int_snd_controls,
 				ARRAY_SIZE(msm_int_snd_controls));
@@ -5759,7 +5759,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 	card = component->card->snd_card;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
@@ -8003,7 +8003,7 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
@@ -8011,8 +8011,6 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	snd_soc_unregister_card(card);
 	msm_i2s_auxpcm_deinit();
 	msm_audio_remove_qos_request();
-
-	return 0;
 }
 
 static struct platform_driver kona_asoc_machine_driver = {

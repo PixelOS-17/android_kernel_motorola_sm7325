@@ -463,8 +463,7 @@ static void fsa4480_update_reg_defaults(struct regmap *regmap)
 				   fsa_reg_i2c_defaults[i].val);
 }
 
-static int fsa4480_probe(struct i2c_client *i2c,
-			 const struct i2c_device_id *id)
+static int fsa4480_probe(struct i2c_client *i2c)
 {
 	struct fsa4480_priv *fsa_priv;
 	u32 use_powersupply = 0;

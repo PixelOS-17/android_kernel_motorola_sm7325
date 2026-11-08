@@ -2368,7 +2368,7 @@ static int tdm_slot_map_put(struct snd_kcontrol *kcontrol,
 	pr_debug("%s: interface = %d, channel = %d\n", __func__,
 		interface, channel);
 
-	component = snd_soc_kcontrol_component(kcontrol);
+	component = snd_kcontrol_chip(kcontrol);
 	pdata = snd_soc_card_get_drvdata(component->card);
 	config = ((struct tdm_dev_config *) tdm_cfg[interface / MAX_PATH]) +
 			((interface % MAX_PATH) * TDM_PORT_MAX) + channel;
@@ -3144,7 +3144,7 @@ static int msm_mi2s_set_sclk(struct snd_pcm_substream *substream, bool enable)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int port_id = 0;
 	/* Rx and Tx DAIs should use same clk index */
 	int index = (cpu_dai->id) / 2;
@@ -5090,7 +5090,7 @@ static int lahaina_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 				     struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	int ret = 0;
 	int slot_width = TDM_SLOT_WIDTH_BITS;
 	int channels, slots;
@@ -5248,7 +5248,7 @@ static int lahaina_tdm_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int tdm_mode = msm_get_tdm_mode(cpu_dai->id);
@@ -5282,7 +5282,7 @@ static void lahaina_tdm_snd_shutdown(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int tdm_mode = msm_get_tdm_mode(cpu_dai->id);
@@ -5312,7 +5312,7 @@ static int lahaina_aux_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	u32 aux_mode = cpu_dai->id - 1;
@@ -5346,7 +5346,7 @@ static void lahaina_aux_snd_shutdown(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	u32 aux_mode = cpu_dai->id - 1;
@@ -5514,8 +5514,8 @@ static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 			     struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai_link *dai_link = rtd->dai_link;
 
 	int ret = 0;
@@ -5628,7 +5628,7 @@ static void msm_fe_qos_shutdown(struct snd_pcm_substream *substream)
 void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	/* Rx and Tx DAIs should use same clk index */
 	int index = (cpu_dai->id) / 2;
 	struct snd_soc_card *card = rtd->card;
@@ -5665,7 +5665,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai **codec_dais = &rtd->dais[rtd->dai_link->num_cpus];
 	/* Rx and Tx DAIs should use same clk index */
 	int index = (cpu_dai->id) / 2;
@@ -5814,7 +5814,7 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	/* Rx and Tx DAIs should use same clk index */
-	int index = (asoc_rtd_to_cpu(rtd, 0)->id) / 2;
+	int index = (snd_soc_rtd_to_cpu(rtd, 0)->id) / 2;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 
@@ -5852,8 +5852,8 @@ static int msm_wcn_hw_params_lito(struct snd_pcm_substream *substream,
 			     struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai_link *dai_link = rtd->dai_link;
 	u32 rx_ch[WCN_CDC_SLIM_RX_CH_MAX], tx_ch[WCN_CDC_SLIM_TX_CH_MAX_LITO];
 	u32 rx_ch_cnt = 0, tx_ch_cnt = 0;
@@ -5887,8 +5887,8 @@ static int msm_wcn_hw_params(struct snd_pcm_substream *substream,
 			     struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai_link *dai_link = rtd->dai_link;
 	u32 rx_ch[WCN_CDC_SLIM_RX_CH_MAX], tx_ch[WCN_CDC_SLIM_TX_CH_MAX];
 	u32 rx_ch_cnt = 0, tx_ch_cnt = 0;
@@ -6058,7 +6058,7 @@ static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 {
 	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
 	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX]  = {159, 160};
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
 
 	return snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
 					   tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
@@ -6068,7 +6068,7 @@ static int msm_wcn_init_lito(struct snd_soc_pcm_runtime *rtd)
 {
 	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
 	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX_LITO]  = {159, 160, 161};
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
 
 	return snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
 					   tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
@@ -6133,7 +6133,7 @@ static int cirrus_amp_init(struct snd_soc_pcm_runtime *rtd)
 		pr_err("%s: No match for codec component\n", __func__);
 		return -1;
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	name_prefix = component->name_prefix;
 	if (!name_prefix) {
@@ -8549,7 +8549,7 @@ static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
         if (pdata->wsa_max_devs > 0) {
 		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
 		if (component) {
-			dapm = snd_soc_component_get_dapm(component);
+			dapm = snd_soc_component_to_dapm(component);
 
 			wsa883x_set_channel_map(component, &spkleft_ports[0],
 					WSA883X_MAX_SWR_PORTS, &ch_mask[0],
@@ -8573,7 +8573,7 @@ static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 
-		dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_to_dapm(component);
 
 		wsa883x_set_channel_map(component, &spkright_ports[0],
 				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
@@ -8610,7 +8610,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 		bolero_component = component;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 
 	ret = snd_soc_add_component_controls(component, msm_int_snd_controls,
 				ARRAY_SIZE(msm_int_snd_controls));
@@ -8681,7 +8681,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 			return -EINVAL;
 		}
 	}
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_to_dapm(component);
 	card = component->card->snd_card;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
@@ -9651,7 +9651,7 @@ err:
 	return ret;
 }
 
-static int msm_asoc_machine_remove(struct platform_device *pdev)
+static void msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 	struct msm_asoc_mach_data *pdata = NULL;
@@ -9663,8 +9663,6 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	snd_soc_unregister_card(card);
 	msm_i2s_auxpcm_deinit();
 	msm_audio_remove_qos_request();
-
-	return 0;
 }
 
 static struct platform_driver lahaina_asoc_machine_driver = {

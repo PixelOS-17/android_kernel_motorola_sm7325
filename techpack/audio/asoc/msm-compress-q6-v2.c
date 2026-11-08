@@ -5788,7 +5788,7 @@ static int msm_compr_dev_probe(struct platform_device *pdev)
 					&msm_soc_component, NULL, 0);
 }
 
-static int msm_compr_remove(struct platform_device *pdev)
+static void msm_compr_remove(struct platform_device *pdev)
 {
 	int i = 0;
 	struct msm_compr_pdata *pdata = NULL;
@@ -5802,7 +5802,6 @@ static int msm_compr_remove(struct platform_device *pdev)
 	kfree(pdata);
 
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_compr_dt_match[] = {

@@ -34573,10 +34573,9 @@ static int msm_routing_pcm_probe(struct platform_device *pdev)
 				NULL, 0);
 }
 
-static int msm_routing_pcm_remove(struct platform_device *pdev)
+static void msm_routing_pcm_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_component(&pdev->dev);
-	return 0;
 }
 
 static const struct of_device_id msm_pcm_routing_dt_match[] = {

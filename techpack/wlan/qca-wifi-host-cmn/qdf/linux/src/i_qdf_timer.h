@@ -166,7 +166,7 @@ static inline void __qdf_timer_free(struct __qdf_timer_t *timer)
 	timer_delete_sync(os_timer);
 
 	if (object_is_on_stack(os_timer))
-		destroy_timer_on_stack(os_timer);
+		timer_destroy_on_stack(os_timer);
 }
 
 static inline bool __qdf_timer_sync_cancel(struct __qdf_timer_t *timer)

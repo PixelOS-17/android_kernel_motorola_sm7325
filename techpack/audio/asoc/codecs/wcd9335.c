@@ -1378,10 +1378,10 @@ static int tasha_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 	if (turn_on) {
 		if (!(supply->ondemand_supply_count)) {
 			ret = snd_soc_dapm_force_enable_pin(
-				snd_soc_component_get_dapm(component),
+				snd_soc_component_to_dapm(component),
 				"MICBIAS_REGULATOR");
 			snd_soc_dapm_sync(
-				snd_soc_component_get_dapm(component));
+				snd_soc_component_to_dapm(component));
 		}
 		supply->ondemand_supply_count++;
 	} else {
@@ -1389,9 +1389,9 @@ static int tasha_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 			supply->ondemand_supply_count--;
 		if (!(supply->ondemand_supply_count)) {
 			ret = snd_soc_dapm_disable_pin(
-				snd_soc_component_get_dapm(component),
+				snd_soc_component_to_dapm(component),
 				"MICBIAS_REGULATOR");
-		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+		snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 		}
 	}
 
@@ -2122,7 +2122,7 @@ static int tasha_get_anc_slot(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = tasha->anc_slot;
@@ -2133,7 +2133,7 @@ static int tasha_put_anc_slot(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	tasha->anc_slot = ucontrol->value.integer.value[0];
@@ -2144,7 +2144,7 @@ static int tasha_get_anc_func(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = (tasha->anc_func == true ? 1 : 0);
@@ -2155,10 +2155,10 @@ static int tasha_put_anc_func(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 
 	mutex_lock(&tasha->codec_mutex);
 	tasha->anc_func = (!ucontrol->value.integer.value[0] ? false : true);
@@ -2219,7 +2219,7 @@ static int tasha_get_clkmode(struct snd_kcontrol *kcontrol,
 			    struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.enumerated.item[0] = tasha->clk_mode;
@@ -2233,7 +2233,7 @@ static int tasha_put_clkmode(struct snd_kcontrol *kcontrol,
 			    struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	tasha->clk_mode = ucontrol->value.enumerated.item[0];
@@ -2248,7 +2248,7 @@ static int tasha_get_iir_enable_audio_mixer(
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2273,7 +2273,7 @@ static int tasha_hph_impedance_get(struct snd_kcontrol *kcontrol,
 	bool hphr;
 	struct soc_multi_mixer_control *mc;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *priv = snd_soc_component_get_drvdata(component);
 
 	mc = (struct soc_multi_mixer_control *)(kcontrol->private_value);
@@ -2297,7 +2297,7 @@ static int tasha_get_hph_type(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *priv = snd_soc_component_get_drvdata(component);
 	struct wcd_mbhc *mbhc;
 
@@ -2808,7 +2808,7 @@ static int tasha_put_iir_enable_audio_mixer(
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2879,7 +2879,7 @@ static int tasha_get_iir_band_audio_mixer(
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -3462,7 +3462,7 @@ static int tasha_put_iir_band_audio_mixer(
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -3510,7 +3510,7 @@ static int tasha_get_compander(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
@@ -3523,7 +3523,7 @@ static int tasha_set_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
@@ -6407,15 +6407,15 @@ static int tasha_codec_enable_standalone_ldo_h(
 
 	if (enable)
 		rc = snd_soc_dapm_force_enable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					DAPM_LDO_H_STANDALONE);
 	else
 		rc = snd_soc_dapm_disable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					DAPM_LDO_H_STANDALONE);
 
 	if (!rc)
-		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+		snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 	else
 		dev_err(component->dev, "%s: ldo_h force %s pin failed\n",
 			__func__, (enable ? "enable" : "disable"));
@@ -6458,15 +6458,15 @@ int tasha_codec_enable_standalone_micbias(struct snd_soc_component *component,
 
 	if (enable)
 		rc = snd_soc_dapm_force_enable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					micb_names[micb_index]);
 	else
 		rc = snd_soc_dapm_disable_pin(
-					snd_soc_component_get_dapm(component),
+					snd_soc_component_to_dapm(component),
 					micb_names[micb_index]);
 
 	if (!rc)
-		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+		snd_soc_dapm_sync(snd_soc_component_to_dapm(component));
 	else
 		dev_err(component->dev, "%s: micbias%d force %s pin failed\n",
 			__func__, micb_num, (enable ? "enable" : "disable"));
@@ -7896,7 +7896,7 @@ static int tasha_amic_pwr_lvl_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u16 amic_reg;
 
 	if (!strcmp(kcontrol->id.name, "AMIC_1_2 PWR MODE"))
@@ -7918,7 +7918,7 @@ static int tasha_amic_pwr_lvl_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u32 mode_val;
 	u16 amic_reg;
 
@@ -7945,7 +7945,7 @@ static int tasha_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = tasha->hph_mode;
@@ -7956,7 +7956,7 @@ static int tasha_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 	u32 mode_val;
 
@@ -7988,7 +7988,7 @@ static int tasha_enable_ldo_h_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u8 val = 0;
 
 	if (component)
@@ -8004,7 +8004,7 @@ static int tasha_enable_ldo_h_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	int value = ucontrol->value.integer.value[0];
 	bool enable;
 
@@ -8020,7 +8020,7 @@ static int tasha_mad_input_get(struct snd_kcontrol *kcontrol,
 {
 	u8 tasha_mad_input;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	tasha_mad_input = snd_soc_component_read(component,
 				WCD9335_SOC_MAD_INP_SEL) & 0x0F;
@@ -8037,7 +8037,7 @@ static int tasha_mad_input_put(struct snd_kcontrol *kcontrol,
 {
 	u8 tasha_mad_input;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct snd_soc_card *card = component->card;
 	char mad_amic_input_widget[6];
 	const char *mad_input_widget;
@@ -8148,7 +8148,7 @@ static int tasha_pinctl_mode_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	u16 ctl_reg;
 	u8 reg_val, pinctl_position;
 
@@ -8184,7 +8184,7 @@ static int tasha_pinctl_mode_put(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 	u16 ctl_reg, cfg_reg;
 	u8 ctl_val, cfg_val, pinctl_position, pinctl_mode, mask;
@@ -8472,7 +8472,7 @@ static int tasha_vbat_adc_data_get(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	wcd_vbat_adc_out_config(&tasha->vbat, component);
@@ -8498,7 +8498,7 @@ static int tasha_vbat_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	ucontrol->value.integer.value[0] =
 		((snd_soc_component_read(
@@ -8514,7 +8514,7 @@ static int tasha_vbat_gsm_mode_func_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: value: %lu\n", __func__,
 		ucontrol->value.integer.value[0]);
@@ -8932,7 +8932,7 @@ static int tasha_ear_pa_gain_get(struct snd_kcontrol *kcontrol,
 {
 	u8 ear_pa_gain;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	ear_pa_gain = snd_soc_component_read(component, WCD9335_ANA_EAR);
 
@@ -8951,7 +8951,7 @@ static int tasha_ear_pa_gain_put(struct snd_kcontrol *kcontrol,
 {
 	u8 ear_pa_gain;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -8967,7 +8967,7 @@ static int tasha_ear_spkr_pa_gain_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = tasha->ear_spkr_gain;
@@ -8982,7 +8982,7 @@ static int tasha_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
@@ -8998,7 +8998,7 @@ static int tasha_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	bst_state_max = snd_soc_component_read(
 				component, WCD9335_CDC_BOOST0_BOOST_CTL);
@@ -9015,7 +9015,7 @@ static int tasha_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -9031,7 +9031,7 @@ static int tasha_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max = 0;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	bst_state_max = snd_soc_component_read(
 			component, WCD9335_CDC_BOOST1_BOOST_CTL);
@@ -9048,7 +9048,7 @@ static int tasha_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
 {
 	u8 bst_state_max;
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -13925,7 +13925,7 @@ static int tasha_codec_probe(struct snd_soc_component *component)
 	struct tasha_priv *tasha;
 	struct wcd9xxx_pdata *pdata;
 	struct snd_soc_dapm_context *dapm =
-				snd_soc_component_get_dapm(component);
+				snd_soc_component_to_dapm(component);
 	int i, ret;
 	void *ptr = NULL;
 	struct regulator *supply;
@@ -14766,7 +14766,7 @@ err_cdc_pwr:
 	return ret;
 }
 
-static int tasha_remove(struct platform_device *pdev)
+static void tasha_remove(struct platform_device *pdev)
 {
 	struct tasha_priv *tasha;
 	int count = 0;
@@ -14789,7 +14789,6 @@ static int tasha_remove(struct platform_device *pdev)
 	mutex_destroy(&tasha->sb_clk_gear_lock);
 	snd_soc_unregister_component(&pdev->dev);
 	devm_kfree(&pdev->dev, tasha);
-	return 0;
 }
 
 static struct platform_driver tasha_codec_driver = {

@@ -1624,7 +1624,7 @@ static int rouleur_get_compander(struct snd_kcontrol *kcontrol,
 {
 
 	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
+				snd_kcontrol_chip(kcontrol);
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
 	bool hphr;
 	struct soc_multi_mixer_control *mc;
@@ -1641,7 +1641,7 @@ static int rouleur_set_compander(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
+			snd_kcontrol_chip(kcontrol);
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
 	int value = ucontrol->value.integer.value[0];
 	bool hphr;
@@ -2197,7 +2197,7 @@ static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
 	struct snd_soc_dapm_context *dapm =
-			snd_soc_component_get_dapm(component);
+			snd_soc_component_to_dapm(component);
 	int ret = -EINVAL;
 
 	dev_info(component->dev, "%s()\n", __func__);
@@ -2829,12 +2829,10 @@ static int rouleur_probe(struct platform_device *pdev)
 					&rouleur_comp_ops, match);
 }
 
-static int rouleur_remove(struct platform_device *pdev)
+static void rouleur_remove(struct platform_device *pdev)
 {
 	component_master_del(&pdev->dev, &rouleur_comp_ops);
 	dev_set_drvdata(&pdev->dev, NULL);
-
-	return 0;
 }
 
 #ifdef CONFIG_PM_SLEEP
