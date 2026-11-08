@@ -3,8 +3,8 @@
 # Usage: ./build-tundra.sh [out-dir]   (default ../out-6.1)
 set -e
 SRC=$(cd "$(dirname "$0")" && pwd)
-OUT=${1:-$SRC/../out-6.1}
-CLANG=${CLANG:-$SRC/../toolchain/clang-r487747c/bin}
+OUT=${1:-$SRC/../out}
+CLANG=${CLANG:-$HOME/pos/prebuilts/clang/host/linux-x86/clang-r596125/bin}
 export KBUILD_BUILD_HOST=${KBUILD_BUILD_HOST:-localhost}
 export PATH=$CLANG:$PATH
 M="make -C $SRC O=$OUT ARCH=arm64 LLVM=1 LLVM_IAS=1"
