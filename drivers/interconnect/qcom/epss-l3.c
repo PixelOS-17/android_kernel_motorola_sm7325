@@ -284,6 +284,8 @@ static int qcom_epss_l3_probe(struct platform_device *pdev)
 
 	icc_provider_init(provider);
 
+	/* nodes[] is __counted_by(num_nodes), so set it before the first write */
+	data->num_nodes = num_nodes;
 	for (i = 0; i < num_nodes; i++) {
 		size_t j;
 
@@ -306,7 +308,6 @@ static int qcom_epss_l3_probe(struct platform_device *pdev)
 
 		data->nodes[i] = node;
 	}
-	data->num_nodes = num_nodes;
 
 	platform_set_drvdata(pdev, qp);
 
