@@ -14,6 +14,15 @@ config SERIAL_EARLYCON
 	  the console before standard serial driver is probed. The console is
 	  enabled when early_param is processed.
 
+config SERIAL_EARLYCON_RAMOOPS
+	bool "Early console into a ramoops zone"
+	depends on SERIAL_CORE
+	select SERIAL_EARLYCON
+	help
+	  Boot console for devices without a UART: writes the kernel log
+	  into a ramoops zone (earlycon=ramoops,<addr>[,<size>]) so that it
+	  can be read from /sys/fs/pstore after a warm reset.
+
 source "drivers/tty/serial/8250/Kconfig"
 
 comment "Non-8250 serial port support"
@@ -918,6 +927,15 @@ config SERIAL_QCOM_GENI
 	depends on QCOM_GENI_SE
 	select SERIAL_CORE
 
+config SERIAL_QCOM_GENI_MSM
+	tristate "QCOM on-chip GENI based serial port support with SCMI"
+	depends on ARCH_QCOM || COMPILE_TEST
+	depends on QCOM_GENI_SE_MSM
+	select SERIAL_CORE
+	help
+	  Serial driver for Qualcomm Technologies Inc's GENI based
+	  QUP hardware with SCMI support.
+
 config SERIAL_QCOM_GENI_CONSOLE
 	bool "QCOM GENI Serial Console support"
 	depends on SERIAL_QCOM_GENI
@@ -934,6 +952,19 @@ config SERIAL_QCOM_GENI_UART_PORTS
 	help
 	  Set this to the maximum number of serial ports you want the driver
 	  to support.
+config SERIAL_MSM_GENI
+    tristate "MSM on-chip GENI HW based serial port support"
+    depends on ARCH_QCOM
+    depends on QCOM_GENI_SE
+
+config SERIAL_MSM_GENI_HALF_SAMPLING
+    bool "Changes clock divider which impacts sampling rate for QUP HW ver greater than 2.5.0"
+    depends on SERIAL_MSM_GENI
+    help
+      Clock divider value should be doubled for QUP hardware version
+      greater than 2.5.0.
+      As earlycon can not have HW version awareness, decision is taken
+      based on the configuration.
 
 config SERIAL_VT8500
 	bool "VIA VT8500 on-chip serial port support"
@@ -1617,6 +1648,17 @@ config SERIAL_ESP32_ACM
 	  When earlycon option is enabled the following kernel command line
 	  snippet may be used:
 	    earlycon=esp32s3acm,mmio32,0x60038000
+config SERIAL_MSM_HS
+	tristate "MSM UART High Speed: Serial Driver"
+	depends on ARCH_QCOM
+	select SERIAL_CORE
+	help
+	  If you have a machine based on MSM family of SoCs, you
+	  can enable its onboard high speed serial port by enabling
+	  this option.
+
+	  Choose M here to compile it as a module. The module will be
+	  called msm_serial_hs.
 
 endmenu
 
