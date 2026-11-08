@@ -202,3 +202,13 @@ config CFG80211_KUNIT_TEST
 	  If unsure, say N.
 
 endif # CFG80211
+config CORE_REGDB
+	bool "kernel support for regulatory database"
+	default n
+	help
+	  Enable this if the kernel is supposed to have regulatory.db
+	  available for core hint.
+
+	  Once this is disabled, kernel will not probe for regulatory.db
+	  on startup, and any programs using NL80211_CMD_RELOAD_REGDB
+	  will be unable to get regulatory.db reloaded.
