@@ -14,3 +14,5 @@ qcom_dma_heaps-$(CONFIG_QCOM_DMABUF_HEAPS_SYSTEM_SECURE) += qcom_secure_system_h
 							    qcom_dynamic_page_pool.o \
 							    qcom_dma_heap_secure_utils.o
 qcom_dma_heaps-$(CONFIG_QCOM_DMABUF_HEAPS_CMA)	+= qcom_cma_heap.o
+obj-$(CONFIG_DMABUF_HEAPS_DEFERRED_FREE) += deferred-free-helper.o
+obj-$(CONFIG_DMABUF_HEAPS_PAGE_POOL)	+= page_pool.o

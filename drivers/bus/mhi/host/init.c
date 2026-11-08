@@ -1452,7 +1452,7 @@ void mhi_driver_unregister(struct mhi_driver *mhi_drv)
 }
 EXPORT_SYMBOL_GPL(mhi_driver_unregister);
 
-static int mhi_uevent(struct device *dev, struct kobj_uevent_env *env)
+static int mhi_uevent(const struct device *dev, struct kobj_uevent_env *env)
 {
 	struct mhi_device *mhi_dev = to_mhi_device(dev);
 
@@ -1460,7 +1460,7 @@ static int mhi_uevent(struct device *dev, struct kobj_uevent_env *env)
 					mhi_dev->name);
 }
 
-static int mhi_match(struct device *dev, struct device_driver *drv)
+static int mhi_match(struct device *dev, const struct device_driver *drv)
 {
 	struct mhi_device *mhi_dev = to_mhi_device(dev);
 	struct mhi_driver *mhi_drv = to_mhi_driver(drv);

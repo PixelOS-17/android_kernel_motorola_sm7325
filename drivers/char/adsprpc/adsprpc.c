@@ -9004,7 +9004,7 @@ static struct device fastrpc_bus = {
 	.init_name	= "fastrpc"
 };
 
-static int fastrpc_bus_match(struct device *dev, struct device_driver *driver)
+static int fastrpc_bus_match(struct device *dev, const struct device_driver *driver)
 {
 	struct fastrpc_apps *me = &gfa;
 	struct fastrpc_driver *frpc_driver = to_fastrpc_driver(driver);

@@ -986,7 +986,7 @@ static const struct swr_device_id *swr_match(const struct swr_device_id *id,
 	return NULL;
 }
 
-static int swr_device_match(struct device *dev, struct device_driver *driver)
+static int swr_device_match(struct device *dev, const struct device_driver *driver)
 {
 	struct swr_device *swr_dev;
 	struct swr_driver *drv = to_swr_driver(driver);

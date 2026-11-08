@@ -366,7 +366,7 @@ static void wl2864c_i2c_remove(struct i2c_client *client)
 
 	if (chip->chip_cs_pin > 0) {
 		desc = gpio_to_desc(chip->chip_cs_pin);
-		gpiod_direction_output_raw(desc, GPIOF_INIT_LOW);
+		gpiod_direction_output_raw(desc, 0);
 	}
 }
 

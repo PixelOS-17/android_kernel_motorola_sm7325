@@ -1260,7 +1260,7 @@ void kgsl_zero_page(struct page *p, unsigned int order,
 	int i;
 
 	for (i = 0; i < (1 << order); i++) {
-		struct page *page = nth_page(p, i);
+		struct page *page = (p + (i));
 
 		clear_highpage(page);
 	}
@@ -1446,7 +1446,7 @@ static void kgsl_free_pages_from_sgt(struct kgsl_memdesc *memdesc)
 
 		while (j < (sg->length/PAGE_SIZE)) {
 			count = 1 << compound_order(p);
-			next = nth_page(p, count);
+			next = (p + (count));
 			kgsl_free_page(p);
 
 			p = next;
