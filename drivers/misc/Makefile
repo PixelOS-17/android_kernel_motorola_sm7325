@@ -80,7 +80,6 @@ obj-$(CONFIG_PKVM_SMC_FILTER)	+= pkvm-smc/
 obj-$(CONFIG_PKVM_IOMMU_TEMPLATE)  += pkvm-iommu-temp/
 
 # tundra (from seventeen-6.1)
-obj-y				+= ti-st/
 obj-$(CONFIG_QSEECOM_PROXY) 	+= qseecom_proxy.o
 obj-$(CONFIG_QSEECOM)		+= qseecom/
 obj-$(CONFIG_MMI_SYS_TEMP)	+= mmi_sys_temp/

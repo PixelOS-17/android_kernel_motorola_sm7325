@@ -129,4 +129,3 @@ obj-y					+= simatic/
 # tundra (from seventeen-6.1)
 obj-$(CONFIG_LEDS_QTI_FLASH)		+= leds-qti-flash.o
 obj-$(CONFIG_LEDS_QTI_TRI_LED)		+= leds-qti-tri-led.o
-obj-y					+= simple/

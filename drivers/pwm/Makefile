@@ -77,5 +77,4 @@ obj-$(CONFIG_PWM_VT8500)	+= pwm-vt8500.o
 obj-$(CONFIG_PWM_XILINX)	+= pwm-xilinx.o
 
 # tundra (from seventeen-6.1)
-obj-$(CONFIG_PWM_SYSFS)		+= sysfs.o
 obj-$(CONFIG_PWM_QTI_LPG)	+= pwm-qti-lpg.o

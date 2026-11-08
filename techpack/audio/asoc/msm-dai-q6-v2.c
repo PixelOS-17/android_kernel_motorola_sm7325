@@ -15758,8 +15758,8 @@ static int msm_dai_q6_dai_cdc_dma_remove(struct snd_soc_dai *dai)
 }
 
 static int msm_dai_q6_cdc_dma_set_channel_map(struct snd_soc_dai *dai,
-			unsigned int tx_num_ch, unsigned int *tx_ch_mask,
-			unsigned int rx_num_ch, unsigned int *rx_ch_mask)
+			unsigned int tx_num_ch, const unsigned int *tx_ch_mask,
+			unsigned int rx_num_ch, const unsigned int *rx_ch_mask)
 
 {
 	int rc = 0;

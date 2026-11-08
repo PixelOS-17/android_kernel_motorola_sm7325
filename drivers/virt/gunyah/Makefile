@@ -13,9 +13,5 @@ obj-$(CONFIG_GUNYAH_IOEVENTFD) += gunyah_ioeventfd.o
 
 # tundra (from seventeen-6.1)
 obj-$(CONFIG_GH_VIRT_WATCHDOG)+= gh_virt_wdt.o
-gh_rm_drv-y                     += gh_rm_core.o gh_rm_iface.o
-gunyah_loader-y                        := gh_main.o gh_secure_vm_virtio_backend.o
-CFLAGS_gh_secure_vm_virtio_backend.o = -DDYNAMIC_DEBUG_MODULE
-gunyah-y += rsc_mgr.o rsc_mgr_rpc.o vm_mgr.o vm_mgr_mm.o
 obj-$(CONFIG_GUNYAH) += gunyah.o
 obj-$(CONFIG_GUNYAH_VCPU) += gunyah_vcpu.o
