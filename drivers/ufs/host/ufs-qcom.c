@@ -1557,7 +1557,7 @@ static void ufs_qcom_populate_available_cpus(struct ufs_hba *hba)
 	 */
 	for_each_cpu(cpu, cpu_possible_mask) {
 		cid = topology_cluster_id(cpu);
-		if (cid != prev_cid) {
+		if (cid != prev_cid && cid < MAX_NUM_CLUSTERS) {
 			cid_cpu[cid] = cpu;
 			prev_cid = cid;
 		}
