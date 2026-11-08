@@ -80,6 +80,13 @@ config IIO_BACKEND
 	  device as the frontend device which can be "linked" against one or
 	  multiple backend devices. The framework then makes it easy to get
 	  and control such backend devices.
+config QTI_IPD
+	tristate "Enable IPD Step Motor Driver"
+	help
+	  IPD(Inter Pupilliar Distance) Step motor driver is used to control the ipd step motor.
+	  IPD step motor is used to adjust the display lens position as the user
+	  adjusts the IPD motor. IPD motor can move the lens in both left and
+          right direction when user wears the MR device.
 
 source "drivers/iio/accel/Kconfig"
 source "drivers/iio/adc/Kconfig"

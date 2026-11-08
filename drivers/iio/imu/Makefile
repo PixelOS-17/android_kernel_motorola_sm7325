@@ -33,3 +33,4 @@ obj-$(CONFIG_SMI240) += smi240.o
 
 obj-y += st_lsm6dsx/
 obj-y += st_lsm9ds0/
+obj-y += st_asm330lhhx/
