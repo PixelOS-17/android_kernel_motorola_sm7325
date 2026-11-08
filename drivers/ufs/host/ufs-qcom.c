@@ -41,6 +41,8 @@
 #include "ufs-qcom-trace.h"
 #include <ufs/ufshci.h>
 #include <ufs/ufs_quirks.h>
+#include "../core/ufshcd-priv.h"
+#include "../core/ufshcd-crypto.h"
 #include <ufs/ufshcd-crypto-qti.h>
 
 #define MCQ_QCFGPTR_MASK	GENMASK(7, 0)
@@ -95,32 +97,11 @@ enum {
 
 static char android_boot_dev[ANDROID_BOOT_DEV_MAX];
 
+#define is_mcq_enabled(hba) false	/* lahaina UFS has no MCQ */
+
 static DEFINE_PER_CPU(struct freq_qos_request, qos_min_req);
 
-int ufsqcom_dump_regs(struct ufs_hba *hba, size_t offset, size_t len,
-		     const char *prefix, enum ufshcd_res id)
-{
-	u32 *regs;
-	size_t pos;
 
-	if (offset % 4 != 0 || len % 4 != 0) /* keep readl happy */
-		return -EINVAL;
-
-	regs = kzalloc(len, GFP_ATOMIC);
-	if (!regs)
-		return -ENOMEM;
-
-	for (pos = 0; pos < len; pos += 4)
-		regs[pos / 4] = readl(hba->res[id].base + offset + pos);
-
-	print_hex_dump(KERN_ERR, prefix,
-		       len > 4 ? DUMP_PREFIX_OFFSET : DUMP_PREFIX_NONE,
-			   16, 4, regs, len, false);
-
-	kfree(regs);
-
-	return 0;
-}
 
 enum {
 	TSTBUS_UAWM,
@@ -2545,7 +2526,7 @@ static int ufs_qcom_apply_dev_quirks(struct ufs_hba *hba)
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
 	/* Set the rpm auto suspend delay to 3s */
-	hba->host->hostt->rpm_autosuspend_delay = UFS_QCOM_AUTO_SUSPEND_DELAY;
+	hba->host->rpm_autosuspend_delay = UFS_QCOM_AUTO_SUSPEND_DELAY;
 	/* Set the default auto-hiberate idle timer value to 5ms */
 	hba->ahit = FIELD_PREP(UFSHCI_AHIBERN8_TIMER_MASK, 5) |
 		    FIELD_PREP(UFSHCI_AHIBERN8_SCALE_MASK, 3);
@@ -2619,7 +2600,7 @@ static void ufs_qcom_advertise_quirks(struct ufs_hba *hba)
 		hba->quirks |= UFSHCD_QUIRK_BROKEN_AUTO_HIBERN8;
 
 #if IS_ENABLED(CONFIG_SCSI_UFS_CRYPTO_QTI)
-	hba->android_quirks |= UFSHCD_ANDROID_QUIRK_CUSTOM_CRYPTO_PROFILE;
+	hba->quirks |= UFSHCD_QUIRK_CUSTOM_CRYPTO_PROFILE;
 #endif
 }
 
@@ -3585,9 +3566,6 @@ static int ufs_qcom_panic_handler(struct notifier_block *nb,
 	dev_err(hba->dev, "last_hibern8_exit_tstamp at %lld us, hibern8_exit_cnt=%d\n",
 		ktime_to_us(hba->ufs_stats.last_hibern8_exit_tstamp),
 		hba->ufs_stats.hibern8_exit_cnt);
-	dev_err(hba->dev, "last intr at %lld us, last intr status=0x%x\n",
-		ktime_to_us(hba->ufs_stats.last_intr_ts),
-		hba->ufs_stats.last_intr_status);
 	dev_err(hba->dev, "error handling flags=0x%x, req. abort count=%d\n",
 		hba->eh_flags, hba->req_abort_count);
 	dev_err(hba->dev, "hba->ufs_version=0x%x, Host capabilities=0x%x, caps=0x%x\n",
@@ -4782,61 +4760,9 @@ static void ufs_qcom_print_all_testbus(struct ufs_hba *hba)
 	kfree(testbus);
 }
 
-static void ufs_qcom_dump_mcq_hci_regs(struct ufs_hba *hba)
-{
-	/* RES_MCQ_1 */
-	ufsqcom_dump_regs(hba, 0x0, 256 * 4,
-			"MCQ HCI 1da0000-1da03f0 ", RES_MCQ);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_2 */
-	ufsqcom_dump_regs(hba, 0x400, 256 * 4,
-			"MCQ HCI 1da0400-1da07f0 ", RES_MCQ);
-	usleep_range(1000, 1100);
 
-	/*RES_MCQ_VS */
-	ufsqcom_dump_regs(hba, 0x0, 5 * 4,
-			"MCQ VS 1da4000-1da4010 ", RES_MCQ_VS);
-	usleep_range(1000, 1100);
 
-	/* RES_MCQ_SQD_1 */
-	ufsqcom_dump_regs(hba, 0x0, 256 * 4,
-			"MCQ SQD 1da5000-1da53f0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_SQD_2 */
-	ufsqcom_dump_regs(hba, 0x400, 256 * 4,
-			"MCQ SQD 1da5400-1da57f0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_SQD_3 */
-	ufsqcom_dump_regs(hba, 0x800, 256 * 4,
-			"MCQ SQD 1da5800-1da5bf0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_SQD_4 */
-	ufsqcom_dump_regs(hba, 0xc00, 256 * 4,
-			"MCQ SQD 1da5c00-1da5ff0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
 
-	/* RES_MCQ_SQD_5 */
-	ufsqcom_dump_regs(hba, 0x1000, 256 * 4,
-			"MCQ SQD 1da6000-1da63f0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_SQD_6 */
-	ufsqcom_dump_regs(hba, 0x1400, 256 * 4,
-			"MCQ SQD 1da6400-1da67f0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_SQD_7 */
-	ufsqcom_dump_regs(hba, 0x1800, 256 * 4,
-			"MCQ SQD 1da6800-1da6bf0 ", RES_MCQ_SQD);
-	usleep_range(1000, 1100);
-	/* RES_MCQ_SQD_8 */
-	ufsqcom_dump_regs(hba, 0x1c00, 256 * 4,
-			"MCQ SQD 1da6c00-1da6ff0 ", RES_MCQ_SQD);
-}
-
-static void ufs_qcom_dump_mcq_dbg_regs(struct ufs_hba *hba)
-{
-	ufshcd_dump_regs(hba, UFS_RD_REG_MCQ, 64 * 4,
-			 "HCI MCQ Debug Registers ");
-}
 
 static void ufs_qcom_dump_dbg_regs(struct ufs_hba *hba)
 {
@@ -5094,231 +5020,20 @@ static void ufs_qcom_fixup_dev_quirks(struct ufs_hba *hba)
 }
 
 /* Resources */
-static const struct ufshcd_res_info ufs_res_info[RES_MAX] = {
-	{.name = "ufs_mem",},
-	{.name = "mcq",},
-	/* Submission Queue DAO */
-	{.name = "mcq_sqd",},
-	/* Submission Queue Interrupt Status */
-	{.name = "mcq_sqis",},
-	/* Completion Queue DAO */
-	{.name = "mcq_cqd",},
-	/* Completion Queue Interrupt Status */
-	{.name = "mcq_cqis",},
-	/* MCQ vendor specific */
-	{.name = "mcq_vs",},
-};
 
-static int ufs_qcom_mcq_config_resource(struct ufs_hba *hba)
-{
-	struct platform_device *pdev = to_platform_device(hba->dev);
-	struct ufshcd_res_info *res;
-	struct resource *res_mem, *res_mcq;
-	int i, ret = 0;
 
-	memcpy(hba->res, ufs_res_info, sizeof(ufs_res_info));
 
-	for (i = 0; i < RES_MAX; i++) {
-		res = &hba->res[i];
-		res->resource = platform_get_resource_byname(pdev,
-							     IORESOURCE_MEM,
-							     res->name);
-		if (!res->resource) {
-			dev_info(hba->dev, "Resource %s not provided\n", res->name);
-			if (i == RES_UFS)
-				return -ENOMEM;
-			continue;
-		} else if (i == RES_UFS) {
-			res_mem = res->resource;
-			res->base = hba->mmio_base;
-			continue;
-		}
 
-		res->base = devm_ioremap_resource(hba->dev, res->resource);
-		if (IS_ERR(res->base)) {
-			dev_err(hba->dev, "Failed to map res %s, err=%d\n",
-					 res->name, (int)PTR_ERR(res->base));
-			ret = PTR_ERR(res->base);
-			res->base = NULL;
-			return ret;
-		}
-	}
 
-	/* MCQ resource provided in DT */
-	res = &hba->res[RES_MCQ];
-	/* Bail if MCQ resource is provided */
-	if (res->base)
-		goto out;
 
-	/* Explicitly allocate MCQ resource from ufs_mem */
-	res_mcq = devm_kzalloc(hba->dev, sizeof(*res_mcq), GFP_KERNEL);
-	if (!res_mcq)
-		return -ENOMEM;
 
-	res_mcq->start = res_mem->start +
-			 MCQ_SQATTR_OFFSET(hba->mcq_capabilities);
-	res_mcq->end = res_mcq->start + hba->nr_hw_queues * MCQ_QCFG_SIZE - 1;
-	res_mcq->flags = res_mem->flags;
-	res_mcq->name = "mcq";
 
-	ret = insert_resource(&iomem_resource, res_mcq);
-	if (ret) {
-		dev_err(hba->dev, "Failed to insert MCQ resource, err=%d\n",
-			ret);
-		return ret;
-	}
 
-	res->base = devm_ioremap_resource(hba->dev, res_mcq);
-	if (IS_ERR(res->base)) {
-		dev_err(hba->dev, "MCQ registers mapping failed, err=%d\n",
-			(int)PTR_ERR(res->base));
-		ret = PTR_ERR(res->base);
-		goto ioremap_err;
-	}
 
-out:
-	hba->mcq_base = res->base;
-	return 0;
-ioremap_err:
-	res->base = NULL;
-	remove_resource(res_mcq);
-	return ret;
-}
 
-static int ufs_qcom_op_runtime_config(struct ufs_hba *hba)
-{
-	struct ufshcd_res_info *mem_res, *sqdao_res;
-	struct ufshcd_mcq_opr_info_t *opr;
-	int i;
 
-	mem_res = &hba->res[RES_UFS];
-	sqdao_res = &hba->res[RES_MCQ_SQD];
 
-	if (!mem_res->base || !sqdao_res->base)
-		return -EINVAL;
 
-	for (i = 0; i < OPR_MAX; i++) {
-		opr = &hba->mcq_opr[i];
-		opr->offset = sqdao_res->resource->start -
-			      mem_res->resource->start + 0x40 * i;
-		opr->stride = 0x100;
-		opr->base = sqdao_res->base + 0x40 * i;
-	}
-
-	return 0;
-}
-
-static int ufs_qcom_get_hba_mac(struct ufs_hba *hba)
-{
-	/* Qualcomm HC supports up to 64 */
-	return MAX_SUPP_MAC;
-}
-
-static int ufs_qcom_get_outstanding_cqs(struct ufs_hba *hba,
-					unsigned long *ocqs)
-{
-	struct ufshcd_res_info *mcq_vs_res = &hba->res[RES_MCQ_VS];
-
-	if (!mcq_vs_res->base)
-		return -EINVAL;
-
-	*ocqs = readl(mcq_vs_res->base + UFS_MEM_CQIS_VS);
-
-	return 0;
-}
-
-static void ufs_qcom_write_msi_msg(struct msi_desc *desc, struct msi_msg *msg)
-{
-	struct device *dev = msi_desc_to_dev(desc);
-	struct ufs_hba *hba = dev_get_drvdata(dev);
-
-	ufshcd_mcq_config_esi(hba, msg);
-}
-
-static irqreturn_t ufs_qcom_mcq_esi_handler(int irq, void *data)
-{
-	struct msi_desc *desc = data;
-	struct device *dev = msi_desc_to_dev(desc);
-	struct ufs_hba *hba = dev_get_drvdata(dev);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	u32 id = desc->msi_index;
-	struct ufs_hw_queue *hwq = &hba->uhq[id];
-
-	ufs_qcom_log_str(host, "!,%d,%u\n", irq, id);
-	ufshcd_mcq_write_cqis(hba, 0x1, id);
-	atomic_add(1, &host->cqhp_update_pending);
-	ufshcd_mcq_poll_cqe_lock(hba, hwq);
-	atomic_sub(1, &host->cqhp_update_pending);
-
-	return IRQ_HANDLED;
-}
-
-static int ufs_qcom_config_esi(struct ufs_hba *hba)
-{
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	struct msi_desc *desc;
-	struct msi_desc *failed_desc = NULL;
-	int nr_irqs, ret;
-
-	if (host->esi_enabled)
-		return 0;
-
-	/*
-	 * 1. We only handle CQs as of now.
-	 * 2. Poll queues do not need ESI.
-	 */
-	nr_irqs = hba->nr_hw_queues - hba->nr_queues[HCTX_TYPE_POLL];
-	ret = platform_msi_domain_alloc_irqs(hba->dev, nr_irqs,
-					     ufs_qcom_write_msi_msg);
-	if (ret) {
-		dev_err(hba->dev, "Failed to request Platform MSI %d\n", ret);
-		goto out;
-	}
-
-	ufs_qcom_msi_lock_descs(hba);
-	msi_for_each_desc(desc, hba->dev, MSI_DESC_ALL) {
-		ret = devm_request_irq(hba->dev, desc->irq,
-				       ufs_qcom_mcq_esi_handler,
-				       IRQF_SHARED, "qcom-mcq-esi", desc);
-		if (ret) {
-			dev_err(hba->dev, "%s: Fail to request IRQ for %d, err = %d\n",
-				__func__, desc->irq, ret);
-			failed_desc = desc;
-			break;
-		}
-	}
-	ufs_qcom_msi_unlock_descs(hba);
-
-	if (ret) {
-		/* Rewind */
-		ufs_qcom_msi_lock_descs(hba);
-		msi_for_each_desc(desc, hba->dev, MSI_DESC_ALL) {
-			if (desc == failed_desc)
-				break;
-			devm_free_irq(hba->dev, desc->irq, hba);
-		}
-		ufs_qcom_msi_unlock_descs(hba);
-		platform_msi_domain_free_irqs(hba->dev);
-	} else {
-		if (host->hw_ver.major == 6 && host->hw_ver.minor == 0 &&
-		    host->hw_ver.step == 0) {
-			ufshcd_writel(hba,
-				      ufshcd_readl(hba, REG_UFS_CFG3) | 0x1F000,
-				      REG_UFS_CFG3);
-		}
-		ufshcd_mcq_enable_esi(hba);
-	}
-
-out:
-	if (!ret) {
-		ufs_qcom_set_esi_affinity_hint(hba);
-		cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN,
-					"ufs_qcom:online", ufs_qcom_cpu_online, NULL);
-		host->esi_enabled = true;
-	}
-
-	return ret;
-}
 
 /*
  * struct ufs_hba_qcom_vops - UFS QCOM specific variant operations
@@ -5344,13 +5059,7 @@ static const struct ufs_hba_variant_ops ufs_hba_qcom_vops = {
 	.dbg_register_dump	= ufs_qcom_dump_dbg_regs,
 	.device_reset		= ufs_qcom_device_reset,
 	.config_scaling_param = ufs_qcom_config_scaling_param,
-	.program_key		= ufs_qcom_ice_program_key,
 	.fixup_dev_quirks       = ufs_qcom_fixup_dev_quirks,
-	.mcq_config_resource	= ufs_qcom_mcq_config_resource,
-	.get_hba_mac		= ufs_qcom_get_hba_mac,
-	.op_runtime_config	= ufs_qcom_op_runtime_config,
-	.get_outstanding_cqs	= ufs_qcom_get_outstanding_cqs,
-	.config_esi		= ufs_qcom_config_esi,
 };
 
 /**
@@ -5545,7 +5254,7 @@ static ssize_t hibern8_count_show(struct device *dev,
 	struct ufs_hba *hba = dev_get_drvdata(dev);
 
 	pm_runtime_get_sync(hba->dev);
-	ufshcd_hold(hba, false);
+	ufshcd_hold(hba);
 	hw_h8_enter = ufshcd_readl(hba, REG_UFS_HW_H8_ENTER_CNT);
 	sw_h8_enter = ufshcd_readl(hba, REG_UFS_SW_H8_ENTER_CNT);
 	sw_hw_h8_enter = ufshcd_readl(hba, REG_UFS_SW_AFTER_HW_H8_ENTER_CNT);
@@ -6060,7 +5769,6 @@ static void ufs_qcom_remove(struct platform_device *pdev)
 				&host->ufs_qcom_panic_nb);
 
 	ufshcd_remove(hba);
-	platform_msi_domain_free_irqs(hba->dev);
 }
 
 /**
@@ -6105,7 +5813,6 @@ static void ufs_qcom_shutdown(struct platform_device *pdev)
 	/* put an additional vote on UFS VCCQ LDO if required */
 	ufs_qcom_enable_vccq_shutdown(hba);
 
-	ufshcd_pltfrm_shutdown(pdev);
 
 	/* UFS_RESET TLMM register cannot reset to POR value '1' after warm
 	 * reset, so deassert ufs device reset line after UFS device shutdown

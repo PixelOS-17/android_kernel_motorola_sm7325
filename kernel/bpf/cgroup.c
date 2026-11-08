@@ -42,6 +42,23 @@ static int __init cgroup_bpf_wq_init(void)
 }
 core_initcall(cgroup_bpf_wq_init);
 
+/*
+ * DEBUG (k61 bring-up): "k61.bpf_reject_eperm" makes a rejecting cgroup
+ * program always fail the operation with -EPERM, as on 5.10, instead of
+ * keeping an error the kernel already returned (getsockopt). The 5.4
+ * userspace sets ro.bpf.kver_override=5.10.239, so netd's getsockoptTest()
+ * expects the 5.10 errno and aborts on 6.1 (ENOPROTOOPT), which makes init
+ * reboot (netd1shot is reboot_on_failure).
+ */
+static bool k61_bpf_reject_eperm;
+
+static int __init k61_bpf_reject_eperm_setup(char *str)
+{
+	k61_bpf_reject_eperm = true;
+	return 1;
+}
+__setup("k61.bpf_reject_eperm", k61_bpf_reject_eperm_setup);
+
 static int cgroup_bpf_lifetime_notify(struct notifier_block *nb,
 				      unsigned long action, void *data);
 

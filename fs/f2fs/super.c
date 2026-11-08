@@ -2864,6 +2864,13 @@ static int f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
 	return ret;
 }
 
+/* DEBUG (k61.data=ckpt): is the checkpoint of this f2fs disabled? */
+bool f2fs_k61_checkpoint_disabled(struct super_block *sb)
+{
+	return sb->s_magic == F2FS_SUPER_MAGIC &&
+	       is_sbi_flag_set(F2FS_SB(sb), SBI_CP_DISABLED);
+}
+
 static int __f2fs_remount(struct fs_context *fc, struct super_block *sb)
 {
 	struct f2fs_sb_info *sbi = F2FS_SB(sb);

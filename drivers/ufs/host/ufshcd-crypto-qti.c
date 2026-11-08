@@ -77,7 +77,7 @@ static int ufshcd_crypto_qti_keyslot_program(
 		return -EINVAL;
 	}
 
-	err = ufshcd_hold(hba, false);
+	err = ufshcd_hold(hba);
 	if (err) {
 		pr_err("%s: failed to enable clocks, err %d\n", __func__, err);
 		goto out;
@@ -112,7 +112,7 @@ static int ufshcd_crypto_qti_keyslot_evict(
 		return -EINVAL;
 	}
 
-	err = ufshcd_hold(hba, false);
+	err = ufshcd_hold(hba);
 	if (err) {
 		pr_err("%s: failed to enable clocks, err %d\n", __func__, err);
 		return err;
@@ -144,7 +144,7 @@ static int ufshcd_crypto_qti_derive_raw_secret(
 		return -EINVAL;
 	}
 
-	err = ufshcd_hold(hba, false);
+	err = ufshcd_hold(hba);
 	if (err) {
 		pr_err("%s: failed to enable clocks, err %d\n", __func__, err);
 		return err;

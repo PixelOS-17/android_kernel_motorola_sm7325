@@ -10,6 +10,7 @@
 #define _TRACE_UFS_QCOM_H
 
 #include <linux/tracepoint.h>
+#include "../core/ufs_trace_types.h"
 
 #define str_opcode(opcode)						\
 	__print_symbolic(opcode,					\

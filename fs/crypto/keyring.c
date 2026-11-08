@@ -20,6 +20,7 @@
 
 #include <crypto/skcipher.h>
 #include <linux/export.h>
+#include <linux/k61-stop.h>
 #include <linux/key-type.h>
 #include <linux/once.h>
 #include <linux/random.h>

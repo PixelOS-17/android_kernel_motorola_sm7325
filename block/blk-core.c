@@ -551,6 +551,52 @@ static inline void bio_check_ro(struct bio *bio)
 	}
 }
 
+/*
+ * DEBUG (k61.stop=init/init2): hard write barrier for the UFS LUNs. 6.1's
+ * bio_check_ro() only warns, so refuse every write, discard or write-zeroes
+ * bio with data to a UFS LUN (sd*) here, before it is remapped and issued,
+ * unless it targets the TZ secure storage partition (ssd), which qseecomd
+ * writes on every boot. dm targets resubmit their clones to the partition
+ * underneath, so this covers dm devices too. Bios already remapped to the
+ * whole LUN (split remainders) were checked on their first submission.
+ */
+static bool k61_stop_bio_refused(struct bio *bio)
+{
+	struct block_device *bdev = bio->bi_bdev;
+	const char *volname;
+
+	if (!op_is_write(bio_op(bio)) || !bio_sectors(bio) ||
+	    bio_flagged(bio, BIO_REMAPPED) ||
+	    strncmp(bdev->bd_disk->disk_name, "sd", 2))
+		return false;
+
+	volname = bdev->bd_meta_info ?
+		  (const char *)bdev->bd_meta_info->volname : "";
+	if (!strcmp(volname, "ssd"))
+		return false;
+	/* k61.efs_rw: the modem EFS (rmt_storage), not the golden fsg */
+	if (k61_stop_efs_volume(volname, true)) {
+		pr_info_ratelimited("k61.stop: EFS write to %pg (%s) sector %llu, %u sectors\n",
+				    bdev, volname,
+				    (unsigned long long)bio->bi_iter.bi_sector,
+				    bio_sectors(bio));
+		return false;
+	}
+	/* k61.data=rw: /data (f2fs on dm-default-key) until a trip */
+	if (k61_stop_data_rw && !READ_ONCE(k61_stop_data_closed) &&
+	    !strcmp(volname, "userdata"))
+		return false;
+
+	pr_emerg_ratelimited("k61.stop: refusing %s bio to %pg (%s) sector %llu, %u sectors, by %s[%d]\n",
+			     blk_op_str(bio_op(bio)), bdev, volname,
+			     (unsigned long long)bio->bi_iter.bi_sector,
+			     bio_sectors(bio), current->comm,
+			     task_pid_nr(current));
+	k61_stop_guard_trip_async("refused a %s bio to %pg (%s)",
+				  blk_op_str(bio_op(bio)), bdev, volname);
+	return true;
+}
+
 int should_fail_bio(struct bio *bio)
 {
 	if (should_fail_request(bdev_whole(bio->bi_bdev), bio->bi_iter.bi_size))

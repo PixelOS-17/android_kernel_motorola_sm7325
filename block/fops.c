@@ -8,6 +8,7 @@
 #include <linux/mm.h>
 #include <linux/blkdev.h>
 #include <linux/blk-integrity.h>
+#include <linux/k61-stop.h>
 #include <linux/buffer_head.h>
 #include <linux/mpage.h>
 #include <linux/uio.h>
@@ -692,6 +693,47 @@ static int blkdev_open(struct inode *inode, struct file *filp)
 	bdev = blkdev_get_no_open(inode->i_rdev, true);
 	if (!bdev)
 		return -ENXIO;
+
+	/*
+	 * DEBUG (k61.stop=init/init2): userspace may not open storage (the
+	 * UFS LUNs and dm devices on top of them) for writing. Loop and zram
+	 * devices, which apexd and swap use, stay writable, and so does the
+	 * TZ secure storage partition (ssd), which qseecomd serves to the TAs
+	 * on every boot. With k61.data=ro, every other storage write open
+	 * fails instead of tripping the guard, so fsck, mkfs and wipes fail
+	 * without stopping the run (fs_mgr runs e2fsck on several vendor
+	 * partitions before /data). k61.data=ckpt allows write opens of the
+	 * whole LUNs, which the boot HAL needs to read the slot attributes,
+	 * and stops at the first write to one (blkdev_write_iter()).
+	 */
+	if (k61_stop_init && (mode & BLK_OPEN_WRITE) &&
+	    (!strncmp(bdev->bd_disk->disk_name, "sd", 2) ||
+	     !strncmp(bdev->bd_disk->disk_name, "dm-", 3))) {
+		const char *volname = bdev->bd_meta_info ?
+				      (const char *)bdev->bd_meta_info->volname : "";
+
+		if (!strcmp(volname, "ssd")) {
+			pr_info("k61.stop: allowing write open of %pg (ssd) by %s[%d]\n",
+				bdev, current->comm, task_pid_nr(current));
+		} else if (k61_stop_efs_volume(volname, false) &&
+			   !strcmp(current->comm, "rmt_storage")) {
+			pr_info("k61.stop: allowing write open of %pg (%s, modem EFS) by %s[%d]\n",
+				bdev, volname, current->comm,
+				task_pid_nr(current));
+		} else if (k61_stop_ckpt_whole_disk(bdev)) {
+			pr_info("k61.stop: allowing write open of %pg (whole LUN, writes stop the run) by %s[%d]\n",
+				bdev, current->comm, task_pid_nr(current));
+		} else if (k61_stop_data_ro) {
+			pr_info("k61.stop: denying write open of %pD (%pg) by %s[%d]\n",
+				filp, bdev, current->comm,
+				task_pid_nr(current));
+			blkdev_put_no_open(bdev);
+			return -EROFS;
+		} else {
+			k61_stop_guard_trip("refusing write open of %pD (%pg)",
+					    filp, bdev);
+		}
+	}
 
 	if (bdev_can_atomic_write(bdev))
 		filp->f_mode |= FMODE_CAN_ATOMIC_WRITE;

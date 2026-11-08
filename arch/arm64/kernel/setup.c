@@ -279,12 +279,6 @@ u64 cpu_logical_map(unsigned int cpu)
 }
 EXPORT_SYMBOL_GPL(cpu_logical_map);
 
-#ifdef CONFIG_TUNDRA_BRINGUP_STAGE_DELAYS
-void bringup_stage_delay(int stage);
-#else
-static inline void bringup_stage_delay(int stage) { }
-#endif
-
 void __init __no_sanitize_address setup_arch(char **cmdline_p)
 {
 	setup_initial_init_mm(_text, _etext, _edata, _end);
@@ -297,7 +291,6 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	early_ioremap_init();
 
 	setup_machine_fdt(__fdt_pointer);
-	bringup_stage_delay(21);
 
 	/*
 	 * Initialise the static keys early as they may be enabled by the
@@ -305,7 +298,6 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	 */
 	jump_label_init();
 	parse_early_param();
-	bringup_stage_delay(22);
 
 	dynamic_scs_init();
 
@@ -321,7 +313,6 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	 * detected and initialized.
 	 */
 	local_daif_restore(DAIF_PROCCTX_NOIRQ);
-	bringup_stage_delay(23);
 
 	/*
 	 * TTBR0 is only used for the identity mapping at this stage. Make it
@@ -331,7 +322,6 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 
 	xen_early_init();
 	efi_init();
-	bringup_stage_delay(24);
 
 	if (!efi_enabled(EFI_BOOT)) {
 		if ((u64)_text % MIN_KIMG_ALIGN)
@@ -341,10 +331,8 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	}
 
 	arm64_memblock_init();
-	bringup_stage_delay(25);
 
 	paging_init();
-	bringup_stage_delay(26);
 
 	acpi_table_upgrade();
 
@@ -353,10 +341,8 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 
 	if (acpi_disabled)
 		unflatten_device_tree();
-	bringup_stage_delay(27);
 
 	bootmem_init();
-	bringup_stage_delay(28);
 
 	kasan_init();
 
@@ -368,7 +354,6 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 		psci_dt_init();
 	else
 		psci_acpi_init();
-	bringup_stage_delay(29);
 
 	arm64_rsi_init();
 

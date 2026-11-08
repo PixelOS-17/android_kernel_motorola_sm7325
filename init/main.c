@@ -1032,7 +1032,6 @@ void start_kernel(void)
 	char *command_line;
 	char *after_dashes;
 
-	bringup_stage_delay(1);
 	set_task_stack_end_magic(&init_task);
 	smp_setup_processor_id();
 	debug_objects_early_init();
@@ -2205,7 +2204,6 @@ void __init console_on_rootfs(void)
 
 static noinline void __init kernel_init_freeable(void)
 {
-	bringup_stage_delay(4);
 	/* Now the scheduler is fully set up and can do blocking allocations */
 	gfp_allowed_mask = __GFP_BITS_MASK;
 
@@ -2234,7 +2232,6 @@ static noinline void __init kernel_init_freeable(void)
 	page_alloc_init_late();
 
 	do_basic_setup();
-	bringup_stage_delay(5);
 
 	kunit_run_all_tests();
 
