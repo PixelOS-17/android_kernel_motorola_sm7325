@@ -1,4 +1,4 @@
-ccflags-y += -I$(srctree)/$(src)/../mmi_charger
+ccflags-y += -I$(src)/../mmi_charger
 
 ifneq ($(filter m y,$(CONFIG_WIRELESS_CPS4035B)),)
 	ccflags-y += -DWIRELESS_CPS4035B
