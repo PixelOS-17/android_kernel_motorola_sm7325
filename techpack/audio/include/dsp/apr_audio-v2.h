@@ -661,7 +661,7 @@ struct adm_cmd_set_pp_params {
 	 * Use q6core_pack_pp_params to pack the header and data correctly
 	 * depending on Instance ID support.
 	 */
-	u8 param_data[0];
+	u8 param_data[];
 } __packed;
 
 
@@ -824,7 +824,7 @@ struct adm_cmd_rsp_get_pp_params_v5 {
 	struct param_hdr_v1 param_hdr;
 
 	/* The parameter data returned */
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 /*
@@ -852,7 +852,7 @@ struct adm_cmd_rsp_get_pp_params_v6 {
 	struct param_hdr_v3 param_hdr;
 
 	/* The parameter data returned */
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 /* Structure for holding soft stepping volume parameters. */
@@ -2251,7 +2251,7 @@ struct afe_port_cmd_set_param_v2 {
 	struct mem_mapping_hdr mem_hdr;
 
 	/* The parameter data to be filled when sent inband */
-	u8 param_data[0];
+	u8 param_data[];
 } __packed;
 
 #define AFE_PORT_CMD_SET_PARAM_V3 0x000100FA
@@ -2278,7 +2278,7 @@ struct afe_port_cmd_set_param_v3 {
 	 * The parameter data to be filled when sent inband.
 	 * Must include param_hdr packed correctly.
 	 */
-	u8 param_data[0];
+	u8 param_data[];
 } __packed;
 
 /* Payload of the #AFE_PARAM_ID_LOOPBACK_GAIN_PER_PATH parameter,
@@ -5710,7 +5710,7 @@ struct afe_port_cmd_get_param_v2 {
 struct afe_port_cmdrsp_get_param_v2 {
 	u32                  status;
 	struct param_hdr_v1 param_hdr;
-	u8 param_data[0];
+	u8 param_data[];
 } __packed;
 
 #define AFE_PORT_CMD_GET_PARAM_V3 0x000100FB
@@ -5743,7 +5743,7 @@ struct afe_port_cmdrsp_get_param_v3 {
 	struct param_hdr_v3 param_hdr;
 
 	/* The parameter data to be filled when sent inband */
-	u8 param_data[0];
+	u8 param_data[];
 } __packed;
 
 #define AFE_PARAM_ID_LPASS_CORE_SHARED_CLOCK_CONFIG	0x0001028C
@@ -8712,7 +8712,7 @@ struct asm_stream_cmd_set_pp_params {
 	 * must be pre-packed with parameter header and then copied here. Use
 	 * q6core_pack_pp_params to pack the header and param data correctly.
 	 */
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 #define ASM_STREAM_CMD_GET_PP_PARAMS_V2		0x00010DA2
@@ -12791,7 +12791,7 @@ struct afe_svc_cmd_set_param_v1 {
 	struct mem_mapping_hdr mem_hdr;
 
 	/* The parameter data to be filled when sent inband */
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 struct afe_svc_cmd_set_param_v2 {
@@ -12805,7 +12805,7 @@ struct afe_svc_cmd_set_param_v2 {
 	u32 payload_size;
 
 	/* The parameter data to be filled when sent inband */
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 struct afe_param_hw_mad_ctrl {

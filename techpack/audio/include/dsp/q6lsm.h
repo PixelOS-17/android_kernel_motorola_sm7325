@@ -156,14 +156,14 @@ struct lsm_session_cmd_set_params_v2 {
 	struct apr_hdr apr_hdr;
 	uint32_t payload_size;
 	struct mem_mapping_hdr mem_hdr;
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 struct lsm_session_cmd_set_params_v3 {
 	struct apr_hdr apr_hdr;
 	struct mem_mapping_hdr mem_hdr;
 	uint32_t payload_size;
-	u32 param_data[0];
+	u32 param_data[];
 } __packed;
 
 struct lsm_session_cmd_get_params_v2 {

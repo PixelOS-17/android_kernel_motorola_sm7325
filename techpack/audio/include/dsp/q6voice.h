@@ -459,7 +459,7 @@ struct vss_icommon_cmd_set_param {
 	 * Parameter data payload when inband. Should have size param_size.
 	 * Bit size of payload must be a multiple of 4.
 	 */
-	uint8_t param_data[0];
+	uint8_t param_data[];
 } __packed;
 
 /* TO MVM commands */
@@ -1138,7 +1138,7 @@ struct vss_icommon_cmd_set_ui_property {
 	struct apr_hdr apr_hdr;
 
 	/* The parameter data to be filled when sent inband */
-	u8 param_data[0];
+	u8 param_data[];
 } __packed;
 
 /*
