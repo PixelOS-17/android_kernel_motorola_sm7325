@@ -131,6 +131,20 @@ static struct attribute *subsys_attrs[] = {
 };
 ATTRIBUTE_GROUPS(subsys);
 
+/*
+ * DEBUG: k61.mss_skip leaves the modem off in test runs that keep the modem EFS
+ * read-only: without rmt_storage's writes the modem firmware crashes, and an
+ * rproc crash panics the SoC.
+ */
+static bool k61_mss_skip;
+
+static int __init k61_mss_skip_setup(char *s)
+{
+	k61_mss_skip = true;
+	return 1;
+}
+__setup("k61.mss_skip", k61_mss_skip_setup);
+
 static int subsys_open(struct inode *inode, struct file *file)
 {
 	struct subsys_legacy *subsys =
@@ -141,7 +155,7 @@ static int subsys_open(struct inode *inode, struct file *file)
 	if (!subsys->users) {
 		dev_info(&subsys->dev, "%s: boot requested by %s[%d]\n",
 			 subsys->name, current->comm, task_pid_nr(current));
-		ret = rproc_boot(subsys->rproc);
+		ret = k61_mss_skip ? 0 : rproc_boot(subsys->rproc);
 		if (ret)
 			dev_err(&subsys->dev, "%s: boot failed: %d\n",
 				subsys->name, ret);
@@ -162,7 +176,8 @@ static int subsys_release(struct inode *inode, struct file *file)
 	if (!--subsys->users) {
 		dev_info(&subsys->dev, "%s: shutdown, last user %s[%d]\n",
 			 subsys->name, current->comm, task_pid_nr(current));
-		rproc_shutdown(subsys->rproc);
+		if (!k61_mss_skip)
+			rproc_shutdown(subsys->rproc);
 	}
 	mutex_unlock(&subsys->lock);
 	return 0;
