@@ -172,7 +172,6 @@ obj-$(CONFIG_NTB)		+= ntb/
 obj-$(CONFIG_POWERCAP)		+= powercap/
 obj-$(CONFIG_MCB)		+= mcb/
 obj-$(CONFIG_PERF_EVENTS)	+= perf/
-obj-$(CONFIG_EOM_MSM)		+= eom/
 obj-$(CONFIG_RAS)		+= ras/
 obj-$(CONFIG_USB4)		+= thunderbolt/
 obj-$(CONFIG_CORESIGHT)		+= hwtracing/coresight/
@@ -198,6 +197,11 @@ obj-$(CONFIG_DPLL)		+= dpll/
 
 obj-$(CONFIG_DIBS)		+= dibs/
 obj-$(CONFIG_S390)		+= s390/
+
+# tundra (from seventeen-6.1)
+obj-$(CONFIG_DAX)		+= dax/
+obj-$(CONFIG_NEW_LEDS)		+= leds/
+obj-$(CONFIG_HID)		+= hid/
 obj-$(CONFIG_MMI_ANNOTATE)	+= mmi_annotate/
 obj-$(CONFIG_MMI_INFO)		+= mmi_info/
 obj-$(CONFIG_MMI_RELAY)		+= mmi_relay/

@@ -133,8 +133,6 @@ source "drivers/infiniband/Kconfig"
 
 source "drivers/edac/Kconfig"
 
-source "drivers/eom/Kconfig"
-
 source "drivers/rtc/Kconfig"
 
 source "drivers/dma/Kconfig"
@@ -252,9 +250,16 @@ source "drivers/peci/Kconfig"
 source "drivers/hte/Kconfig"
 
 source "drivers/cdx/Kconfig"
+
+
+source "drivers/gpu/trace/Kconfig"
+
 source "drivers/mmi_annotate/Kconfig"
+
 source "drivers/mmi_info/Kconfig"
+
 source "drivers/mmi_relay/Kconfig"
+
 source "drivers/sensors/Kconfig"
 
 endmenu

@@ -10,7 +10,7 @@ obj-y				+= vboxguest/
 obj-$(CONFIG_NITRO_ENCLAVES)	+= nitro_enclaves/
 obj-$(CONFIG_ACRN_HSM)		+= acrn/
 obj-y				+= coco/
-obj-$(CONFIG_GUNYAH_DRIVERS)	+= gunyah/
-obj-$(CONFIG_EFI_SECRET)	+= coco/efi_secret/
-obj-$(CONFIG_SEV_GUEST)		+= coco/sev-guest/
 obj-y				+= gunyah/
+
+# tundra (from seventeen-6.1)
+obj-$(CONFIG_GUNYAH_DRIVERS)	+= gunyah/

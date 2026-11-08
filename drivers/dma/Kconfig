@@ -579,15 +579,6 @@ config SOPHGO_CV1800B_DMAMUX
 	  Support for the DMA multiplexer on Sophgo CV1800/SG2000
 	  series SoCs.
 	  Say Y here if your board have this soc.
-config QCOM_SPS_DMA
-        tristate "Qualcomm technologies inc DMA driver for sps-BAM"
-        depends on ARCH_QCOM
-        select DMA_ENGINE
-        help
-          Enable support for Qualcomm technologies inc, BAM DMA engine.
-          This DMA-engine-driver is a wrapper of the sps-BAM library. DMA
-          engine callbacks are implemented using the sps-BAM functionality
-          to access HW.
 
 config STE_DMA40
 	bool "ST-Ericsson DMA40 support"

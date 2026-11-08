@@ -1575,17 +1575,6 @@ config ARM64_PA_BITS
 config ARM64_LPA2
 	def_bool y
 	depends on ARM64_PA_BITS_52 && !ARM64_64K_PAGES
-config ARM64_MEMMAP_ON_MEMORY
-	bool "Support memmap_on_memory"
-	default n
-	depends on MHP_MEMMAP_ON_MEMORY
-	depends on !HUGETLB_PAGE
-	help
-	  Adjust the ARM64 section size such that the size of the
-	  struct page array (the memmap) for a memory block is aligned to
-	  pageblock_nr_pages. When hotplugging memory, this allows the
-	  memmap to be allocated from within the new memory block thus
-	  reducing pressure on existing memory blocks.
 
 choice
 	prompt "Endianness"
@@ -2571,4 +2560,96 @@ source "drivers/acpi/Kconfig"
 source "arch/arm64/kvm/Kconfig"
 
 source "kernel/livepatch/Kconfig"
-source "arch/arm64/gunyah/Kconfig"
+
+config CLANG_SUPPORTS_DYNAMIC_FTRACE_WITH_REGS
+	def_bool CC_IS_CLANG
+	# https://github.com/ClangBuiltLinux/linux/issues/1507
+	depends on AS_IS_GNU || (AS_IS_LLVM && (LD_IS_LLD || LD_VERSION >= 23600))
+	select HAVE_DYNAMIC_FTRACE_WITH_REGS
+
+config ARCH_MHP_MEMMAP_ON_MEMORY_ENABLE
+	def_bool y
+
+config ARM64_LD_HAS_FIX_ERRATUM_843419
+	def_bool $(ld-option,--fix-cortex-a53-843419)
+
+config ANDROID_ARM64_WORKAROUND_DMA_BEYOND_POC
+	bool "Remove cacheable aliases of non-cacheable DMA buffers at stage-2"
+	default y
+	depends on KVM
+	help
+	  Some SoCs integrate non-coherent DMA-capable peripherals beyond
+	  the Point of Coherency (PoC), resulting in loss of coherency
+	  with non-cacheable mappings on the CPU in the presence of a
+	  cacheable alias.
+
+	  This workaround provides a mechanism (controlled by the kernel
+	  command-line) to remap pages as non-cacheable in pKVM's stage-2
+	  mapping for the host, thereby removing any cacheable aliases
+	  that may be present in the stage-1 mapping.
+
+	  If unsure, say Y.
+
+config SCHED_MC
+	bool "Multi-core scheduler support"
+	help
+	  Multi-core scheduler support improves the CPU scheduler's decision
+	  making when dealing with multi-core CPU chips at a cost of slightly
+	  increased overhead in some places. If unsure say N here.
+
+config RODATA_FULL_DEFAULT_ENABLED
+	bool "Apply r/o permissions of VM areas also to their linear aliases"
+	default y
+	help
+	  Apply read-only attributes of VM areas to the linear alias of
+	  the backing pages as well. This prevents code or read-only data
+	  from being modified (inadvertently or intentionally) via another
+	  mapping of the same memory page. This additional enhancement can
+	  be turned off at runtime by passing rodata=[off|on] (and turned on
+	  with rodata=full if this option is set to 'n')
+
+	  This requires the linear region to be mapped down to pages,
+	  which may adversely affect performance in some cases.
+
+config AS_HAS_LDAPR
+	def_bool $(as-instr,.arch_extension rcpc)
+
+config AS_HAS_LSE_ATOMICS
+	def_bool $(as-instr,.arch_extension lse)
+
+config AS_HAS_ARMV8_2
+	def_bool $(cc-option,-Wa$(comma)-march=armv8.2-a)
+
+config AS_HAS_SHA3
+	def_bool $(as-instr,.arch armv8.2-a+sha3)
+
+config CC_HAS_SIGN_RETURN_ADDRESS
+	# GCC 7, 8
+	def_bool $(cc-option,-msign-return-address=all)
+
+config AS_HAS_PAC
+	def_bool $(cc-option,-Wa$(comma)-march=armv8.3-a)
+
+config AS_HAS_ARMV8_4
+	def_bool $(cc-option,-Wa$(comma)-march=armv8.4-a)
+
+config ARM64_MODULE_PLTS
+	bool "Use PLTs to allow module memory to spill over into vmalloc area"
+	depends on MODULES
+	help
+	  Allocate PLTs when loading modules so that jumps and calls whose
+	  targets are too far away for their relative offsets to be encoded
+	  in the instructions themselves can be bounced via veneers in the
+	  module's PLT. This allows modules to be allocated in the generic
+	  vmalloc area after the dedicated module memory area has been
+	  exhausted.
+
+	  When running with address space randomization (KASLR), the module
+	  region itself may be too far away for ordinary relative jumps and
+	  calls, and so in that case, module PLTs are required and cannot be
+	  disabled.
+
+	  Specific errata workaround(s) might also force module PLTs to be
+	  enabled (ARM64_ERRATUM_843419).
+
+

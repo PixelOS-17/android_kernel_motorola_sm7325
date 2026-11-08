@@ -16,10 +16,6 @@ obj-$(CONFIG_FIRMWARE_MEMMAP)	+= memmap.o
 obj-$(CONFIG_MTK_ADSP_IPC)	+= mtk-adsp-ipc.o
 obj-$(CONFIG_RASPBERRYPI_FIRMWARE) += raspberrypi.o
 obj-$(CONFIG_FW_CFG_SYSFS)	+= qemu_fw_cfg.o
-obj-$(CONFIG_QCOM_SCM)		+= qcom-scm.o
-qcom-scm-objs-$(CONFIG_QTEE_SHM_BRIDGE) += qtee_shmbridge.o
-qcom-scm-objs += qcom_scm.o qcom_scm-smc.o qcom_scm-legacy.o $(qcom-scm-objs-y)
-obj-$(CONFIG_QCOM_SCM_HAB)	+= qcom_scm_hab.o
 obj-$(CONFIG_SYSFB)		+= sysfb.o
 obj-$(CONFIG_SYSFB_SIMPLEFB)	+= sysfb_simplefb.o
 obj-$(CONFIG_TH1520_AON_PROTOCOL) += thead,th1520-aon.o
@@ -42,3 +38,8 @@ obj-y				+= samsung/
 obj-y				+= smccc/
 obj-y				+= tegra/
 obj-y				+= xilinx/
+
+# tundra (from seventeen-6.1)
+obj-$(CONFIG_QCOM_SCM)		+= qcom-scm.o
+qcom-scm-objs-$(CONFIG_QTEE_SHM_BRIDGE) += qtee_shmbridge.o
+qcom-scm-objs += qcom_scm.o qcom_scm-smc.o qcom_scm-legacy.o $(qcom-scm-objs-y)

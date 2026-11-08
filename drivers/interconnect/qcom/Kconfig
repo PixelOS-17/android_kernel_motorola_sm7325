@@ -25,8 +25,6 @@ config INTERCONNECT_QCOM_MSM8909
 	help
 	  This is a driver for the Qualcomm Network-on-Chip on msm8909-based
 	  platforms.
-config INTERCONNECT_QCOM_QOS_RPM
-	tristate
 
 config INTERCONNECT_QCOM_MSM8916
 	tristate "Qualcomm MSM8916 interconnect driver"
@@ -90,14 +88,6 @@ config INTERCONNECT_QCOM_MSM8996
 	help
 	  This is a driver for the Qualcomm Network-on-Chip on msm8996-based
 	  platforms.
-
-config INTERCONNECT_QCOM_EPSS_L3
-	tristate "LAHAINA EPSS L3 driver"
-	depends on INTERCONNECT_QCOM || COMPILE_TEST
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. EPSS
-	  L3 control found on lahaina-based platforms. The EPSS L3 provider
-	  votes for the L3 cache frequency of the CPU clusters.
 
 config INTERCONNECT_QCOM_OSM_L3
 	tristate "Qualcomm OSM L3 interconnect driver"
@@ -248,32 +238,6 @@ config INTERCONNECT_QCOM_SDM845
 	  This is a driver for the Qualcomm Network-on-Chip on sdm845-based
 	  platforms.
 
-config INTERCONNECT_QCOM_ANORAK
-        tristate "ANORAK interconnect driver"
-        depends on INTERCONNECT_QCOM
-        depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-        select INTERCONNECT_QCOM_BCM_VOTER
-        select INTERCONNECT_QCOM_RPMH
-        select INTERCONNECT_QCOM_QOS
-        help
-          This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-          on Anorak-based platforms. Interconnect driver provides interfaces
-          for setting bandwidth between two endpoints (path). It also used to
-          configure NOC QoS settings (Quality of Service).
-
-config INTERCONNECT_QCOM_NEO
-	tristate "NEO interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on Neo-based platforms. Interconnect driver provides interfaces
-	  for setting bandwidth between two endpoints (path). It also used to
-	  configure NOC QoS settings (Quality of Service).
-
 config INTERCONNECT_QCOM_SDX55
 	tristate "Qualcomm SDX55 interconnect driver"
 	depends on INTERCONNECT_QCOM_RPMH_POSSIBLE
@@ -340,31 +304,11 @@ config INTERCONNECT_QCOM_MILOS
 config INTERCONNECT_QCOM_SM8150
 	tristate "Qualcomm SM8150 interconnect driver"
 	depends on INTERCONNECT_QCOM_RPMH_POSSIBLE
-config INTERCONNECT_QCOM_SM6150
-	tristate "SM6150 interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-	select INTERCONNECT_QCOM_BCM_VOTER
 	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on sm6150-based platforms. The interconnect provider collects and
-	  aggreagates the cosumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
-
-config INTERCONNECT_QCOM_SM8150
-	tristate "SM8150 interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
 	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
 	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on sm8150-based platforms. The interconnect provider collects and
-	  aggregates the cosumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
+	  This is a driver for the Qualcomm Network-on-Chip on sm8150-based
+	  platforms.
 
 config INTERCONNECT_QCOM_SM8250
 	tristate "Qualcomm SM8250 interconnect driver"
@@ -428,92 +372,20 @@ config INTERCONNECT_QCOM_X1E80100
 	help
 	  This is a driver for the Qualcomm Network-on-Chip on X1E80100-based
 	  platforms.
-config INTERCONNECT_QCOM_CLIFFS
-	tristate "CLIFFS interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on Cliffs-based platforms. Interconnect driver provides interfaces
-	  for setting bandwidth between two endpoints (path). It also used to
-	  configure NOC QoS settings (Quality of Service).
-
-config INTERCONNECT_QCOM_VOLCANO
-	tristate "VOLCANO interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on volcano-based platforms. The interconnect provider collects and
-	  aggregates the consumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
-
-config INTERCONNECT_QCOM_PINEAPPLE
-	tristate "PINEAPPLE interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on Pineapple-based platforms. Interconnect driver provides interfaces
-	  for setting bandwidth between two endpoints (path). It also used to
-	  configure NOC QoS settings (Quality of Service).
-
-config INTERCONNECT_QCOM_NIOBE
-	tristate "NIOBE interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on Niobe-based platforms. Interconnect driver provides interfaces
-	  for setting bandwidth between two endpoints (path). It also used to
-	  configure NOC QoS settings (Quality of Service).
-
-config INTERCONNECT_QCOM_SERAPH
-	tristate "SERAPH interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on Seraph-based platforms. Interconnect driver provides interfaces
-	  for setting bandwidth between two endpoints (path). It also used to
-	  configure NOC QoS settings (Quality of Service).
-
-config INTERCONNECT_QCOM_RPM
-	tristate
 
 config INTERCONNECT_QCOM_SMD_RPM
 	tristate
 
+config INTERCONNECT_QCOM_EPSS_L3
+	tristate "LAHAINA EPSS L3 driver"
+	depends on INTERCONNECT_QCOM || COMPILE_TEST
+	help
+	  This is a driver for the Qualcomm Technologies, Inc. EPSS
+	  L3 control found on lahaina-based platforms. The EPSS L3 provider
+	  votes for the L3 cache frequency of the CPU clusters.
+
 config INTERCONNECT_QCOM_QOS
 	tristate
-
-config INTERCONNECT_QCOM_KALAMA
-	tristate "KALAMA interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on Kalama-based platforms. Interconnect driver provides interfaces
-	  for setting bandwidth between two endpoints (path). It also used to
-	  configure NOC QoS settings (Quality of Service).
 
 config INTERCONNECT_QCOM_LAHAINA
 	tristate "LAHAINA interconnect driver"
@@ -528,42 +400,6 @@ config INTERCONNECT_QCOM_LAHAINA
 	  for setting bandwidth between two endpoints (path). It also used to
 	  configure NOC QoS settings (Quality of Service).
 
-config INTERCONNECT_QCOM_BLAIR
-	tristate "BLAIR interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on MSM_RPM_SMD
-	select INTERCONNECT_QCOM_RPM
-	select INTERCONNECT_QCOM_QOS_RPM
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on blair-based platforms. The interconnect provider collects and
-	  aggreagates the cosumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
-
-config INTERCONNECT_QCOM_HOLI
-	tristate "HOLI interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on MSM_RPM_SMD
-	select INTERCONNECT_QCOM_RPM
-	select INTERCONNECT_QCOM_QOS_RPM
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on holi-based platforms. The interconnect provider collects and
-	  aggregates the consumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
-
-config INTERCONNECT_QCOM_PITTI
-	tristate "PITTI interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on MSM_RPM_SMD
-	select INTERCONNECT_QCOM_RPM
-	select INTERCONNECT_QCOM_QOS_RPM
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on pitti-based platforms. The interconnect provider collects and
-	  aggregates the consumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
-
 config INTERCONNECT_QCOM_DEBUG
 	tristate "QCOM-specific interconnect debug features"
 	depends on INTERCONNECT_QCOM
@@ -572,40 +408,4 @@ config INTERCONNECT_QCOM_DEBUG
           features include optionally printing all enabled interconnect votes
           when entering suspend.
 
-config INTERCONNECT_QCOM_LEMANS
-	tristate "LEMANS interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on lemans-based platforms. The interconnect provider collects and
-	  aggreagates the cosumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
 
-config INTERCONNECT_QCOM_MONACO_AUTO
-	tristate "MONACO_AUTO interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on QCOM_RPMH && QCOM_COMMAND_DB && OF
-	select INTERCONNECT_QCOM_BCM_VOTER
-	select INTERCONNECT_QCOM_RPMH
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on monaco_auto-based platforms. The interconnect provider collects and
-	  aggregates the consumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.
-
-config INTERCONNECT_QCOM_MDM9X07
-	tristate "MDM9X07 interconnect driver"
-	depends on INTERCONNECT_QCOM
-	depends on MSM_RPM_SMD
-	select INTERCONNECT_QCOM_RPM
-	select INTERCONNECT_QCOM_QOS
-	help
-	  This is a driver for the Qualcomm Technologies, Inc. Network-on-Chip
-	  on mdm9x07-based platforms. The interconnect provider collects and
-	  aggregates the consumer bandwidth requests to satisfy constraints
-	  placed on Network-on-Chip performance states.

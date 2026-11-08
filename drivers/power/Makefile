@@ -3,6 +3,7 @@ obj-$(CONFIG_POWER_RESET)	+= reset/
 obj-$(CONFIG_POWER_SEQUENCING)	+= sequencing/
 obj-$(CONFIG_POWER_SUPPLY)	+= supply/
 
+# tundra (from seventeen-6.1)
 obj-$(CONFIG_BM_ADSP_ULOG)	+= bm_adsp_ulog/
 obj-$(CONFIG_USE_MMI_CHARGER)	+= mmi_charger/
 obj-$(CONFIG_QTI_GLINK_CHARGER)	+= qti_glink_charger/

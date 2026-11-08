@@ -3,10 +3,9 @@ obj-$(CONFIG_MHI_BUS) += host/
 
 # Endpoint MHI stack
 obj-$(CONFIG_MHI_BUS_EP) += ep/
+
+# tundra (from seventeen-6.1)
+obj-y += host/
 obj-y += ep/
-
-# MHI Devices stack
 obj-y += devices/
-
-#MHI Controller stack
 obj-y += controllers/

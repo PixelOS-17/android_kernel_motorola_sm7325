@@ -9,7 +9,6 @@ obj-$(CONFIG_NVME_RDMA)			+= nvme-rdma.o
 obj-$(CONFIG_NVME_FC)			+= nvme-fc.o
 obj-$(CONFIG_NVME_TCP)			+= nvme-tcp.o
 obj-$(CONFIG_NVME_APPLE)		+= nvme-apple.o
-obj-$(CONFIG_MSM_SDEXPRESS)		+= sdexpress.o
 
 nvme-core-y				+= core.o ioctl.o sysfs.o pr.o
 nvme-core-$(CONFIG_NVME_VERBOSE_ERRORS)	+= constants.o
@@ -21,7 +20,6 @@ nvme-core-$(CONFIG_NVME_HWMON)		+= hwmon.o
 nvme-core-$(CONFIG_NVME_HOST_AUTH)	+= auth.o
 
 nvme-y					+= pci.o
-sdexpress-y				+= msm_sdexpress.o
 
 nvme-fabrics-y				+= fabrics.o
 
@@ -32,3 +30,6 @@ nvme-fc-y				+= fc.o
 nvme-tcp-y				+= tcp.o
 
 nvme-apple-y				+= apple.o
+
+# tundra (from seventeen-6.1)
+sdexpress-y				+= msm_sdexpress.o

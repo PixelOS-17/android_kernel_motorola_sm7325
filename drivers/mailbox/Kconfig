@@ -389,6 +389,8 @@ config RISCV_SBI_MPXY_MBOX
 	  remote processor through the SBI implementation (M-mode firmware
 	  or HS-mode hypervisor). Say Y here if you want to have this support.
 	  If unsure say N.
+
+
 config MSM_QMP
 	tristate "QTI Mailbox Protocol(QMP)"
 	help

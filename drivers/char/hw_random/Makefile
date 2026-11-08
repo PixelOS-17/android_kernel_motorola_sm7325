@@ -52,4 +52,6 @@ obj-$(CONFIG_HW_RANDOM_CN10K) += cn10k-rng.o
 obj-$(CONFIG_HW_RANDOM_POLARFIRE_SOC) += mpfs-rng.o
 obj-$(CONFIG_HW_RANDOM_ROCKCHIP) += rockchip-rng.o
 obj-$(CONFIG_HW_RANDOM_JH7110) += jh7110-trng.o
+
+# tundra (from seventeen-6.1)
 obj-$(CONFIG_HW_RANDOM_MSM_LEGACY) += msm_rng.o

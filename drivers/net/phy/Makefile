@@ -98,4 +98,18 @@ obj-$(CONFIG_STE10XP)		+= ste10Xp.o
 obj-$(CONFIG_TERANETICS_PHY)	+= teranetics.o
 obj-$(CONFIG_VITESSE_PHY)	+= vitesse.o
 obj-$(CONFIG_XILINX_GMII2RGMII) += xilinx_gmii2rgmii.o
-obj-$(CONFIG_QCA8337_SWITCH)    += qca8337.o
+
+# tundra (from seventeen-6.1)
+ifdef CONFIG_MDIO_DEVICE
+obj-y				+= mdio-boardinfo.o
+endif
+ifdef CONFIG_PHYLIB
+libphy-y			+= $(mdio-bus-y)
+else
+obj-$(CONFIG_MDIO_DEVICE)	+= mdio-bus.o
+endif
+obj-$(CONFIG_MDIO_DEVRES)	+= mdio_devres.o
+aquantia-objs			+= aquantia_main.o
+ifdef CONFIG_HWMON
+aquantia-objs			+= aquantia_hwmon.o
+endif

@@ -1904,17 +1904,6 @@ config SENSORS_QNAP_MCU_HWMON
 
 	  This driver can also be built as a module. If so, the module
 	  will be called qnap-mcu-hwmon.
-config SENSORS_QTI_AMOLED_ECM
-	tristate "Qualcomm Technologies, Inc. AMOLED Current Monitor"
-	depends on SPMI
-	help
-	  Qualcomm Technologies, Inc. ECM driver supports measurement of
-	  OLED display power with a time granularity in sub-frame or
-	  multiple frames of image data. The measurement can be for a short
-	  period (N frames) or a long period (continuous mode).
-
-	  To compile this driver as module, choose M here: the module will
-	  be called qti_amoled_ecm.
 
 config SENSORS_RASPBERRYPI_HWMON
 	tristate "Raspberry Pi voltage monitor"

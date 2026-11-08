@@ -18,4 +18,6 @@ obj-$(CONFIG_NFC_NXP_NCI)	+= nxp-nci/
 obj-$(CONFIG_NFC_S3FWRN5)	+= s3fwrn5/
 obj-$(CONFIG_NFC_ST95HF)	+= st95hf/
 obj-$(CONFIG_NFC_VIRTUAL_NCI)	+= virtual_ncidev.o
+
+# tundra (from seventeen-6.1)
 obj-$(CONFIG_NFC_I2C)		+= sn1xx/

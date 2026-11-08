@@ -7,17 +7,6 @@ obj-$(CONFIG_PHY_QCOM_IPQ806X_SATA)	+= phy-qcom-ipq806x-sata.o
 obj-$(CONFIG_PHY_QCOM_M31_USB)		+= phy-qcom-m31.o
 obj-$(CONFIG_PHY_QCOM_M31_EUSB)		+= phy-qcom-m31-eusb2.o
 obj-$(CONFIG_PHY_QCOM_PCIE2)		+= phy-qcom-pcie2.o
-obj-$(CONFIG_PHY_QCOM_UFS)		+= phy-qcom-ufs.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4)		+= phy-qcom-ufs-qmp-v4.o
-obj-$(CONFIG_PHY_QCOM_UFS_V3)           += phy-qcom-ufs-qmp-v3-660.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4_PINEAPPLE)	+= phy-qcom-ufs-qmp-v4-pineapple.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4_NIOBE)	+= phy-qcom-ufs-qmp-v4-niobe.o
-obj-$(CONFIG_PHY_QCOM_UFS_QRBTC_SDM845) += phy-qcom-ufs-qrbtc-sdm845.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4_WAIPIO)    += phy-qcom-ufs-qmp-v4-waipio.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4_BLAIR)	+= phy-qcom-ufs-qmp-v4-blair.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4_LAHAINA)	+= phy-qcom-ufs-qmp-v4-lahaina.o
-obj-$(CONFIG_PHY_QCOM_UFS_V3_SM4350)	+= phy-qcom-ufs-qmp-v3.o
-obj-$(CONFIG_PHY_QCOM_UFS_V4_CROW)	+= phy-qcom-ufs-qmp-v4-crow.o
 
 obj-$(CONFIG_PHY_QCOM_QMP_COMBO)	+= phy-qcom-qmp-combo.o phy-qcom-qmp-usbc.o
 obj-$(CONFIG_PHY_QCOM_QMP_PCIE)		+= phy-qcom-qmp-pcie.o
@@ -36,3 +25,8 @@ obj-$(CONFIG_PHY_QCOM_USB_SS)		+= phy-qcom-usb-ss.o
 obj-$(CONFIG_PHY_QCOM_USB_SNPS_FEMTO_V2)+= phy-qcom-snps-femto-v2.o
 obj-$(CONFIG_PHY_QCOM_IPQ806X_USB)	+= phy-qcom-ipq806x-usb.o
 obj-$(CONFIG_PHY_QCOM_SGMII_ETH)	+= phy-qcom-sgmii-eth.o
+
+# tundra (from seventeen-6.1)
+obj-$(CONFIG_PHY_QCOM_UFS)		+= phy-qcom-ufs.o
+obj-$(CONFIG_PHY_QCOM_UFS_V4)		+= phy-qcom-ufs-qmp-v4.o
+obj-$(CONFIG_PHY_QCOM_UFS_V4_LAHAINA)	+= phy-qcom-ufs-qmp-v4-lahaina.o

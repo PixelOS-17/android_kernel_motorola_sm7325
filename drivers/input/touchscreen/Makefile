@@ -120,5 +120,7 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 obj-$(CONFIG_TOUCHSCREEN_IQS7211)	+= iqs7211.o
 obj-$(CONFIG_TOUCHSCREEN_ZINITIX)	+= zinitix.o
 obj-$(CONFIG_TOUCHSCREEN_HIMAX_HX83112B)	+= himax_hx83112b.o
+
+# tundra (from seventeen-6.1)
 obj-$(CONFIG_INPUT_TOUCHSCREEN_MMI)	+= touchscreen_mmi/
 obj-$(CONFIG_TOUCHSCREEN_GOODIX_BRL)	+= goodix_berlin_mmi/

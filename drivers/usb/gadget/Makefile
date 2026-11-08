@@ -11,5 +11,6 @@ libcomposite-y			+= composite.o functions.o configfs.o u_f.o
 libcomposite-$(CONFIG_ANDROID_USB_CONFIGFS_UEVENT) += android_configfs_uevent.o
 
 obj-$(CONFIG_USB_GADGET)	+= udc/ function/ legacy/
-obj-$(CONFIG_USB_CI13XXX_MSM) 	+= ci13xxx.o
+
+# tundra (from seventeen-6.1)
 ci13xxx-y := ci13xxx_udc.o ci13xxx_msm.o

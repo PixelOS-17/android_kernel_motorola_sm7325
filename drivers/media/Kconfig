@@ -228,7 +228,6 @@ source "drivers/media/test-drivers/Kconfig"
 endif
 
 source "drivers/media/firewire/Kconfig"
-source "techpack/camera/Kconfig"
 
 # Common driver options
 source "drivers/media/common/Kconfig"
@@ -258,5 +257,8 @@ source "drivers/media/tuners/Kconfig"
 source "drivers/media/dvb-frontends/Kconfig"
 
 endmenu
+
+
+source "techpack/camera/Kconfig"
 
 endif # MEDIA_SUPPORT

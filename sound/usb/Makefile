@@ -38,6 +38,25 @@ obj-$(CONFIG_SND_USB_US122L) += snd-usbmidi-lib.o
 obj-$(CONFIG_SND) += misc/ usx2y/ caiaq/ 6fire/ hiface/ bcd2000/ qcom/
 obj-$(CONFIG_SND_USB_LINE6)	+= line6/
 
+# tundra (from seventeen-6.1)
+snd-usb-audio-objs := 	card.o \
+			clock.o \
+			endpoint.o \
+			format.o \
+			helper.o \
+			implicit.o \
+			mixer.o \
+			mixer_quirks.o \
+			mixer_scarlett.o \
+			mixer_scarlett2.o \
+			mixer_us16x08.o \
+			mixer_s1810c.o \
+			pcm.o \
+			power.o \
+			proc.o \
+			quirks.o \
+			stream.o \
+			validate.o
+snd-usbmidi-lib-objs := midi.o
 CFLAGS_xhci-sec.o := -I$(srctree)/drivers/usb/host
 snd-usb-audio-qmi-objs := usb_audio_qmi_v01.o usb_audio_qmi_svc.o xhci-sec.o
-obj-$(CONFIG_SND_USB_AUDIO_QMI) += snd-usb-audio-qmi.o

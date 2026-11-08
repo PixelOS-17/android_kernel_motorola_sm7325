@@ -22,16 +22,11 @@ obj-$(CONFIG_KEYSTONE_REMOTEPROC)	+= keystone_remoteproc.o
 obj-$(CONFIG_MESON_MX_AO_ARC_REMOTEPROC)+= meson_mx_ao_arc.o
 obj-$(CONFIG_PRU_REMOTEPROC)		+= pru_rproc.o
 obj-$(CONFIG_QCOM_PIL_INFO)		+= qcom_pil_info.o
-obj-$(CONFIG_QCOM_RPROC_COMMON)		+= rproc_qcom_common.o
-rproc_qcom_common-y			:= qcom_common.o qcom_tracepoints.o
-obj-$(CONFIG_MSM_QUIN_SUBSYSTEM_NOTIF_VIRT) += subsystem_notif_virt.o
+obj-$(CONFIG_QCOM_RPROC_COMMON)		+= qcom_common.o
 obj-$(CONFIG_QCOM_Q6V5_COMMON)		+= qcom_q6v5.o
 obj-$(CONFIG_QCOM_Q6V5_ADSP)		+= qcom_q6v5_adsp.o
 obj-$(CONFIG_QCOM_Q6V5_MSS)		+= qcom_q6v5_mss.o
 obj-$(CONFIG_QCOM_Q6V5_PAS)		+= qcom_q6v5_pas.o
-obj-$(CONFIG_QCOM_ADSP_LOADER_LEGACY)	+= qcom_adsp_loader_legacy.o
-obj-$(CONFIG_QCOM_SUBSYS_LEGACY)	+= qcom_subsys_legacy.o
-obj-$(CONFIG_QCOM_SPSS)                 += qcom_spss.o
 obj-$(CONFIG_QCOM_Q6V5_WCSS)		+= qcom_q6v5_wcss.o
 obj-$(CONFIG_QCOM_SYSMON)		+= qcom_sysmon.o
 obj-$(CONFIG_QCOM_WCNSS_PIL)		+= qcom_wcnss_pil.o
@@ -45,3 +40,9 @@ obj-$(CONFIG_TI_K3_DSP_REMOTEPROC)	+= ti_k3_dsp_remoteproc.o ti_k3_common.o
 obj-$(CONFIG_TI_K3_M4_REMOTEPROC)	+= ti_k3_m4_remoteproc.o ti_k3_common.o
 obj-$(CONFIG_TI_K3_R5_REMOTEPROC)	+= ti_k3_r5_remoteproc.o ti_k3_common.o
 obj-$(CONFIG_XLNX_R5_REMOTEPROC)	+= xlnx_r5_remoteproc.o
+
+# tundra (from seventeen-6.1)
+obj-$(CONFIG_QCOM_RPROC_COMMON)		+= rproc_qcom_common.o
+rproc_qcom_common-y			:= qcom_common.o qcom_tracepoints.o
+obj-$(CONFIG_QCOM_ADSP_LOADER_LEGACY)	+= qcom_adsp_loader_legacy.o
+obj-$(CONFIG_QCOM_SUBSYS_LEGACY)	+= qcom_subsys_legacy.o

@@ -19,7 +19,6 @@ obj-y += marvell/
 obj-y += mediatek/
 obj-y += microchip/
 obj-y += nuvoton/
-obj-y += msm/
 obj-y += nvidia/
 obj-y += nxp/
 obj-y += qcom/
@@ -40,3 +39,6 @@ obj-y += xilinx/
 # (e. g. LC_ALL=C sort Makefile)
 obj-$(CONFIG_VIDEO_MEM2MEM_DEINTERLACE)	+= m2m-deinterlace.o
 obj-$(CONFIG_VIDEO_MUX)			+= video-mux.o
+
+# tundra (from seventeen-6.1)
+obj-y += msm/

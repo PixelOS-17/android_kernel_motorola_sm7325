@@ -31,8 +31,7 @@ coresight-y := coresight-core.o  coresight-etm-perf.o coresight-platform.o \
 		coresight-syscfg-configfs.o coresight-trace-id.o
 obj-$(CONFIG_CORESIGHT_LINK_AND_SINK_TMC) += coresight-tmc.o
 coresight-tmc-y := coresight-tmc-core.o coresight-tmc-etf.o \
-		      coresight-tmc-etr.o coresight-byte-cntr.o \
-		      coresight-tmc-usb.o
+		      coresight-tmc-etr.o
 obj-$(CONFIG_CORESIGHT_SINK_TPIU) += coresight-tpiu.o
 obj-$(CONFIG_CORESIGHT_SINK_ETBV10) += coresight-etb10.o
 obj-$(CONFIG_CORESIGHT_LINKS_AND_SINKS) += coresight-funnel.o \
@@ -58,12 +57,12 @@ obj-$(CONFIG_CORESIGHT_DUMMY) += coresight-dummy.o
 obj-$(CONFIG_CORESIGHT_CTCU) += coresight-ctcu.o
 coresight-ctcu-y := coresight-ctcu-core.o
 obj-$(CONFIG_CORESIGHT_KUNIT_TESTS) += coresight-kunit-tests.o
-obj-$(CONFIG_CORESIGHT_DUMMY) += coresight-dummy.o
-obj-$(CONFIG_CORESIGHT_REMOTE_ETM) += coresight-remote-etm.o coresight-tmc-sec.o
-obj-$(CONFIG_CORESIGHT_TRACE_NOC) += coresight-trace-noc.o
-obj-$(CONFIG_CORESIGHT_TGU) += coresight-tgu.o
-obj-$(CONFIG_CORESIGHT_HWEVENT) += coresight-hwevent.o
-obj-$(CONFIG_CORESIGHT_DBGUI) += coresight-dbgui.o
-obj-$(CONFIG_CORESIGHT_TPDA) += coresight-tpda.o
-obj-$(CONFIG_CORESIGHT_TPDM) += coresight-tpdm.o
-obj-$(CONFIG_CORESIGHT_CSR) += coresight-csr.o
+
+# tundra (from seventeen-6.1)
+coresight-y := coresight-core.o  coresight-etm-perf.o coresight-platform.o \
+		coresight-sysfs.o coresight-syscfg.o coresight-config.o \
+		coresight-cfg-preload.o coresight-cfg-afdo.o \
+		coresight-syscfg-configfs.o
+coresight-tmc-y := coresight-tmc-core.o coresight-tmc-etf.o \
+		      coresight-tmc-etr.o coresight-byte-cntr.o \
+		      coresight-tmc-usb.o

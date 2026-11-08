@@ -73,24 +73,6 @@ config DEVFREQ_GOV_PASSIVE
 	  through sysfs entries. The passive governor recommends that
 	  devfreq device uses the OPP table to get the frequency/voltage.
 
-config DEVFREQ_GOV_QCOM_BW_HWMON
-	tristate "HW monitor based governor for device BW"
-	depends on QCOM_BIMC_BWMON
-	help
-	  HW monitor based governor for device to DDR bandwidth voting.
-	  This governor sets the CPU BW vote by using BIMC counters to monitor
-	  the CPU's use of DDR. Since this uses target specific counters it
-	  can conflict with existing profiling tools.  This governor is unlikely
-	  to be useful for non-QCOM devices.
-
-config DEVFREQ_GOV_CPUFREQ
-	tristate "CPUfreq"
-	depends on CPU_FREQ
-	help
-	  Chooses frequency based on the online CPUs' current frequency and a
-	  CPU frequency to device frequency mapping table(s). This governor
-	  can be useful for controlling devices such as DDR, cache, CCI, etc.
-
 comment "DEVFREQ Drivers"
 
 config ARM_EXYNOS_BUS_DEVFREQ
@@ -179,6 +161,27 @@ config ARM_SUN8I_A33_MBUS_DEVFREQ
 	  This adds the DEVFREQ driver for the MBUS controller in some
 	  Allwinner sun8i (A33 through H3) and sun50i (A64 and H5) SoCs.
 
+source "drivers/devfreq/event/Kconfig"
+
+
+config DEVFREQ_GOV_QCOM_BW_HWMON
+	tristate "HW monitor based governor for device BW"
+	depends on QCOM_BIMC_BWMON
+	help
+	  HW monitor based governor for device to DDR bandwidth voting.
+	  This governor sets the CPU BW vote by using BIMC counters to monitor
+	  the CPU's use of DDR. Since this uses target specific counters it
+	  can conflict with existing profiling tools.  This governor is unlikely
+	  to be useful for non-QCOM devices.
+
+config DEVFREQ_GOV_CPUFREQ
+	tristate "CPUfreq"
+	depends on CPU_FREQ
+	help
+	  Chooses frequency based on the online CPUs' current frequency and a
+	  CPU frequency to device frequency mapping table(s). This governor
+	  can be useful for controlling devices such as DDR, cache, CCI, etc.
+
 config QCOM_DEVFREQ_ICC
 	bool "Qualcomm Technologies Inc. DEVFREQ device for device master <-> slave IB/AB BW voting"
 	depends on ARCH_QCOM
@@ -230,7 +233,5 @@ config QCOM_BIMC_BWMON
 	  traffic coming from each master port connected to the BIMC. It also
 	  has the capability to raise an IRQ when the count exceeds a
 	  programmable limit.
-
-source "drivers/devfreq/event/Kconfig"
 
 endif # PM_DEVFREQ

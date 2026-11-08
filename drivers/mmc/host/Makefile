@@ -95,7 +95,6 @@ obj-$(CONFIG_MMC_SDHCI_OF_MA35D1)	+= sdhci-of-ma35d1.o
 obj-$(CONFIG_MMC_SDHCI_BCM_KONA)	+= sdhci-bcm-kona.o
 obj-$(CONFIG_MMC_SDHCI_IPROC)		+= sdhci-iproc.o
 obj-$(CONFIG_MMC_SDHCI_NPCM)		+= sdhci-npcm.o
-obj-$(CONFIG_MMC_SDHCI_MSM_SCALING)		+= sdhci-msm-scaling.o
 obj-$(CONFIG_MMC_SDHCI_MSM)		+= sdhci-msm.o
 obj-$(CONFIG_MMC_SDHCI_ST)		+= sdhci-st.o
 obj-$(CONFIG_MMC_SDHCI_MICROCHIP_PIC32)	+= sdhci-pic32.o
@@ -106,7 +105,6 @@ obj-$(CONFIG_MMC_SUNPLUS)		+= sunplus-mmc.o
 obj-$(CONFIG_MMC_CQHCI)			+= cqhci.o
 cqhci-y					+= cqhci-core.o
 cqhci-$(CONFIG_MMC_CRYPTO)		+= cqhci-crypto.o
-cqhci-$(CONFIG_MMC_CRYPTO_QTI)          += cqhci-crypto-qti.o
 obj-$(CONFIG_MMC_HSQ)			+= mmc_hsq.o
 obj-$(CONFIG_MMC_LITEX)			+= litex_mmc.o
 

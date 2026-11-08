@@ -23,7 +23,6 @@ obj-$(CONFIG_BLK_DEV_LOOP)	+= loop.o
 obj-$(CONFIG_SUNVDC)		+= sunvdc.o
 
 obj-$(CONFIG_BLK_DEV_NBD)	+= nbd.o
-obj-$(CONFIG_VIRTIO_BLK_QTI_CRYPTO) += virtio_blk_qti_crypto.o
 obj-$(CONFIG_VIRTIO_BLK)	+= virtio_blk.o
 
 obj-$(CONFIG_XEN_BLKDEV_FRONTEND)	+= xen-blkfront.o

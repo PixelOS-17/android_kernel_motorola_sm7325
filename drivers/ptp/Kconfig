@@ -262,26 +262,5 @@ config PTP_NETC_V4_TIMER
 	  clock, the clock is used by ENETC V4 or NETC V4 Switch for PTP time
 	  synchronization. It also supports periodic output signal (e.g. PPS)
 	  and external trigger timestamping.
-config PTP_QCOM_CLOCK_TSC
-	tristate "QCOM  TSC as PTP clock"
-	depends on COMMON_CLK
-	help
-	  This driver adds support for using the TSC as a PTP clock.
-	  The hardware supports time stamping of PTP packets.
-
-	  This PTP driver also registers interrupts for ETU(Event Timestamp Unit)
-	  and updates the TSC timestamps to PTP clock.
-
-	  To compile this driver as a module, choose M here: the module
-	  will be called ptp_qcom_tsc.
-
-config PTP_QCOM_CLOCK_TSC_VM
-	tristate "QCOM TSC virtual PTP clock"
-	help
-	  This driver adds support for reading the TSC timestamp using the
-	  PTP clock gettime operation on a virtual machine(VM).
-
-	  To compile this driver as a module, choose M here: the module
-	  will be called ptp_qcom_tsc_vm.
 
 endmenu
