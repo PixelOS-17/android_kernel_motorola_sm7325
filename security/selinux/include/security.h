@@ -197,10 +197,16 @@ static inline bool selinux_policycap_userspace_initial_context(void)
 		selinux_state.policycap[POLICYDB_CAP_USERSPACE_INITIAL_CONTEXT]);
 }
 
+/*
+ * tundra: the vendor policy is Android 11 and has no netlink xperm rules, so
+ * with this capability (set by the Android 17 platform policy) netmgrd was
+ * denied RTM_NEWLINK and no rmnet_data interface came up: no mobile data, no
+ * IMS. Keep checking nlmsg_read/nlmsg_write as kernels before the capability
+ * did.
+ */
 static inline bool selinux_policycap_netlink_xperm(void)
 {
-	return READ_ONCE(
-		selinux_state.policycap[POLICYDB_CAP_NETLINK_XPERM]);
+	return false;
 }
 
 static inline bool selinux_policycap_functionfs_seclabel(void)
