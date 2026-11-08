@@ -6,13 +6,11 @@
 
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
-#include <linux/cleanup.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
-#include <linux/nvmem-consumer.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/of_address.h>
@@ -37,12 +35,7 @@
 #define ATTR1_MAX_CAP_SHIFT_v31       0x0E
 #define ATTR0_RES_WAYS_MASK           GENMASK(15, 0)
 #define ATTR0_BONUS_WAYS_MASK         GENMASK(31, 16)
-#define ATTR0_BONUS_WAYS_SHIFT        16
-#define ATTR2_PROBE_TARGET_WAYS_MASK  BIT(4)
-#define ATTR2_FIXED_SIZE_MASK         BIT(8)
-#define ATTR2_PRIORITY_MASK           GENMASK(14, 12)
-#define ATTR2_PARENT_SCID_MASK        GENMASK(21, 16)
-#define ATTR2_IN_A_GROUP_MASK         BIT(24)
+#define ATTR0_BONUS_WAYS_SHIFT        0x10
 #define LLCC_STATUS_READ_DELAY        100
 
 #define CACHE_LINE_SIZE_SHIFT         6
@@ -355,40 +348,10 @@ struct qcom_llcc_config {
 };
 
 static const struct llcc_slice_config sc7180_data[] =  {
-	{
-		.usecase_id = LLCC_CPUSS,
-		.slice_id = 1,
-		.max_cap = 256,
-		.priority = 1,
-		.bonus_ways = 0xf,
-		.cache_mode = 0,
-		.retain_on_pc = true,
-		.activate_on_init = true,
-	}, {
-		.usecase_id = LLCC_MDM,
-		.slice_id = 8,
-		.max_cap = 128,
-		.priority = 1,
-		.bonus_ways = 0xf,
-		.cache_mode = 0,
-		.retain_on_pc = true,
-	}, {
-		.usecase_id = LLCC_GPUHTW,
-		.slice_id = 11,
-		.max_cap = 128,
-		.priority = 1,
-		.bonus_ways = 0xf,
-		.cache_mode = 0,
-		.retain_on_pc = true,
-	}, {
-		.usecase_id = LLCC_GPU,
-		.slice_id = 12,
-		.max_cap = 128,
-		.priority = 1,
-		.bonus_ways = 0xf,
-		.cache_mode = 0,
-		.retain_on_pc = true,
-	},
+	{ LLCC_CPUSS,    1,  256, 1, 0, 0xf, 0x0, 0, 0, 0, 1, 1 },
+	{ LLCC_MDM,      8,  128, 1, 0, 0xf, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_GPUHTW,   11, 128, 1, 0, 0xf, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_GPU,      12, 128, 1, 0, 0xf, 0x0, 0, 0, 0, 1, 0 },
 };
 
 static const struct llcc_slice_config sdm845_data[] =  {
@@ -1233,7 +1196,7 @@ struct llcc_slice_desc *llcc_slice_getd(u32 uid)
 EXPORT_SYMBOL_GPL(llcc_slice_getd);
 
 /**
- * llcc_slice_putd - llcc slice descriptor
+ * llcc_slice_putd - llcc slice descritpor
  * @desc: Pointer to llcc slice descriptor
  */
 void llcc_slice_putd(struct llcc_slice_desc *desc)
@@ -1247,7 +1210,6 @@ EXPORT_SYMBOL_GPL(llcc_slice_putd);
 static int llcc_update_act_ctrl(u32 sid,
 				u32 act_ctrl_reg_val, u32 status)
 {
-	struct regmap *regmap;
 	u32 act_ctrl_reg;
 	u32 act_clear_reg;
 	u32 status_reg;
@@ -1904,10 +1866,11 @@ end:
 	return ret;
 }
 
-static void qcom_llcc_remove(struct platform_device *pdev)
+static int qcom_llcc_remove(struct platform_device *pdev)
 {
 	/* Set the global pointer to a error code to avoid referencing it */
 	drv_data = ERR_PTR(-ENODEV);
+	return 0;
 }
 
 static struct regmap *qcom_llcc_init_mmio(struct platform_device *pdev,
@@ -1918,6 +1881,7 @@ static struct regmap *qcom_llcc_init_mmio(struct platform_device *pdev,
 		.reg_bits = 32,
 		.reg_stride = 4,
 		.val_bits = 32,
+		.fast_io = true,
 	};
 
 	base = devm_platform_ioremap_resource_byname(pdev, name);
@@ -1933,7 +1897,6 @@ static int qcom_llcc_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	int ret, i;
 	struct platform_device *llcc_edac;
-	const struct qcom_sct_config *cfgs;
 	const struct qcom_llcc_config *cfg;
 	const struct llcc_slice_config *llcc_cfg;
 	struct device_node *tcm_memory_node;

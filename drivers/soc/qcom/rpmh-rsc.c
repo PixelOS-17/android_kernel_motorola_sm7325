@@ -13,7 +13,6 @@
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/kernel.h>
-#include <linux/ktime.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/notifier.h>
@@ -28,7 +27,6 @@
 #include <linux/suspend.h>
 #include <linux/wait.h>
 
-#include <clocksource/arm_arch_timer.h>
 #include <soc/qcom/cmd-db.h>
 #include <soc/qcom/tcs.h>
 #include <soc/qcom/crm.h>
@@ -509,7 +507,6 @@ static const struct tcs_request *get_req_from_tcs(struct rsc_drv *drv,
 static void __tcs_set_trigger(struct rsc_drv *drv, int tcs_id, bool trigger)
 {
 	u32 enable;
-	u32 reg = drv->regs[RSC_DRV_CONTROL];
 
 	/*
 	 * HW req: Clear the DRV_CONTROL and enable TCS again
@@ -543,7 +540,6 @@ static void __tcs_set_trigger(struct rsc_drv *drv, int tcs_id, bool trigger)
 static void enable_tcs_irq(struct rsc_drv *drv, int tcs_id, bool enable)
 {
 	u32 data;
-	u32 reg = drv->regs[RSC_DRV_IRQ_ENABLE];
 
 	data = readl_relaxed(drv->tcs_base + drv->regs[RSC_DRV_IRQ_ENABLE]);
 	if (enable)
@@ -1144,48 +1140,6 @@ static bool rpmh_rsc_ctrlr_is_busy(struct rsc_drv *drv)
 }
 
 /**
- * rpmh_rsc_write_next_wakeup() - Write next wakeup in CONTROL_TCS.
- * @drv: The controller
- *
- * Writes maximum wakeup cycles when called from suspend.
- * Writes earliest hrtimer wakeup when called from idle.
- */
-void rpmh_rsc_write_next_wakeup(struct rsc_drv *drv)
-{
-	ktime_t now, wakeup;
-	u64 wakeup_us, wakeup_cycles = ~0;
-	u32 lo, hi;
-
-	if (!drv->tcs[CONTROL_TCS].num_tcs || !drv->genpd_nb.notifier_call)
-		return;
-
-	/* Set highest time when system (timekeeping) is suspended */
-	if (system_state == SYSTEM_SUSPEND)
-		goto exit;
-
-	/* Find the earliest hrtimer wakeup from online cpus */
-	wakeup = dev_pm_genpd_get_next_hrtimer(drv->dev);
-
-	/* Find the relative wakeup in kernel time scale */
-	now = ktime_get();
-	wakeup = ktime_sub(wakeup, now);
-	wakeup_us = ktime_to_us(wakeup);
-
-	/* Convert the wakeup to arch timer scale */
-	wakeup_cycles = USECS_TO_CYCLES(wakeup_us);
-	wakeup_cycles += arch_timer_read_counter();
-
-exit:
-	lo = wakeup_cycles & RSC_DRV_CTL_TCS_DATA_LO_MASK;
-	hi = wakeup_cycles >> RSC_DRV_CTL_TCS_DATA_SIZE;
-	hi &= RSC_DRV_CTL_TCS_DATA_HI_MASK;
-	hi |= RSC_DRV_CTL_TCS_DATA_HI_VALID;
-
-	writel_relaxed(lo, drv->base + RSC_DRV_CTL_TCS_DATA_LO);
-	writel_relaxed(hi, drv->base + RSC_DRV_CTL_TCS_DATA_HI);
-}
-
-/**
  * rpmh_rsc_cpu_pm_callback() - Check if any of the AMCs are busy.
  * @nfb:    Pointer to the notifier block in struct rsc_drv.
  * @action: CPU_PM_ENTER, CPU_PM_ENTER_FAILED, or CPU_PM_EXIT.
@@ -1741,9 +1695,12 @@ static int rpmh_rsc_probe(struct platform_device *pdev)
 	 * do. To avoid adding this check to our children we'll do it now.
 	 */
 	ret = cmd_db_ready();
-	if (ret)
-		return dev_err_probe(&pdev->dev, ret,
-				     "Command DB not available\n");
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Command DB not available (%d)\n",
+									ret);
+		return ret;
+	}
 
 	rpmh_standalone = cmd_db_is_standalone();
 	if (rpmh_standalone)
@@ -1913,7 +1870,7 @@ static int rpmh_rsc_probe(struct platform_device *pdev)
 	list_add_tail(&rsc_top->list, &rpmh_rsc_dev_list);
 	dev_set_drvdata(&pdev->dev, rsc_top);
 
-	return ret;
+	return devm_of_platform_populate(&pdev->dev);
 }
 
 static const struct dev_pm_ops rpmh_rsc_dev_pm_ops = {
@@ -1945,7 +1902,7 @@ static int __init rpmh_driver_init(void)
 {
 	return platform_driver_register(&rpmh_driver);
 }
-core_initcall(rpmh_driver_init);
+arch_initcall(rpmh_driver_init);
 
 MODULE_DESCRIPTION("Qualcomm Technologies, Inc. RPMh Driver");
 MODULE_LICENSE("GPL v2");

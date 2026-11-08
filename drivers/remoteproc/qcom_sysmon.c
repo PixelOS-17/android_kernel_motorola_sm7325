@@ -10,6 +10,7 @@
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/of_irq.h>
+#include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/rpmsg.h>
 #include <trace/events/rproc_qcom.h>
@@ -195,7 +196,7 @@ struct ssctl_shutdown_resp {
 	struct qmi_response_type_v01 resp;
 };
 
-static const struct qmi_elem_info ssctl_shutdown_resp_ei[] = {
+static struct qmi_elem_info ssctl_shutdown_resp_ei[] = {
 	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
@@ -849,7 +850,7 @@ EXPORT_SYMBOL(qcom_sysmon_get_reason);
  * @name:	name of this subdev, to use in SSR
  * @ssctl_instance: instance id of the ssctl QMI service
  *
- * Return: A new qcom_sysmon object, or an error pointer on failure
+ * Return: A new qcom_sysmon object, or NULL on failure
  */
 struct qcom_sysmon *qcom_add_sysmon_subdev(struct rproc *rproc,
 					   const char *name,

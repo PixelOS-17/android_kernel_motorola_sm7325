@@ -56,11 +56,8 @@ enum qcom_scm_arg_types {
 
 /**
  * struct qcom_scm_desc
- * @svc: Service identifier
- * @cmd: Command identifier
  * @arginfo:	Metadata describing the arguments in args[]
  * @args:	The array of arguments for the secure syscall
- * @owner: Owner identifier
  */
 struct qcom_scm_desc {
 	u32 svc;
@@ -105,18 +102,15 @@ extern int __scm_smc_call(struct device *dev, const struct qcom_scm_desc *desc,
 	__scm_smc_call((dev), (desc), qcom_scm_convention, (res), (atomic))
 
 #define SCM_LEGACY_FNID(s, c)	(((s) << 10) | ((c) & 0x3ff))
-int scm_legacy_call_atomic(struct device *dev, const struct qcom_scm_desc *desc,
+extern int scm_legacy_call_atomic(struct device *dev,
+				  const struct qcom_scm_desc *desc,
+				  struct qcom_scm_res *res);
+extern int scm_legacy_call(struct device *dev, const struct qcom_scm_desc *desc,
 			   struct qcom_scm_res *res);
-int scm_legacy_call(struct device *dev, const struct qcom_scm_desc *desc,
-		    struct qcom_scm_res *res);
-
-struct qcom_tzmem_pool *qcom_scm_get_tzmem_pool(void);
-int qcom_scm_shm_bridge_enable(struct device *scm_dev);
 
 #define QCOM_SCM_SVC_BOOT		0x01
 #define QCOM_SCM_BOOT_SET_ADDR		0x01
 #define QCOM_SCM_BOOT_TERMINATE_PC	0x02
-#define QCOM_SCM_BOOT_SDI_CONFIG	0x09
 #define QCOM_SCM_BOOT_SET_DLOAD_MODE	0x10
 #define QCOM_SCM_BOOT_SET_ADDR_MC               0x11
 #define QCOM_SCM_BOOT_SEC_WDOG_DIS		0x07

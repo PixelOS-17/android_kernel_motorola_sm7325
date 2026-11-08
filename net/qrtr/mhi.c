@@ -30,25 +30,13 @@ static void qcom_mhi_qrtr_dl_callback(struct mhi_device *mhi_dev,
 	struct qrtr_mhi_dev *qdev = dev_get_drvdata(&mhi_dev->dev);
 	int rc;
 
-	if (!qdev || (mhi_res->transaction_status && mhi_res->transaction_status != -ENOTCONN))
+	if (!qdev || mhi_res->transaction_status)
 		return;
-
-	/* Channel got reset. So just free the buffer */
-	if (mhi_res->transaction_status == -ENOTCONN) {
-		devm_kfree(&mhi_dev->dev, mhi_res->buf_addr);
-		return;
-	}
 
 	rc = qrtr_endpoint_post(&qdev->ep, mhi_res->buf_addr,
 				mhi_res->bytes_xferd);
 	if (rc == -EINVAL)
 		dev_err(qdev->dev, "invalid ipcrouter packet\n");
-
-	/* Done with the buffer, now recycle it for future use */
-	rc = mhi_queue_buf(mhi_dev, DMA_FROM_DEVICE, mhi_res->buf_addr,
-			   mhi_dev->mhi_cntrl->buffer_len, MHI_EOT);
-	if (rc)
-		dev_err(&mhi_dev->dev, "Failed to recycle the buffer: %d\n", rc);
 }
 
 /* From QRTR to MHI */
@@ -171,8 +159,9 @@ static int qcom_mhi_qrtr_probe(struct mhi_device *mhi_dev,
 		return rc;
 
 	/* start channels */
-	rc = mhi_prepare_for_transfer(mhi_dev);
-	if (rc)
+	rc = mhi_prepare_for_transfer_autoqueue(mhi_dev);
+	if (rc) {
+		qrtr_endpoint_unregister(&qdev->ep);
 		return rc;
 	}
 	complete_all(&qdev->prepared);
@@ -180,13 +169,6 @@ static int qcom_mhi_qrtr_probe(struct mhi_device *mhi_dev,
 	dev_dbg(qdev->dev, "Qualcomm MHI QRTR driver probed\n");
 
 	return 0;
-
-err_unregister:
-	qrtr_endpoint_unregister(&qdev->ep);
-err_unprepare:
-	mhi_unprepare_from_transfer(mhi_dev);
-
-	return rc;
 }
 
 static void qcom_mhi_qrtr_remove(struct mhi_device *mhi_dev)
@@ -204,53 +186,6 @@ static const struct mhi_device_id qcom_mhi_qrtr_id_table[] = {
 };
 MODULE_DEVICE_TABLE(mhi, qcom_mhi_qrtr_id_table);
 
-static int __maybe_unused qcom_mhi_qrtr_pm_suspend_late(struct device *dev)
-{
-	struct mhi_device *mhi_dev = container_of(dev, struct mhi_device, dev);
-	enum mhi_state state;
-
-	state = mhi_get_mhi_state(mhi_dev->mhi_cntrl);
-	/*
-	 * If the device is in suspend state, then no need for the
-	 * client driver to unprepare the channels.
-	 */
-	if (state == MHI_STATE_M3)
-		return 0;
-
-	mhi_unprepare_from_transfer(mhi_dev);
-
-	return 0;
-}
-
-static int __maybe_unused qcom_mhi_qrtr_pm_resume_early(struct device *dev)
-{
-	struct mhi_device *mhi_dev = container_of(dev, struct mhi_device, dev);
-	enum mhi_state state;
-	int rc;
-
-	state = mhi_get_mhi_state(mhi_dev->mhi_cntrl);
-	/*
-	 * If the device is in suspend state, we won't unprepare channels
-	 * in suspend callback, therefore no need to prepare channels when
-	 * resume.
-	 */
-	if (state == MHI_STATE_M3)
-		return 0;
-
-	rc = mhi_prepare_for_transfer(mhi_dev);
-	if (rc) {
-		dev_err(dev, "failed to prepare for autoqueue transfer %d\n", rc);
-		return rc;
-	}
-
-	return qcom_mhi_qrtr_queue_dl_buffers(mhi_dev);
-}
-
-static const struct dev_pm_ops qcom_mhi_qrtr_pm_ops = {
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(qcom_mhi_qrtr_pm_suspend_late,
-				     qcom_mhi_qrtr_pm_resume_early)
-};
-
 static struct mhi_driver qcom_mhi_qrtr_driver = {
 	.probe = qcom_mhi_qrtr_probe,
 	.remove = qcom_mhi_qrtr_remove,
@@ -259,7 +194,6 @@ static struct mhi_driver qcom_mhi_qrtr_driver = {
 	.id_table = qcom_mhi_qrtr_id_table,
 	.driver = {
 		.name = "qcom_mhi_qrtr",
-		.pm = &qcom_mhi_qrtr_pm_ops,
 	},
 };
 

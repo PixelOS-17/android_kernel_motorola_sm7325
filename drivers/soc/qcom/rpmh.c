@@ -238,7 +238,7 @@ int rpmh_write_async(const struct device *dev, enum rpmh_state state,
 
 	return __rpmh_write(dev, state, &rpm_msg);
 }
-EXPORT_SYMBOL_GPL(rpmh_write_async);
+EXPORT_SYMBOL(rpmh_write_async);
 
 /**
  * rpmh_write: Write a set of RPMH commands and block until response
@@ -368,7 +368,7 @@ int rpmh_write_batch(const struct device *dev, enum rpmh_state state,
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(rpmh_write_batch);
+EXPORT_SYMBOL(rpmh_write_batch);
 
 static int is_req_valid(struct cache_req *req)
 {

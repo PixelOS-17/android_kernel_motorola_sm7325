@@ -32,7 +32,7 @@ static bool clk_branch_in_hwcg_mode(const struct clk_branch *br)
 
 static bool clk_branch_check_halt(const struct clk_branch *br, bool enabling)
 {
-	bool invert = (br->halt_check & BRANCH_HALT_ENABLE);
+	bool invert = (br->halt_check == BRANCH_HALT_ENABLE);
 	u32 val;
 
 	regmap_read(br->clkr.regmap, br->halt_reg, &val);
@@ -54,10 +54,9 @@ static bool clk_branch2_check_halt(const struct clk_branch *br, bool enabling)
 {
 	u32 val;
 	u32 mask;
-	bool invert = (br->halt_check & BRANCH_HALT_ENABLE);
 
-	mask = CBCR_NOC_FSM_STATUS;
-	mask |= CBCR_CLK_OFF;
+	mask = BRANCH_NOC_FSM_STATUS_MASK << BRANCH_NOC_FSM_STATUS_SHIFT;
+	mask |= BRANCH_CLK_OFF;
 
 	regmap_read(br->clkr.regmap, br->halt_reg, &val);
 
@@ -72,7 +71,6 @@ static bool clk_branch2_check_halt(const struct clk_branch *br, bool enabling)
 	} else {
 		return val & BRANCH_CLK_OFF;
 	}
-	return (val & CBCR_CLK_OFF) == (invert ? 0 : CBCR_CLK_OFF);
 }
 
 static int get_branch_timeout(const struct clk_branch *br)
@@ -561,10 +559,3 @@ const struct clk_ops clk_branch_simple_ops = {
 	.debug_init = clk_branch_debug_init,
 };
 EXPORT_SYMBOL_GPL(clk_branch_simple_ops);
-
-const struct clk_ops clk_branch2_prepare_ops = {
-	.prepare = clk_branch2_enable,
-	.unprepare = clk_branch2_disable,
-	.is_prepared = clk_is_enabled_regmap,
-};
-EXPORT_SYMBOL_GPL(clk_branch2_prepare_ops);

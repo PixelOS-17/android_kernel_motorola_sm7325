@@ -217,7 +217,6 @@ struct llcc_uid_slice_pair {
 struct llcc_drv_data {
 	struct regmap *regmap;
 	struct regmap *bcast_regmap;
-	struct regmap *bcast_and_regmap;
 	const struct llcc_slice_config *cfg;
 	const struct llcc_edac_reg_offset *edac_reg_offset;
 	struct mutex lock;

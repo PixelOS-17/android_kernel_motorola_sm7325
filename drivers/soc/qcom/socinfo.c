@@ -12,16 +12,20 @@
 #include <linux/random.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/smem.h>
-#include <linux/soc/qcom/socinfo.h>
 #include <linux/string.h>
-#include <linux/stringify.h>
 #include <linux/sys_soc.h>
 #include <linux/types.h>
 #include <soc/qcom/socinfo.h>
 
 #include <linux/unaligned.h>
 
-#include <dt-bindings/arm/qcom,ids.h>
+/*
+ * SoC version type with major number in the upper 16 bits and minor
+ * number in the lower 16 bits.
+ */
+#define SOCINFO_MAJOR(ver) (((ver) >> 16) & 0xffff)
+#define SOCINFO_MINOR(ver) ((ver) & 0xffff)
+#define SOCINFO_VERSION(maj, min)  ((((maj) & 0xffff) << 16)|((min) & 0xffff))
 
 #define SMEM_SOCINFO_BUILD_ID_LENGTH           32
 #define SMEM_SOCINFO_CHIP_ID_LENGTH            32
@@ -186,7 +190,6 @@ static const char * const hw_platform_ifeature_code[] = {
 #define SMEM_IMAGE_TABLE_BOOT_INDEX     0
 #define SMEM_IMAGE_TABLE_TZ_INDEX       1
 #define SMEM_IMAGE_TABLE_RPM_INDEX      3
-#define SMEM_IMAGE_TABLE_APPSBL_INDEX	9
 #define SMEM_IMAGE_TABLE_APPS_INDEX     10
 #define SMEM_IMAGE_TABLE_MPSS_INDEX     11
 #define SMEM_IMAGE_TABLE_ADSP_INDEX     12
@@ -204,7 +207,6 @@ static const char * const hw_platform_ifeature_code[] = {
  */
 static const char *const socinfo_image_names[] = {
 	[SMEM_IMAGE_TABLE_ADSP_INDEX] = "adsp",
-	[SMEM_IMAGE_TABLE_APPSBL_INDEX] = "appsbl",
 	[SMEM_IMAGE_TABLE_APPS_INDEX] = "apps",
 	[SMEM_IMAGE_TABLE_BOOT_INDEX] = "boot",
 	[SMEM_IMAGE_TABLE_CNSS_INDEX] = "cnss",
@@ -245,7 +247,7 @@ static const char *const pmic_models[] = {
 	[22] = "PM8821",
 	[23] = "PM8038",
 	[24] = "PM8005/PM8922",
-	[25] = "PM8917/PM8937",
+	[25] = "PM8917",
 	[26] = "PM660L",
 	[27] = "PM660",
 	[30] = "PM8150",
@@ -253,21 +255,15 @@ static const char *const pmic_models[] = {
 	[32] = "PM8150B",
 	[33] = "PMK8002",
 	[36] = "PM8009",
-	[37] = "PMI632",
 	[38] = "PM8150C",
-	[40] = "PM6150",
 	[41] = "SMB2351",
-	[44] = "PM8008",
 	[45] = "PM6125",
-	[46] = "PM7250B",
 	[47] = "PMK8350",
 	[48] = "PM8350",
 	[49] = "PM8350C",
 	[50] = "PM8350B",
 	[51] = "PMR735A",
 	[52] = "PMR735B",
-	[54] = "PM6350",
-	[55] = "PM4125",
 	[58] = "PM8450",
 	[65] = "PM8010",
 	[78] = "PMM8650",
@@ -345,6 +341,7 @@ struct socinfo {
 	__le32 num_part_instances;
 } *socinfo;
 
+#ifdef CONFIG_DEBUG_FS
 struct socinfo_params {
 	u32 raw_device_family;
 	u32 hw_plat_subtype;
@@ -1747,13 +1744,15 @@ static int qcom_socinfo_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static void qcom_socinfo_remove(struct platform_device *pdev)
+static int qcom_socinfo_remove(struct platform_device *pdev)
 {
 	struct qcom_socinfo *qs = platform_get_drvdata(pdev);
 
 	soc_device_unregister(qs->soc_dev);
 
 	socinfo_debugfs_exit(qs);
+
+	return 0;
 }
 
 static struct platform_driver qcom_socinfo_driver = {

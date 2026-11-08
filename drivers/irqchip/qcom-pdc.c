@@ -17,6 +17,7 @@
 #include <linux/notifier.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/of_device.h>
 #include <linux/of_irq.h>
 #include <linux/soc/qcom/irq.h>
 #include <linux/spinlock.h>
@@ -30,11 +31,8 @@
 
 #define PDC_IPC_LOG_SZ		2
 #define PDC_MAX_GPIO_IRQS	256
-#define PDC_DRV_OFFSET		0x10000
 
-/* Valid only on HW version < 3.2 */
 #define IRQ_ENABLE_BANK		0x10
-#define IRQ_ENABLE_BANK_MAX	(IRQ_ENABLE_BANK + BITS_TO_BYTES(PDC_MAX_GPIO_IRQS))
 #define IRQ_i_CFG		0x110
 #define IRQ_i_CFG_IRQ_ENABLE	3
 #define IRQ_i_CFG_TYPE_MASK	0x7
@@ -51,16 +49,6 @@ struct pdc_irq_info {
 	u32 enabled;
 };
 static struct pdc_irq_info pdc_irq_config[PDC_MAX_GPIO_IRQS];
-
-/* Valid only on HW version >= 3.2 */
-#define IRQ_i_CFG_IRQ_ENABLE	3
-
-#define IRQ_i_CFG_TYPE_MASK	GENMASK(2, 0)
-
-#define PDC_VERSION_REG		0x1000
-
-/* Notable PDC versions */
-#define PDC_VERSION_3_2		0x30200
 
 struct pdc_pin_region {
 	u32 pin_base;
@@ -81,7 +69,6 @@ struct spi_cfg_regs {
 
 static DEFINE_RAW_SPINLOCK(pdc_lock);
 static void __iomem *pdc_base;
-static void __iomem *pdc_prev_base;
 static struct pdc_pin_region *pdc_region;
 static int pdc_region_cnt;
 static struct spi_cfg_regs *spi_cfg;
@@ -144,7 +131,7 @@ static int spi_configure_type(irq_hw_number_t hwirq, unsigned int type)
 
 static void pdc_reg_write(int reg, u32 i, u32 val)
 {
-	pdc_base_reg_write(pdc_base, reg, i, val);
+	writel_relaxed(val, pdc_base + reg + i * sizeof(u32));
 }
 
 static u32 pdc_reg_read(int reg, u32 i)
@@ -477,46 +464,17 @@ static int pdc_setup_pin_mapping(struct device_node *np)
 	return 0;
 }
 
-#define QCOM_PDC_SIZE 0x30000
-
-static int qcom_pdc_probe(struct platform_device *pdev, struct device_node *parent)
+static int qcom_pdc_init(struct device_node *node, struct device_node *parent)
 {
 	struct irq_domain *parent_domain, *pdc_domain;
 	struct resource res;
 	int ret;
 	u32 version, major_ver, minor_ver;
 
-	/* compat with old sm8150 DT which had very small region for PDC */
-	if (of_address_to_resource(node, 0, &res))
-		return -EINVAL;
-
-	res_size = max_t(resource_size_t, resource_size(&res), QCOM_PDC_SIZE);
-	if (res_size > resource_size(&res))
-		pr_warn("%pOF: invalid reg size, please fix DT\n", node);
-
-	/*
-	 * PDC has multiple DRV regions, each one provides the same set of
-	 * registers for a particular client in the system. Due to a hardware
-	 * bug on X1E, some writes to the IRQ_ENABLE_BANK register must be
-	 * issued inside the previous region. This region belongs to
-	 * a different client and is not described in the device tree. Map the
-	 * region with the expected offset to preserve support for old DTs.
-	 */
-	if (of_device_is_compatible(node, "qcom,x1e80100-pdc")) {
-		pdc_prev_base = ioremap(res.start - PDC_DRV_OFFSET, IRQ_ENABLE_BANK_MAX);
-		if (!pdc_prev_base) {
-			pr_err("%pOF: unable to map previous PDC DRV region\n", node);
-			return -ENXIO;
-		}
-
-		pdc_x1e_quirk = true;
-	}
-
-	pdc_base = ioremap(res.start, res_size);
+	pdc_base = of_iomap(node, 0);
 	if (!pdc_base) {
 		pr_err("%pOF: unable to map PDC registers\n", node);
-		ret = -ENXIO;
-		goto fail;
+		return -ENXIO;
 	}
 
 	version = pdc_reg_read(VERSION, 0);
@@ -591,7 +549,6 @@ fail:
 	if (pdc_region)
 		kfree(pdc_region);
 	iounmap(pdc_base);
-	iounmap(pdc_prev_base);
 	return ret;
 }
 

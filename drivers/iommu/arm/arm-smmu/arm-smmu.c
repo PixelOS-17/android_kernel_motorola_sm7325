@@ -33,6 +33,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/of_device.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
@@ -348,7 +349,7 @@ static int arm_smmu_register_legacy_master(struct device *dev,
 	int err;
 
 	np = dev_get_dev_node(dev);
-	if (!np || !of_property_present(np, "#stream-id-cells")) {
+	if (!np || !of_find_property(np, "#stream-id-cells", NULL)) {
 		of_node_put(np);
 		return -ENODEV;
 	}
@@ -908,8 +909,6 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 	struct iommu_domain *domain = dev;
 	struct arm_smmu_domain *smmu_domain = to_smmu_domain(domain);
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
-	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
-				      DEFAULT_RATELIMIT_BURST);
 	int idx = smmu_domain->cfg.cbndx;
 	static DEFINE_RATELIMIT_STATE(_rs,
 				      DEFAULT_RATELIMIT_INTERVAL,
@@ -1574,14 +1573,15 @@ out_unlock:
 	return ret;
 }
 
-static void arm_smmu_destroy_domain_context(struct arm_smmu_domain *smmu_domain)
+static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 {
+	struct arm_smmu_domain *smmu_domain = to_smmu_domain(domain);
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
 	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
 	int ret, irq, i;
 	bool pinned = false;
 
-	if (!smmu)
+	if (!smmu || domain->type == IOMMU_DOMAIN_IDENTITY)
 		return;
 
 	ret = arm_smmu_rpm_get(smmu);
@@ -1604,7 +1604,7 @@ static void arm_smmu_destroy_domain_context(struct arm_smmu_domain *smmu_domain)
 
 	if (cfg->irptndx != ARM_SMMU_INVALID_IRPTNDX) {
 		irq = smmu->irqs[cfg->irptndx];
-		devm_free_irq(smmu->dev, irq, smmu_domain);
+		devm_free_irq(smmu->dev, irq, domain);
 	}
 
 	qcom_free_io_pgtable_ops(smmu_domain->pgtbl_ops);
@@ -1621,12 +1621,15 @@ static void arm_smmu_destroy_domain_context(struct arm_smmu_domain *smmu_domain)
 	arm_smmu_rpm_put(smmu);
 }
 
-static struct iommu_domain *arm_smmu_domain_alloc_paging(struct device *dev)
+static struct iommu_domain *arm_smmu_domain_alloc(unsigned type)
 {
 	struct arm_smmu_domain *smmu_domain;
-	struct arm_smmu_master_cfg *cfg = dev_iommu_priv_get(dev);
-	struct arm_smmu_device *smmu = cfg->smmu;
 
+	if (type != IOMMU_DOMAIN_UNMANAGED && type != IOMMU_DOMAIN_IDENTITY) {
+		if (using_legacy_binding ||
+		    (type != IOMMU_DOMAIN_DMA && type != IOMMU_DOMAIN_DMA_FQ))
+			return NULL;
+	}
 	/*
 	 * Allocate the domain and initialise some of its data structures.
 	 * We can't really do anything meaningful until we've added a
@@ -1887,12 +1890,14 @@ static void arm_smmu_master_free_smes(struct arm_smmu_master_cfg *cfg,
 	mutex_unlock(&smmu->stream_map_mutex);
 }
 
-static void arm_smmu_master_install_s2crs(struct arm_smmu_master_cfg *cfg,
-					  enum arm_smmu_s2cr_type type,
-					  u8 cbndx, struct iommu_fwspec *fwspec)
+static int arm_smmu_domain_add_master(struct arm_smmu_domain *smmu_domain,
+				      struct arm_smmu_master_cfg *cfg,
+				      struct iommu_fwspec *fwspec)
 {
-	struct arm_smmu_device *smmu = cfg->smmu;
+	struct arm_smmu_device *smmu = smmu_domain->smmu;
 	struct arm_smmu_s2cr *s2cr = smmu->s2crs;
+	u8 cbndx = smmu_domain->cfg.cbndx;
+	enum arm_smmu_s2cr_type type;
 	int i, idx;
 
 	if (smmu_domain->stage == ARM_SMMU_DOMAIN_BYPASS)
@@ -2081,7 +2086,7 @@ static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev)
 		return ret;
 
 	/* Ensure that the domain is finalised */
-	ret = arm_smmu_init_domain_context(smmu_domain, smmu, dev);
+	ret = arm_smmu_init_domain_context(domain, smmu, dev);
 	if (ret < 0)
 		goto rpm_put;
 
@@ -2090,13 +2095,30 @@ static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev)
 	 * different SMMUs.
 	 */
 	if (smmu_domain->smmu != smmu) {
+		dev_err(dev,
+			"cannot attach to SMMU %s whilst already attached to domain on SMMU %s\n",
+			dev_name(smmu_domain->smmu->dev), dev_name(smmu->dev));
 		ret = -EINVAL;
 		goto rpm_put;
 	}
 
 	/* Looks ok, so add the device to the domain */
-	arm_smmu_master_install_s2crs(cfg, S2CR_TYPE_TRANS,
-				      smmu_domain->cfg.cbndx, fwspec);
+	ret = arm_smmu_domain_add_master(smmu_domain, cfg, fwspec);
+
+	/*
+	 * Setup an autosuspend delay to avoid bouncing runpm state.
+	 * Otherwise, if a driver for a suspended consumer device
+	 * unmaps buffers, it will runpm resume/suspend for each one.
+	 *
+	 * For example, when used by a GPU device, when an application
+	 * or game exits, it can trigger unmapping 100s or 1000s of
+	 * buffers.  With a runpm cycle for each buffer, that adds up
+	 * to 5-10sec worth of reprogramming the context bank, while
+	 * the system appears to be locked up to the user.
+	 */
+	pm_runtime_set_autosuspend_delay(smmu->dev, 20);
+	pm_runtime_use_autosuspend(smmu->dev);
+
 rpm_put:
 	arm_smmu_rpm_put(smmu);
 
@@ -2291,7 +2313,7 @@ static phys_addr_t __arm_smmu_iova_to_phys_hard(struct iommu_domain *domain,
 		arm_smmu_cb_write(smmu, idx, ARM_SMMU_CB_ATS1PR, va);
 
 	reg = arm_smmu_page(smmu, ARM_SMMU_CB(smmu, idx)) + ARM_SMMU_CB_ATSR;
-	if (readl_poll_timeout_atomic(reg, tmp, !(tmp & ARM_SMMU_CB_ATSR_ACTIVE),
+	if (readl_poll_timeout_atomic(reg, tmp, !(tmp & ARM_SMMU_ATSR_ACTIVE),
 				      5, 50)) {
 		spin_unlock_irqrestore(&smmu_domain->cb_lock, flags);
 		dev_err(dev,
@@ -2388,7 +2410,6 @@ static bool arm_smmu_capable(struct device *dev, enum iommu_cap cap)
 		return cfg->smmu->features & ARM_SMMU_FEAT_COHERENT_WALK ||
 			device_get_dma_attr(dev) == DEV_DMA_COHERENT;
 	case IOMMU_CAP_NOEXEC:
-	case IOMMU_CAP_DEFERRED_FLUSH:
 		return true;
 	default:
 		return false;
@@ -2398,8 +2419,8 @@ static bool arm_smmu_capable(struct device *dev, enum iommu_cap cap)
 static
 struct arm_smmu_device *arm_smmu_get_by_fwnode(struct fwnode_handle *fwnode)
 {
-	struct device *dev = bus_find_device_by_fwnode(&platform_bus_type, fwnode);
-
+	struct device *dev = driver_find_device_by_fwnode(&arm_smmu_driver.driver,
+							  fwnode);
 	put_device(dev);
 	return dev ? dev_get_drvdata(dev) : NULL;
 }
@@ -2427,7 +2448,7 @@ static struct iommu_device *arm_smmu_probe_device(struct device *dev)
 		if (!smmu)
 			return ERR_PTR(-ENODEV);
 	} else {
-		smmu = arm_smmu_get_by_fwnode(fwspec->iommu_fwnode);
+		return ERR_PTR(-ENODEV);
 	}
 
 	ret = -EINVAL;
@@ -2476,6 +2497,7 @@ static struct iommu_device *arm_smmu_probe_device(struct device *dev)
 out_cfg_free:
 	kfree(cfg);
 out_free:
+	iommu_fwspec_free(dev);
 	return ERR_PTR(ret);
 }
 
@@ -2499,6 +2521,7 @@ static void arm_smmu_release_device(struct device *dev)
 
 	arm_smmu_rpm_put(cfg->smmu);
 
+	dev_iommu_priv_set(dev, NULL);
 	kfree(cfg);
 }
 
@@ -2569,6 +2592,21 @@ finish:
 
 	mutex_unlock(&smmu->stream_map_mutex);
 	return group;
+}
+
+static int arm_smmu_enable_nesting(struct iommu_domain *domain)
+{
+	struct arm_smmu_domain *smmu_domain = to_smmu_domain(domain);
+	int ret = 0;
+
+	mutex_lock(&smmu_domain->init_mutex);
+	if (smmu_domain->smmu)
+		ret = -EPERM;
+	else
+		smmu_domain->stage = ARM_SMMU_DOMAIN_NESTED;
+	mutex_unlock(&smmu_domain->init_mutex);
+
+	return ret;
 }
 
 static int arm_smmu_set_pgtable_quirks(struct iommu_domain *domain,
@@ -2870,6 +2908,7 @@ static struct qcom_iommu_ops arm_smmu_ops = {
 		.flush_iotlb_all	= arm_smmu_flush_iotlb_all,
 		.iotlb_sync		= arm_smmu_iotlb_sync,
 		.iova_to_phys		= arm_smmu_iova_to_phys,
+		.enable_nesting		= arm_smmu_enable_nesting,
 		.set_pgtable_quirks	= arm_smmu_set_pgtable_quirks,
 		.free			= arm_smmu_domain_free,
 	},
@@ -2919,7 +2958,7 @@ static void arm_smmu_device_reset(struct arm_smmu_device *smmu)
 	/* Make sure all context banks are disabled and clear CB_FSR  */
 	for (i = 0; i < smmu->num_context_banks; ++i) {
 		arm_smmu_write_context_bank(smmu, i);
-		arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_FSR, ARM_SMMU_CB_FSR_FAULT);
+		arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_FSR, ARM_SMMU_FSR_FAULT);
 	}
 skip_init:
 #endif
@@ -3549,7 +3588,7 @@ static void arm_smmu_rmr_install_bypass_smr(struct arm_smmu_device *smmu)
 	}
 
 	dev_notice(smmu->dev, "\tpreserved %d boot mapping%s\n", cnt,
-		   str_plural(cnt));
+		   cnt == 1 ? "" : "s");
 	iort_put_rmr_sids(dev_fwnode(smmu->dev), &rmr_list);
 }
 
@@ -3722,18 +3761,6 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	arm_smmu_interrupt_selftest(smmu);
 	k61dbg("%s: reset done", dev_name(dev));
 
-	err = iommu_device_sysfs_add(&smmu->iommu, smmu->dev, NULL,
-				     "smmu.%pa", &smmu->ioaddr);
-	if (err)
-		return dev_err_probe(dev, err, "Failed to register iommu in sysfs\n");
-
-	err = iommu_device_register(&smmu->iommu, &arm_smmu_ops,
-				    using_legacy_binding ? NULL : dev);
-	if (err) {
-		iommu_device_sysfs_remove(&smmu->iommu);
-		return dev_err_probe(dev, err, "Failed to register iommu\n");
-	}
-
 	/*
 	 * We want to avoid touching dev->power.lock in fastpaths unless
 	 * it's really going to do something useful - pm_runtime_enabled()
@@ -3747,7 +3774,6 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	if (smmu->pwr->num_gdscs) {
 		pm_runtime_set_active(dev);
 		pm_runtime_enable(dev);
-		arm_smmu_rpm_use_autosuspend(smmu);
 	}
 
 	return 0;
@@ -4003,7 +4029,7 @@ static struct platform_driver arm_smmu_driver = {
 		.suppress_bind_attrs    = true,
 	},
 	.probe	= arm_smmu_device_probe,
-	.remove = arm_smmu_device_remove,
+	.remove_new = arm_smmu_device_remove,
 	.shutdown = arm_smmu_device_shutdown,
 };
 

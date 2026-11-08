@@ -144,11 +144,6 @@ struct rsc_drv_top {
 	struct list_head list;
 };
 
-struct rsc_ver {
-	u32 major;
-	u32 minor;
-};
-
 /**
  * struct rsc_drv: the Direct Resource Voter (DRV) of the
  * Resource State Coordinator controller (RSC)
@@ -196,7 +191,6 @@ struct rsc_drv {
 	bool in_solver_mode;
 	bool initialized;
 	struct notifier_block rsc_pm;
-	struct notifier_block genpd_nb;
 	atomic_t cpus_in_pm;
 	struct drv_channel ch[MAX_CHANNEL];
 	DECLARE_BITMAP(tcs_in_use, MAX_TCS_NR);

@@ -15,8 +15,8 @@
  *
  * @ctrl: Controller handle
  * @reply: Reply received from the device
- * @tid: Transaction ID received with which framework can associate reply.
  * @len: Length of the reply
+ * @tid: Transaction ID received with which framework can associate reply.
  *
  * Called by controller to inform framework about the response received.
  * This helps in making the API asynchronous, and controller-driver doesn't need
@@ -175,9 +175,9 @@ int slim_do_transfer(struct slim_controller *ctrl, struct slim_msg_txn *txn)
 	} else if (!ret && need_tid && !txn->msg->comp) {
 		unsigned long ms = txn->rl + HZ;
 
-		time_left = wait_for_completion_timeout(txn->comp,
-							msecs_to_jiffies(ms));
-		if (!time_left) {
+		timeout = wait_for_completion_timeout(txn->comp,
+						      msecs_to_jiffies(ms));
+		if (!timeout) {
 			ret = -ETIMEDOUT;
 			dev_err(ctrl->dev, "%s: Timed out %d\n", __func__, ret);
 			txn->comp = NULL;
@@ -248,7 +248,7 @@ static u16 slim_slicesize(int code)
 /**
  * slim_xfer_msg() - Transfer a value info message on slim device
  *
- * @sbdev: slim device to which this msg has to be transferred
+ * @sbdev: slim device to which this msg has to be transfered
  * @msg: value info message pointer
  * @mc: message code of the message
  *

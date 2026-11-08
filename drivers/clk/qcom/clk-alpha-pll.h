@@ -12,8 +12,6 @@
 enum {
 	CLK_ALPHA_PLL_TYPE_DEFAULT,
 	CLK_ALPHA_PLL_TYPE_HUAYRA,
-	CLK_ALPHA_PLL_TYPE_HUAYRA_APSS,
-	CLK_ALPHA_PLL_TYPE_HUAYRA_2290,
 	CLK_ALPHA_PLL_TYPE_BRAMMO,
 	CLK_ALPHA_PLL_TYPE_FABIA,
 	CLK_ALPHA_PLL_TYPE_TRION,
@@ -165,9 +163,7 @@ struct alpha_pll_config {
 	u32 user_ctl_hi_val;
 	u32 user_ctl_hi1_val;
 	u32 test_ctl_val;
-	u32 test_ctl_mask;
 	u32 test_ctl_hi_val;
-	u32 test_ctl_hi_mask;
 	u32 test_ctl_hi1_val;
 	u32 test_ctl_hi2_val;
 	u32 main_output_mask;
@@ -184,9 +180,6 @@ struct alpha_pll_config {
 	u32 test_ctl_hi_mask;
 	u32 vco_val;
 	u32 vco_mask;
-	u32 status_val;
-	u32 status_mask;
-	u32 lock_det;
 };
 
 extern const struct clk_ops clk_alpha_pll_ops;
@@ -195,8 +188,6 @@ extern const struct clk_ops clk_alpha_pll_hwfsm_ops;
 extern const struct clk_ops clk_alpha_pll_postdiv_ops;
 extern const struct clk_ops clk_alpha_pll_huayra_ops;
 extern const struct clk_ops clk_alpha_pll_postdiv_ro_ops;
-extern const struct clk_ops clk_alpha_pll_stromer_ops;
-extern const struct clk_ops clk_alpha_pll_stromer_plus_ops;
 
 extern const struct clk_ops clk_alpha_pll_fabia_ops;
 extern const struct clk_ops clk_alpha_pll_fixed_fabia_ops;
@@ -223,18 +214,12 @@ extern const struct clk_ops clk_alpha_pll_zonda_5lpe_ops;
 extern const struct clk_ops clk_regera_pll_ops;
 
 extern const struct clk_ops clk_alpha_pll_lucid_evo_ops;
-#define clk_alpha_pll_taycan_elu_ops clk_alpha_pll_lucid_evo_ops
-#define clk_alpha_pll_taycan_eko_t_ops clk_alpha_pll_lucid_evo_ops
 extern const struct clk_ops clk_alpha_pll_reset_lucid_evo_ops;
-#define clk_alpha_pll_reset_lucid_ole_ops clk_alpha_pll_reset_lucid_evo_ops
 extern const struct clk_ops clk_alpha_pll_fixed_lucid_evo_ops;
 extern const struct clk_ops clk_alpha_pll_zonda_evo_ops;
 extern const struct clk_ops clk_alpha_pll_fixed_zonda_evo_ops;
 extern const struct clk_ops clk_alpha_pll_postdiv_zonda_evo_ops;
 extern const struct clk_ops clk_alpha_pll_postdiv_lucid_evo_ops;
-#define clk_alpha_pll_postdiv_lucid_ole_ops clk_alpha_pll_postdiv_lucid_evo_ops
-#define clk_alpha_pll_postdiv_taycan_elu_ops clk_alpha_pll_postdiv_lucid_evo_ops
-#define clk_alpha_pll_postdiv_taycan_eko_t_ops clk_alpha_pll_postdiv_lucid_evo_ops
 
 #define clk_alpha_pll_lucid_ole_ops clk_alpha_pll_lucid_evo_ops
 #define clk_alpha_pll_fixed_lucid_ole_ops clk_alpha_pll_fixed_lucid_evo_ops
@@ -256,13 +241,8 @@ extern const struct clk_ops clk_alpha_pll_rivian_evo_ops;
 #define clk_alpha_pll_postdiv_rivian_evo_ops clk_alpha_pll_postdiv_fabia_ops
 #define clk_alpha_pll_rivian_eko_t_ops clk_alpha_pll_rivian_evo_ops
 
-extern const struct clk_ops clk_alpha_pll_regera_ops;
-extern const struct clk_ops clk_alpha_pll_slew_ops;
-
 void clk_alpha_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
 			     const struct alpha_pll_config *config);
-void clk_huayra_2290_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
-				   const struct alpha_pll_config *config);
 void clk_fabia_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
 				const struct alpha_pll_config *config);
 void clk_trion_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,

@@ -16,7 +16,6 @@
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include "internal.h"
-#include "trace.h"
 
 int __must_check mhi_read_reg(struct mhi_controller *mhi_cntrl,
 			      void __iomem *base, u32 offset, u32 *out)
@@ -42,11 +41,10 @@ int __must_check mhi_read_reg_field(struct mhi_controller *mhi_cntrl,
 
 int __must_check mhi_poll_reg_field(struct mhi_controller *mhi_cntrl,
 				    void __iomem *base, u32 offset,
-				    u32 mask, u32 val, u32 delayus,
-				    u32 timeout_ms)
+				    u32 mask, u32 val, u32 delayus)
 {
 	int ret;
-	u32 out, retry = (timeout_ms * 1000) / delayus;
+	u32 out, retry = (mhi_cntrl->timeout_ms * 1000) / delayus;
 
 	while (retry--) {
 		ret = mhi_read_reg_field(mhi_cntrl, base, offset, mask, &out);
@@ -549,7 +547,6 @@ irqreturn_t mhi_intvec_threaded_handler(int irq_number, void *priv)
 		mhi_state_str(mhi_cntrl->dev_state),
 		TO_MHI_EXEC_STR(ee), mhi_state_str(state));
 
-	trace_mhi_intvec_states(mhi_cntrl, ee, state);
 	if (state == MHI_STATE_SYS_ERR) {
 		MHI_VERB(dev, "System error detected\n");
 		pm_state = mhi_tryset_pm_state(mhi_cntrl,
@@ -569,7 +566,6 @@ irqreturn_t mhi_intvec_threaded_handler(int irq_number, void *priv)
 
 			mhi_cntrl->status_cb(mhi_cntrl, MHI_CB_EE_RDDM);
 			mhi_cntrl->ee = ee;
-			mhi_uevent_notify(mhi_cntrl, mhi_cntrl->ee);
 			wake_up_all(&mhi_cntrl->state_event);
 		}
 		break;
@@ -1023,6 +1019,7 @@ int mhi_process_ctrl_ev_ring(struct mhi_controller *mhi_cntrl,
 				if (!mhi_chan->configured)
 					break;
 				parse_xfer_event(mhi_cntrl, local_rp, mhi_chan);
+				event_quota--;
 			}
 			break;
 		default:
@@ -1045,9 +1042,7 @@ int mhi_process_ctrl_ev_ring(struct mhi_controller *mhi_cntrl,
 	}
 
 	read_lock_bh(&mhi_cntrl->pm_lock);
-
-	/* Ring EV DB only if there is any pending element to process */
-	if (likely(MHI_DB_ACCESS_VALID(mhi_cntrl)) && count)
+	if (likely(MHI_DB_ACCESS_VALID(mhi_cntrl)))
 		mhi_ring_er_db(mhi_event);
 	read_unlock_bh(&mhi_cntrl->pm_lock);
 
@@ -1121,9 +1116,7 @@ int mhi_process_data_event_ring(struct mhi_controller *mhi_cntrl,
 		count++;
 	}
 	read_lock_bh(&mhi_cntrl->pm_lock);
-
-	/* Ring EV DB only if there is any pending element to process */
-	if (likely(MHI_DB_ACCESS_VALID(mhi_cntrl)) && count)
+	if (likely(MHI_DB_ACCESS_VALID(mhi_cntrl)))
 		mhi_ring_er_db(mhi_event);
 	read_unlock_bh(&mhi_cntrl->pm_lock);
 
@@ -1278,6 +1271,25 @@ int mhi_queue_skb(struct mhi_device *mhi_dev, enum dma_data_direction dir,
 	return mhi_queue(mhi_dev, &buf_info, dir, mflags);
 }
 EXPORT_SYMBOL_GPL(mhi_queue_skb);
+
+int mhi_queue_dma(struct mhi_device *mhi_dev, enum dma_data_direction dir,
+		  struct mhi_buf *mhi_buf, size_t len, enum mhi_flags mflags)
+{
+	struct mhi_chan *mhi_chan = (dir == DMA_TO_DEVICE) ? mhi_dev->ul_chan :
+							     mhi_dev->dl_chan;
+	struct mhi_buf_info buf_info = { };
+
+	buf_info.p_addr = mhi_buf->dma_addr;
+	buf_info.cb_buf = mhi_buf;
+	buf_info.pre_mapped = true;
+	buf_info.len = len;
+
+	if (unlikely(mhi_chan->pre_alloc))
+		return -EINVAL;
+
+	return mhi_queue(mhi_dev, &buf_info, dir, mflags);
+}
+EXPORT_SYMBOL_GPL(mhi_queue_dma);
 
 int mhi_gen_tre(struct mhi_controller *mhi_cntrl, struct mhi_chan *mhi_chan,
 			struct mhi_buf_info *info, enum mhi_flags flags)
@@ -1546,7 +1558,7 @@ exit_unprepare_channel:
 	mutex_unlock(&mhi_chan->mutex);
 }
 
-static int mhi_prepare_channel(struct mhi_controller *mhi_cntrl,
+int mhi_prepare_channel(struct mhi_controller *mhi_cntrl,
 			struct mhi_chan *mhi_chan, unsigned int flags)
 {
 	int ret = 0;
@@ -1847,16 +1859,15 @@ EXPORT_SYMBOL(mhi_start_transfer);
 
 int mhi_poll(struct mhi_device *mhi_dev, u32 budget)
 {
-	struct device *dev = &mhi_cntrl->mhi_dev->dev;
-	void __iomem *base = mhi_cntrl->regs;
+	struct mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
+	struct mhi_chan *mhi_chan = mhi_dev->dl_chan;
+	struct mhi_event *mhi_event = &mhi_cntrl->mhi_event[mhi_chan->er_index];
 	int ret;
 
-	ret = mhi_read_reg(mhi_cntrl, base, CHDBOFF, chdb_offset);
-	if (ret) {
-		dev_err(dev, "Unable to read CHDBOFF register\n");
-		return -EIO;
-	}
+	spin_lock_bh(&mhi_event->lock);
+	ret = mhi_event->process_event(mhi_cntrl, mhi_event, budget);
+	spin_unlock_bh(&mhi_event->lock);
 
-	return 0;
+	return ret;
 }
-EXPORT_SYMBOL_GPL(mhi_get_channel_doorbell_offset);
+EXPORT_SYMBOL_GPL(mhi_poll);

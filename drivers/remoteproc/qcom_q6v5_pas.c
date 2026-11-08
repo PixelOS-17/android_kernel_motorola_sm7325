@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Qualcomm Peripheral Authentication Service remoteproc driver
+ * Qualcomm ADSP/SLPI Peripheral Image Loader for MSM8974 and MSM8996
  *
  * Copyright (C) 2016 Linaro Ltd
  * Copyright (C) 2014 Sony Mobile Communications AB
@@ -14,7 +14,6 @@
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_device.h>
 #include <linux/of_reserved_mem.h>
@@ -76,9 +75,7 @@ EXPORT_SYMBOL_GPL(power_state_enter_into_hibernate);
 #define EARLY_BOOT_RETRY_COUNT 5
 #define EARLY_BOOT_RETRY_INTERVAL_MS 1000
 
-#define MAX_ASSIGN_COUNT 3
-
-struct qcom_pas_data {
+struct adsp_data {
 	int crash_reason_smem;
 	int crash_reason_stack;
 	const char *firmware_name;
@@ -109,7 +106,7 @@ struct qcom_pas_data {
 	bool early_boot;
 };
 
-struct qcom_pas {
+struct qcom_adsp {
 	struct device *dev;
 	struct device *minidump_dev;
 	struct rproc *rproc;
@@ -134,7 +131,6 @@ struct qcom_pas {
 	int active_pd_count;
 	int proxy_pd_count;
 
-	const char *dtb_firmware_name;
 	int pas_id;
 	int dtb_pas_id;
 	const char *dtb_fw_name;
@@ -152,9 +148,6 @@ struct qcom_pas {
 	bool decrypt_shutdown;
 	const char *info_name;
 
-	const struct firmware *firmware;
-	const struct firmware *dtb_firmware;
-
 	struct completion start_done;
 	struct completion stop_done;
 	struct timer_list boot_timer;
@@ -166,25 +159,12 @@ struct qcom_pas {
 	size_t dtb_mem_size;
 
 	phys_addr_t mem_phys;
-	phys_addr_t dtb_mem_phys;
 	phys_addr_t mem_reloc;
-	phys_addr_t dtb_mem_reloc;
-	phys_addr_t region_assign_phys[MAX_ASSIGN_COUNT];
 	void *mem_region;
-	void *dtb_mem_region;
 	size_t mem_size;
-	size_t dtb_mem_size;
-	size_t region_assign_size[MAX_ASSIGN_COUNT];
-
-	int region_assign_idx;
-	int region_assign_count;
-	bool region_assign_shared;
-	int region_assign_vmid;
-	u64 region_assign_owners[MAX_ASSIGN_COUNT];
 
 	struct qcom_rproc_glink glink_subdev;
 	struct qcom_rproc_subdev smd_subdev;
-	struct qcom_rproc_pdm pdm_subdev;
 	struct qcom_rproc_ssr ssr_subdev;
 	struct qcom_sysmon *sysmon;
 	const struct firmware *dtb_firmware;
@@ -299,7 +279,7 @@ void adsp_segment_dump(struct rproc *rproc, struct rproc_dump_segment *segment,
 
 static void adsp_minidump(struct rproc *rproc)
 {
-	struct qcom_pas *pas = rproc->priv;
+	struct qcom_adsp *adsp = rproc->priv;
 
 	trace_rproc_qcom_event(dev_name(adsp->dev), "adsp_minidump", "enter");
 
@@ -313,8 +293,8 @@ exit:
 	trace_rproc_qcom_event(dev_name(adsp->dev), "adsp_minidump", "exit");
 }
 
-static int qcom_pas_pds_enable(struct qcom_pas *pas, struct device **pds,
-			       size_t pd_count)
+static int adsp_pds_enable(struct qcom_adsp *adsp, struct device **pds,
+			   size_t pd_count)
 {
 	int ret;
 	int i;
@@ -340,8 +320,8 @@ unroll_pd_votes:
 	return ret;
 };
 
-static void qcom_pas_pds_disable(struct qcom_pas *pas, struct device **pds,
-				 size_t pd_count)
+static void adsp_pds_disable(struct qcom_adsp *adsp, struct device **pds,
+			     size_t pd_count)
 {
 	int i;
 
@@ -351,14 +331,14 @@ static void qcom_pas_pds_disable(struct qcom_pas *pas, struct device **pds,
 	}
 }
 
-static int qcom_pas_shutdown_poll_decrypt(struct qcom_pas *pas)
+static int adsp_shutdown_poll_decrypt(struct qcom_adsp *adsp)
 {
 	unsigned int retry_num = 50;
 	int ret;
 
 	do {
-		msleep(QCOM_PAS_DECRYPT_SHUTDOWN_DELAY_MS);
-		ret = qcom_scm_pas_shutdown(pas->pas_id);
+		msleep(ADSP_DECRYPT_SHUTDOWN_DELAY_MS);
+		ret = qcom_scm_pas_shutdown(adsp->pas_id);
 	} while (ret == -EINVAL && --retry_num);
 
 	return ret;
@@ -442,7 +422,7 @@ static void adsp_add_coredump_segments(struct qcom_adsp *adsp, const struct firm
 
 static int adsp_load(struct rproc *rproc, const struct firmware *fw)
 {
-	struct qcom_pas *pas = rproc->priv;
+	struct qcom_adsp *adsp = (struct qcom_adsp *)rproc->priv;
 	int ret;
 
 	trace_rproc_qcom_event(dev_name(adsp->dev), "adsp_load", "enter");
@@ -1699,50 +1679,23 @@ static int adsp_alloc_memory_region(struct qcom_adsp *adsp)
 	struct resource r;
 	int ret;
 
-	node = of_parse_phandle(pas->dev->of_node, "memory-region", 0);
+	node = of_parse_phandle(adsp->dev->of_node, "memory-region", 0);
 	if (!node) {
-		dev_err(pas->dev, "no memory-region specified\n");
+		dev_err(adsp->dev, "no memory-region specified\n");
 		return -EINVAL;
 	}
 
-	rmem = of_reserved_mem_lookup(node);
+	ret = of_address_to_resource(node, 0, &r);
 	of_node_put(node);
-	if (!rmem) {
-		dev_err(pas->dev, "unable to resolve memory-region\n");
-		return -EINVAL;
-	}
+	if (ret)
+		return ret;
 
-	pas->mem_phys = pas->mem_reloc = rmem->base;
-	pas->mem_size = rmem->size;
-	pas->mem_region = devm_ioremap_wc(pas->dev, pas->mem_phys, pas->mem_size);
-	if (!pas->mem_region) {
-		dev_err(pas->dev, "unable to map memory region: %pa+%zx\n",
-			&rmem->base, pas->mem_size);
-		return -EBUSY;
-	}
-
-	if (!pas->dtb_pas_id)
-		return 0;
-
-	node = of_parse_phandle(pas->dev->of_node, "memory-region", 1);
-	if (!node) {
-		dev_err(pas->dev, "no dtb memory-region specified\n");
-		return -EINVAL;
-	}
-
-	rmem = of_reserved_mem_lookup(node);
-	of_node_put(node);
-	if (!rmem) {
-		dev_err(pas->dev, "unable to resolve dtb memory-region\n");
-		return -EINVAL;
-	}
-
-	pas->dtb_mem_phys = pas->dtb_mem_reloc = rmem->base;
-	pas->dtb_mem_size = rmem->size;
-	pas->dtb_mem_region = devm_ioremap_wc(pas->dev, pas->dtb_mem_phys, pas->dtb_mem_size);
-	if (!pas->dtb_mem_region) {
-		dev_err(pas->dev, "unable to map dtb memory region: %pa+%zx\n",
-			&rmem->base, pas->dtb_mem_size);
+	adsp->mem_phys = adsp->mem_reloc = r.start;
+	adsp->mem_size = resource_size(&r);
+	adsp->mem_region = devm_ioremap_wc(adsp->dev, adsp->mem_phys, adsp->mem_size);
+	if (!adsp->mem_region) {
+		dev_err(adsp->dev, "unable to map memory region: %pa+%zx\n",
+			&r.start, adsp->mem_size);
 		return -EBUSY;
 	}
 
@@ -1914,18 +1867,10 @@ static int adsp_probe_desc(struct platform_device *pdev,
 	if (ret < 0 && ret != -EINVAL)
 		return ret;
 
-	if (desc->dtb_firmware_name) {
-		dtb_fw_name = desc->dtb_firmware_name;
-		ret = of_property_read_string_index(pdev->dev.of_node, "firmware-name", 1,
-						    &dtb_fw_name);
-		if (ret < 0 && ret != -EINVAL)
-			return ret;
-	}
-
 	if (desc->minidump_id)
-		ops = &qcom_pas_minidump_ops;
+		ops = &adsp_minidump_ops;
 
-	rproc = devm_rproc_alloc(&pdev->dev, desc->sysmon_name, ops, fw_name, sizeof(*pas));
+	rproc = rproc_alloc(&pdev->dev, pdev->name, ops, fw_name, sizeof(*adsp));
 
 	if (!rproc) {
 		dev_err(&pdev->dev, "unable to allocate remoteproc\n");
@@ -1983,11 +1928,11 @@ static int adsp_probe_desc(struct platform_device *pdev,
 	if (ret)
 		goto free_dtb_firmware;
 
-	ret = qcom_pas_assign_memory_region(pas);
+	ret = adsp_init_clock(adsp);
 	if (ret)
 		goto free_dtb_firmware;
 
-	ret = qcom_pas_init_clock(pas);
+	ret = adsp_init_regulator(adsp);
 	if (ret)
 		goto free_dtb_firmware;
 
@@ -1999,11 +1944,8 @@ static int adsp_probe_desc(struct platform_device *pdev,
 		goto free_dtb_firmware;
 	adsp->active_pd_count = ret;
 
-	ret = qcom_pas_init_regulator(pas);
-	if (ret)
-		goto unassign_mem;
-
-	ret = qcom_pas_pds_attach(&pdev->dev, pas->proxy_pds, desc->proxy_pd_names);
+	ret = adsp_pds_attach(&pdev->dev, adsp->proxy_pds,
+			      desc->proxy_pd_names);
 	if (ret < 0)
 		goto detach_active_pds;
 	adsp->proxy_pd_count = ret;
@@ -2108,7 +2050,6 @@ static int adsp_probe_desc(struct platform_device *pdev,
 		}
 	}
 
-	qcom_add_ssr_subdev(rproc, &pas->ssr_subdev, desc->ssr_name);
 	ret = rproc_add(rproc);
 	if (ret)
 		goto destroy_minidump_dev;
@@ -2629,7 +2570,7 @@ static const struct adsp_data pitti_adsp_resource = {
 	.ssctl_id = 0x14,
 };
 
-static const struct qcom_pas_data cdsp_resource_init = {
+static const struct adsp_data cdsp_resource_init = {
 	.crash_reason_smem = 601,
 	.firmware_name = "cdsp.mdt",
 	.pas_id = 18,
@@ -2639,43 +2580,7 @@ static const struct qcom_pas_data cdsp_resource_init = {
 	.ssctl_id = 0x17,
 };
 
-static const struct qcom_pas_data sa8775p_cdsp0_resource = {
-	.crash_reason_smem = 601,
-	.firmware_name = "cdsp0.mbn",
-	.pas_id = 18,
-	.minidump_id = 7,
-	.auto_boot = true,
-	.proxy_pd_names = (char*[]){
-		"cx",
-		"mxc",
-		"nsp",
-		NULL
-	},
-	.load_state = "cdsp",
-	.ssr_name = "cdsp",
-	.sysmon_name = "cdsp",
-	.ssctl_id = 0x17,
-};
-
-static const struct qcom_pas_data sa8775p_cdsp1_resource = {
-	.crash_reason_smem = 633,
-	.firmware_name = "cdsp1.mbn",
-	.pas_id = 30,
-	.minidump_id = 20,
-	.auto_boot = true,
-	.proxy_pd_names = (char*[]){
-		"cx",
-		"mxc",
-		"nsp",
-		NULL
-	},
-	.load_state = "nsp",
-	.ssr_name = "cdsp1",
-	.sysmon_name = "cdsp1",
-	.ssctl_id = 0x20,
-};
-
-static const struct qcom_pas_data sdm845_cdsp_resource_init = {
+static const struct adsp_data sdm845_cdsp_resource_init = {
 	.crash_reason_smem = 601,
 	.firmware_name = "cdsp.mdt",
 	.pas_id = 18,
@@ -2686,7 +2591,7 @@ static const struct qcom_pas_data sdm845_cdsp_resource_init = {
 	.ssctl_id = 0x17,
 };
 
-static const struct qcom_pas_data sm6350_cdsp_resource = {
+static const struct adsp_data sm6350_cdsp_resource = {
 	.crash_reason_smem = 601,
 	.firmware_name = "cdsp.mdt",
 	.pas_id = 18,
@@ -2998,41 +2903,7 @@ static const struct adsp_data holi_cdsp_resource = {
 	.ssctl_id = 0x17,
 };
 
-static const struct qcom_pas_data sa8775p_gpdsp0_resource = {
-	.crash_reason_smem = 640,
-	.firmware_name = "gpdsp0.mbn",
-	.pas_id = 39,
-	.minidump_id = 21,
-	.auto_boot = true,
-	.proxy_pd_names = (char*[]){
-		"cx",
-		"mxc",
-		NULL
-	},
-	.load_state = "gpdsp0",
-	.ssr_name = "gpdsp0",
-	.sysmon_name = "gpdsp0",
-	.ssctl_id = 0x21,
-};
-
-static const struct qcom_pas_data sa8775p_gpdsp1_resource = {
-	.crash_reason_smem = 641,
-	.firmware_name = "gpdsp1.mbn",
-	.pas_id = 40,
-	.minidump_id = 22,
-	.auto_boot = true,
-	.proxy_pd_names = (char*[]){
-		"cx",
-		"mxc",
-		NULL
-	},
-	.load_state = "gpdsp1",
-	.ssr_name = "gpdsp1",
-	.sysmon_name = "gpdsp1",
-	.ssctl_id = 0x22,
-};
-
-static const struct qcom_pas_data mpss_resource_init = {
+static const struct adsp_data mpss_resource_init = {
 	.crash_reason_smem = 421,
 	.firmware_name = "modem.mdt",
 	.pas_id = 4,
@@ -3255,7 +3126,8 @@ static const struct adsp_data sm8250_slpi_resource = {
 		NULL
 	},
 	.proxy_pd_names = (char*[]){
-		"ssc_cx",
+		"lcx",
+		"lmx",
 		NULL
 	},
 	.ssr_name = "dsps",
@@ -3263,7 +3135,7 @@ static const struct adsp_data sm8250_slpi_resource = {
 	.ssctl_id = 0x16,
 };
 
-static const struct qcom_pas_data sdm845_slpi_resource_init = {
+static const struct adsp_data sm8350_slpi_resource = {
 	.crash_reason_smem = 424,
 	.firmware_name = "slpi.mdt",
 	.pas_id = 12,
@@ -3320,7 +3192,7 @@ static const struct adsp_data wcss_resource_init = {
 	.ssctl_id = 0x12,
 };
 
-static const struct qcom_pas_data sdx55_mpss_resource = {
+static const struct adsp_data sdx55_mpss_resource = {
 	.crash_reason_smem = 421,
 	.firmware_name = "modem.mdt",
 	.pas_id = 4,
@@ -3338,7 +3210,6 @@ static const struct qcom_pas_data sdx55_mpss_resource = {
 static const struct adsp_data sc8180x_mpss_resource = {
 	.crash_reason_smem = 421,
 	.firmware_name = "modem.mdt",
-	.dtb_firmware_name = "modem_dtb.mdt",
 	.pas_id = 4,
 	.has_aggre2_clk = false,
 	.auto_boot = false,
@@ -3353,10 +3224,6 @@ static const struct adsp_data sc8180x_mpss_resource = {
 	.ssr_name = "mpss",
 	.sysmon_name = "modem",
 	.ssctl_id = 0x12,
-	.smem_host_id = 1,
-	.region_assign_idx = 2,
-	.region_assign_count = 2,
-	.region_assign_vmid = QCOM_SCM_VMID_MSS_MSA,
 };
 
 static const struct adsp_data sdmshrike_adsp_resource = {
@@ -3511,12 +3378,7 @@ static const struct of_device_id adsp_of_match[] = {
 	{ .compatible = "qcom,sdm845-adsp-pas", .data = &adsp_resource_init},
 	{ .compatible = "qcom,sdm845-cdsp-pas", .data = &cdsp_resource_init},
 	{ .compatible = "qcom,sdm845-cdsp-pas", .data = &sdm845_cdsp_resource_init},
-	{ .compatible = "qcom,sdm845-slpi-pas", .data = &sdm845_slpi_resource_init},
 	{ .compatible = "qcom,sdx55-mpss-pas", .data = &sdx55_mpss_resource},
-	{ .compatible = "qcom,sdx75-mpss-pas", .data = &sm8650_mpss_resource},
-	{ .compatible = "qcom,sm6115-adsp-pas", .data = &adsp_resource_init},
-	{ .compatible = "qcom,sm6115-cdsp-pas", .data = &cdsp_resource_init},
-	{ .compatible = "qcom,sm6115-mpss-pas", .data = &sc8180x_mpss_resource},
 	{ .compatible = "qcom,sm6350-adsp-pas", .data = &sm6350_adsp_resource},
 	{ .compatible = "qcom,sm6150-adsp-pas", .data = &sm6150_adsp_resource},
 	{ .compatible = "qcom,sm6150-cdsp-pas", .data = &sm6150_cdsp_resource},
@@ -3526,10 +3388,10 @@ static const struct of_device_id adsp_of_match[] = {
 	{ .compatible = "qcom,sm8150-slpi-pas", .data = &sm8150_slpi_resource},
 	{ .compatible = "qcom,sm8250-adsp-pas", .data = &sm8250_adsp_resource},
 	{ .compatible = "qcom,sm8250-cdsp-pas", .data = &sm8250_cdsp_resource},
-	{ .compatible = "qcom,sm8250-slpi-pas", .data = &sdm845_slpi_resource_init},
+	{ .compatible = "qcom,sm8250-slpi-pas", .data = &sm8250_slpi_resource},
 	{ .compatible = "qcom,sm8350-adsp-pas", .data = &sm8350_adsp_resource},
 	{ .compatible = "qcom,sm8350-cdsp-pas", .data = &sm8350_cdsp_resource},
-	{ .compatible = "qcom,sm8350-slpi-pas", .data = &sdm845_slpi_resource_init},
+	{ .compatible = "qcom,sm8350-slpi-pas", .data = &sm8350_slpi_resource},
 	{ .compatible = "qcom,sm8350-mpss-pas", .data = &mpss_resource_init},
 	{ .compatible = "qcom,waipio-adsp-pas", .data = &waipio_adsp_resource},
 	{ .compatible = "qcom,waipio-cdsp-pas", .data = &waipio_cdsp_resource},
@@ -3580,17 +3442,17 @@ static const struct of_device_id adsp_of_match[] = {
 	{ .compatible = "qcom,pil-tz-generic" },
 	{ },
 };
-MODULE_DEVICE_TABLE(of, qcom_pas_of_match);
+MODULE_DEVICE_TABLE(of, adsp_of_match);
 
-static struct platform_driver qcom_pas_driver = {
-	.probe = qcom_pas_probe,
-	.remove = qcom_pas_remove,
+static struct platform_driver adsp_driver = {
+	.probe = adsp_probe,
+	.remove = adsp_remove,
 	.driver = {
 		.name = "qcom_q6v5_pas",
-		.of_match_table = qcom_pas_of_match,
+		.of_match_table = adsp_of_match,
 	},
 };
 
-module_platform_driver(qcom_pas_driver);
-MODULE_DESCRIPTION("Qualcomm Peripheral Authentication Service remoteproc driver");
+module_platform_driver(adsp_driver);
+MODULE_DESCRIPTION("Qualcomm Hexagon v5 Peripheral Authentication Service driver");
 MODULE_LICENSE("GPL v2");

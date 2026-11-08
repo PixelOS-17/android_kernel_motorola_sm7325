@@ -138,7 +138,7 @@ enum adc5_cal_val {
  *	that is an average of multiple measurements.
  * @scale_fn_type: Represents the scaling function to convert voltage
  *	physical units desired by the client for the channel.
- * @channel_name: Channel name used in device tree.
+ * @datasheet_name: Channel name used in device tree.
  */
 struct adc5_channel_prop {
 	unsigned int		channel;
@@ -150,7 +150,7 @@ struct adc5_channel_prop {
 	unsigned int		hw_settle_time;
 	unsigned int		avg_samples;
 	enum vadc_scale_fn_type	scale_fn_type;
-	const char		*channel_name;
+	const char		*datasheet_name;
 };
 
 /**
@@ -1220,7 +1220,8 @@ static int adc5_get_fw_channel_data(struct adc5_chip *adc,
 		chan = chan & ADC_CHANNEL_MASK;
 	}
 
-	if (chan > ADC5_PARALLEL_ISENSE_VBAT_IDATA) {
+	if (chan > ADC5_PARALLEL_ISENSE_VBAT_IDATA ||
+	    !data->adc_chans[chan].datasheet_name) {
 		dev_err(dev, "%s invalid channel number %d\n", name, chan);
 		return -EINVAL;
 	}
@@ -1231,9 +1232,9 @@ static int adc5_get_fw_channel_data(struct adc5_chip *adc,
 
 	ret = fwnode_property_read_string(fwnode, "label", &channel_name);
 	if (ret)
-		channel_name = data->adc_chans[chan].datasheet_name;
+		channel_name = name;
 
-	prop->channel_name = channel_name;
+	prop->datasheet_name = channel_name;
 
 	ret = fwnode_property_read_u32(fwnode, "qcom,decimation", &value);
 	if (!ret) {
@@ -1452,12 +1453,13 @@ static int adc5_get_fw_data(struct adc5_chip *adc)
 	const struct adc5_channels *adc_chan;
 	struct iio_chan_spec *iio_chan;
 	struct adc5_channel_prop prop, *chan_props;
+	struct fwnode_handle *child;
 	unsigned int index = 0;
 	int ret;
 
 	adc->nchannels = device_get_child_node_count(adc->dev);
 	if (!adc->nchannels)
-		return dev_err_probe(adc->dev, -EINVAL, "no channels defined\n");
+		return -EINVAL;
 
 	adc->iio_chans = devm_kcalloc(adc->dev, adc->nchannels,
 				       sizeof(*adc->iio_chans), GFP_KERNEL);
@@ -1475,10 +1477,12 @@ static int adc5_get_fw_data(struct adc5_chip *adc)
 	if (!adc->data)
 		adc->data = &adc5_data_pmic;
 
-	device_for_each_child_node_scoped(adc->dev, child) {
+	device_for_each_child_node(adc->dev, child) {
 		ret = adc5_get_fw_channel_data(adc, &prop, child, adc->data);
-		if (ret)
+		if (ret) {
+			fwnode_handle_put(child);
 			return ret;
+		}
 
 		if (prop.scale_fn_type == -EINVAL)
 			prop.scale_fn_type =
@@ -1488,8 +1492,8 @@ static int adc5_get_fw_data(struct adc5_chip *adc)
 		adc_chan = &adc->data->adc_chans[prop.channel];
 
 		iio_chan->channel = prop.channel;
-		iio_chan->datasheet_name = adc_chan->datasheet_name;
-		iio_chan->extend_name = prop.channel_name;
+		iio_chan->datasheet_name = prop.datasheet_name;
+		iio_chan->extend_name = prop.datasheet_name;
 		iio_chan->info_mask_separate = adc_chan->info_mask;
 		iio_chan->type = adc_chan->type;
 		iio_chan->address = index;
@@ -1553,8 +1557,10 @@ static int adc5_probe(struct platform_device *pdev)
 	mutex_init(&adc->lock);
 
 	ret = adc5_get_fw_data(adc);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "adc get dt data failed\n");
 		return ret;
+	}
 
 	adc->irq_eoc = platform_get_irq(pdev, 0);
 	if (adc->irq_eoc < 0) {

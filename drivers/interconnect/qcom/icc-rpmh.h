@@ -23,11 +23,6 @@
  * @bcms: list of bcms that maps to the provider
  * @num_bcms: number of @bcms
  * @voter: bcm voter targeted by this provider
- * @nodes: list of icc nodes that maps to the provider
- * @num_nodes: number of @nodes
- * @regmap: used for QoS, register access
- * @clks : clks required for register access
- * @num_clks: number of @clks
  */
 struct qcom_icc_provider {
 	struct icc_provider provider;
@@ -61,26 +56,6 @@ struct bcm_db {
 	u8 reserved;
 };
 
-#define MAX_PORTS		4
-
-/**
- * struct qcom_icc_qosbox - Qualcomm specific QoS config
- * @prio: priority value assigned to requests on the node
- * @urg_fwd: whether to forward the urgency promotion issued by master
- * (endpoint), or discard
- * @prio_fwd_disable: whether to forward the priority driven by master, or
- * override by @prio
- * @num_ports: number of @ports
- * @port_offsets: qos register offsets
- */
-struct qcom_icc_qosbox {
-	const u32 prio;
-	const bool urg_fwd;
-	const bool prio_fwd_disable;
-	const u32 num_ports;
-	const u32 port_offsets[MAX_PORTS];
-};
-
 #define MAX_LINKS		128
 #define MAX_BCMS		64
 #define MAX_BCM_PER_NODE	3
@@ -99,8 +74,6 @@ struct qcom_icc_crm_voter {
  * @name: the node name used in debugfs
  * @links: an array of nodes where we can go next while traversing
  * @id: a unique node identifier
- * @link_nodes: links associated with this node
- * @node: icc_node associated with this node
  * @num_links: the total number of @links
  * @channels: num of channels at this node
  * @buswidth: width of the interconnect between a node and the bus
@@ -121,8 +94,6 @@ struct qcom_icc_node {
 	const char *name;
 	u16 links[MAX_LINKS];
 	u16 id;
-	struct qcom_icc_node **link_nodes;
-	struct icc_node *node;
 	u16 num_links;
 	u16 channels;
 	u16 buswidth;
@@ -205,6 +176,16 @@ struct qcom_icc_desc {
 	size_t num_voters;
 	bool reapply_qos;
 };
+
+#define DEFINE_QNODE(_name, _id, _channels, _buswidth, ...)		\
+		static struct qcom_icc_node _name = {			\
+		.id = _id,						\
+		.name = #_name,						\
+		.channels = _channels,					\
+		.buswidth = _buswidth,					\
+		.num_links = ARRAY_SIZE(((int[]){ __VA_ARGS__ })),	\
+		.links = { __VA_ARGS__ },				\
+	}
 
 int qcom_icc_aggregate(struct icc_node *node, u32 tag, u32 avg_bw,
 		       u32 peak_bw, u32 *agg_avg, u32 *agg_peak);

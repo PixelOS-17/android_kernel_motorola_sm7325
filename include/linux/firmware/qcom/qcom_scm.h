@@ -10,8 +10,6 @@
 #include <linux/types.h>
 #include <linux/cpumask.h>
 
-#include <dt-bindings/firmware/qcom,scm.h>
-
 #define QCOM_SCM_VERSION(major, minor)	(((major) << 16) | ((minor) & 0xFF))
 #define QCOM_SCM_CPU_PWR_DOWN_L2_ON	0x0
 #define QCOM_SCM_CPU_PWR_DOWN_L2_OFF	0x1

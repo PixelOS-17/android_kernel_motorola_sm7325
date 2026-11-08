@@ -43,8 +43,7 @@
 
 #define PLL_USER_CTL(p)		((p)->offset + (p)->regs[PLL_OFF_USER_CTL])
 # define PLL_POST_DIV_SHIFT	8
-# define PLL_POST_DIV_MASK(p)	GENMASK((p)->width ? (p)->width - 1 : 3, 0)
-# define PLL_ALPHA_MSB		BIT(15)
+# define PLL_POST_DIV_MASK(p)	GENMASK((p)->width - 1, 0)
 # define PLL_ALPHA_EN		BIT(24)
 # define PLL_ALPHA_MODE		BIT(25)
 # define PLL_VCO_SHIFT		20
@@ -65,10 +64,8 @@
 #define PLL_OPMODE(p)		((p)->offset + (p)->regs[PLL_OFF_OPMODE])
 #define PLL_FRAC(p)		((p)->offset + (p)->regs[PLL_OFF_FRAC])
 
-#define GET_PLL_TYPE(pll)	(((pll)->regs - clk_alpha_pll_regs[0]) / PLL_OFF_MAX_REGS)
-
 const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
-	[CLK_ALPHA_PLL_TYPE_DEFAULT] = {
+	[CLK_ALPHA_PLL_TYPE_DEFAULT] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_ALPHA_VAL_U] = 0x0c,
@@ -79,7 +76,7 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_TEST_CTL_U] = 0x20,
 		[PLL_OFF_STATUS] = 0x24,
 	},
-	[CLK_ALPHA_PLL_TYPE_HUAYRA] = {
+	[CLK_ALPHA_PLL_TYPE_HUAYRA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_USER_CTL] = 0x10,
@@ -89,30 +86,7 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_TEST_CTL_U] = 0x20,
 		[PLL_OFF_STATUS] = 0x24,
 	},
-	[CLK_ALPHA_PLL_TYPE_HUAYRA_APSS] = {
-		[PLL_OFF_L_VAL] = 0x08,
-		[PLL_OFF_ALPHA_VAL] = 0x10,
-		[PLL_OFF_USER_CTL] = 0x18,
-		[PLL_OFF_CONFIG_CTL] = 0x20,
-		[PLL_OFF_CONFIG_CTL_U] = 0x24,
-		[PLL_OFF_STATUS] = 0x28,
-		[PLL_OFF_TEST_CTL] = 0x30,
-		[PLL_OFF_TEST_CTL_U] = 0x34,
-	},
-	[CLK_ALPHA_PLL_TYPE_HUAYRA_2290] = {
-		[PLL_OFF_L_VAL] = 0x04,
-		[PLL_OFF_ALPHA_VAL] = 0x08,
-		[PLL_OFF_USER_CTL] = 0x0c,
-		[PLL_OFF_CONFIG_CTL] = 0x10,
-		[PLL_OFF_CONFIG_CTL_U] = 0x14,
-		[PLL_OFF_CONFIG_CTL_U1] = 0x18,
-		[PLL_OFF_TEST_CTL] = 0x1c,
-		[PLL_OFF_TEST_CTL_U] = 0x20,
-		[PLL_OFF_TEST_CTL_U1] = 0x24,
-		[PLL_OFF_OPMODE] = 0x28,
-		[PLL_OFF_STATUS] = 0x38,
-	},
-	[CLK_ALPHA_PLL_TYPE_BRAMMO] = {
+	[CLK_ALPHA_PLL_TYPE_BRAMMO] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_ALPHA_VAL_U] = 0x0c,
@@ -121,7 +95,7 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_TEST_CTL] = 0x1c,
 		[PLL_OFF_STATUS] = 0x24,
 	},
-	[CLK_ALPHA_PLL_TYPE_FABIA] = {
+	[CLK_ALPHA_PLL_TYPE_FABIA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_USER_CTL] = 0x0c,
 		[PLL_OFF_USER_CTL_U] = 0x10,
@@ -152,7 +126,7 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_SSC_NUM_STEPS] = 0x4C,
 		[PLL_OFF_SSC_UPDATE_RATE] = 0x50,
 	},
-	[CLK_ALPHA_PLL_TYPE_AGERA] = {
+	[CLK_ALPHA_PLL_TYPE_AGERA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_USER_CTL] = 0x0c,
@@ -162,7 +136,7 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_TEST_CTL_U] = 0x1c,
 		[PLL_OFF_STATUS] = 0x2c,
 	},
-	[CLK_ALPHA_PLL_TYPE_ZONDA] = {
+	[CLK_ALPHA_PLL_TYPE_ZONDA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_USER_CTL] = 0x0c,
@@ -228,53 +202,6 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_TEST_CTL_U] = 0x30,
 		[PLL_OFF_TEST_CTL_U1] = 0x34,
 	},
-	[CLK_ALPHA_PLL_TYPE_LUCID_OLE] = {
-		[PLL_OFF_OPMODE] = 0x04,
-		[PLL_OFF_STATE] = 0x08,
-		[PLL_OFF_STATUS] = 0x0c,
-		[PLL_OFF_L_VAL] = 0x10,
-		[PLL_OFF_ALPHA_VAL] = 0x14,
-		[PLL_OFF_USER_CTL] = 0x18,
-		[PLL_OFF_USER_CTL_U] = 0x1c,
-		[PLL_OFF_CONFIG_CTL] = 0x20,
-		[PLL_OFF_CONFIG_CTL_U] = 0x24,
-		[PLL_OFF_CONFIG_CTL_U1] = 0x28,
-		[PLL_OFF_TEST_CTL] = 0x2c,
-		[PLL_OFF_TEST_CTL_U] = 0x30,
-		[PLL_OFF_TEST_CTL_U1] = 0x34,
-		[PLL_OFF_TEST_CTL_U2] = 0x38,
-	},
-	[CLK_ALPHA_PLL_TYPE_PONGO_ELU] = {
-		[PLL_OFF_OPMODE] = 0x04,
-		[PLL_OFF_STATE] = 0x08,
-		[PLL_OFF_STATUS] = 0x0c,
-		[PLL_OFF_L_VAL] = 0x10,
-		[PLL_OFF_USER_CTL] = 0x14,
-		[PLL_OFF_USER_CTL_U] = 0x18,
-		[PLL_OFF_CONFIG_CTL] = 0x1c,
-		[PLL_OFF_CONFIG_CTL_U] = 0x20,
-		[PLL_OFF_CONFIG_CTL_U1] = 0x24,
-		[PLL_OFF_CONFIG_CTL_U2] = 0x28,
-		[PLL_OFF_TEST_CTL] = 0x2c,
-		[PLL_OFF_TEST_CTL_U] = 0x30,
-		[PLL_OFF_TEST_CTL_U1] = 0x34,
-		[PLL_OFF_TEST_CTL_U2] = 0x38,
-		[PLL_OFF_TEST_CTL_U3] = 0x3c,
-	},
-	[CLK_ALPHA_PLL_TYPE_TAYCAN_ELU] = {
-		[PLL_OFF_OPMODE] = 0x04,
-		[PLL_OFF_STATE] = 0x08,
-		[PLL_OFF_STATUS] = 0x0c,
-		[PLL_OFF_L_VAL] = 0x10,
-		[PLL_OFF_ALPHA_VAL] = 0x14,
-		[PLL_OFF_USER_CTL] = 0x18,
-		[PLL_OFF_USER_CTL_U] = 0x1c,
-		[PLL_OFF_CONFIG_CTL] = 0x20,
-		[PLL_OFF_CONFIG_CTL_U] = 0x24,
-		[PLL_OFF_CONFIG_CTL_U1] = 0x28,
-		[PLL_OFF_TEST_CTL] = 0x2c,
-		[PLL_OFF_TEST_CTL_U] = 0x30,
-	},
 	[CLK_ALPHA_PLL_TYPE_RIVIAN_EVO] = {
 		[PLL_OFF_OPMODE] = 0x04,
 		[PLL_OFF_STATUS] = 0x0c,
@@ -327,7 +254,7 @@ const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
 		[PLL_OFF_CONFIG_CTL] = 0x20,
 		[PLL_OFF_STATUS] = 0x24,
 	},
-	[CLK_ALPHA_PLL_TYPE_BRAMMO_EVO] = {
+	[CLK_ALPHA_PLL_TYPE_BRAMMO_EVO] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_ALPHA_VAL_U] = 0x0c,
@@ -363,8 +290,6 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_regs);
 #define ALPHA_REG_16BIT_WIDTH	16
 #define ALPHA_BITWIDTH		32U
 #define ALPHA_SHIFT(w)		min(w, ALPHA_BITWIDTH)
-
-#define	ALPHA_PLL_STATUS_REG_SHIFT	8
 
 #define PLL_HUAYRA_M_WIDTH		8
 #define PLL_HUAYRA_M_SHIFT		8
@@ -406,13 +331,6 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_regs);
 #define LUCID_EVO_PCAL_NOT_DONE		BIT(8)
 #define LUCID_EVO_PLL_L_VAL_MASK        GENMASK(15, 0)
 #define LUCID_EVO_PLL_CAL_L_VAL_SHIFT	16
-#define LUCID_OLE_PLL_RINGOSC_CAL_L_VAL_SHIFT	24
-
-/* PONGO ELU PLL specific setting and offsets */
-#define PONGO_PLL_OUT_MASK		GENMASK(1, 0)
-#define PONGO_PLL_L_VAL_MASK		GENMASK(11, 0)
-#define PONGO_XO_PRESENT		BIT(10)
-#define PONGO_CLOCK_SELECT		BIT(12)
 
 /* ZONDA PLL specific */
 #define ZONDA_PLL_OUT_MASK	0xf
@@ -570,22 +488,6 @@ void clk_alpha_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
 	if (pll->flags & SUPPORTS_DYNAMIC_UPDATE)
 		regmap_update_bits(regmap, PLL_MODE(pll), PLL_UPDATE_BYPASS,
 					PLL_UPDATE_BYPASS);
-
-	if (config->test_ctl_mask)
-		regmap_update_bits(regmap, PLL_TEST_CTL(pll),
-				   config->test_ctl_mask,
-				   config->test_ctl_val);
-	else
-		clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll),
-					   config->test_ctl_val);
-
-	if (config->test_ctl_hi_mask)
-		regmap_update_bits(regmap, PLL_TEST_CTL_U(pll),
-				   config->test_ctl_hi_mask,
-				   config->test_ctl_hi_val);
-	else
-		clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U(pll),
-					   config->test_ctl_hi_val);
 
 	if (pll->flags & SUPPORTS_FSM_MODE)
 		qcom_pll_set_fsm_mode(regmap, PLL_MODE(pll), 6, 0);
@@ -955,29 +857,6 @@ static int clk_alpha_pll_update_latch(struct clk_alpha_pll *pll,
 	return __clk_alpha_pll_update_latch(pll);
 }
 
-static void clk_alpha_pll_update_configs(struct clk_alpha_pll *pll, const struct pll_vco *vco,
-					 u32 l, u64 alpha, u32 alpha_width, bool alpha_en)
-{
-	regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
-
-	if (alpha_width > ALPHA_BITWIDTH)
-		alpha <<= alpha_width - ALPHA_BITWIDTH;
-
-	if (alpha_width > 32)
-		regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL_U(pll), upper_32_bits(alpha));
-
-	regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL(pll), lower_32_bits(alpha));
-
-	if (vco) {
-		regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
-				   PLL_VCO_MASK << PLL_VCO_SHIFT,
-				   vco->val << PLL_VCO_SHIFT);
-	}
-
-	if (alpha_en)
-		regmap_set_bits(pll->clkr.regmap, PLL_USER_CTL(pll), PLL_ALPHA_EN);
-}
-
 static int __clk_alpha_pll_set_rate(struct clk_hw *hw, unsigned long rate,
 				    unsigned long prate,
 				    int (*is_enabled)(struct clk_hw *))
@@ -1072,8 +951,8 @@ static int clk_alpha_pll_hwfsm_set_rate(struct clk_hw *hw, unsigned long rate,
 					clk_alpha_pll_hwfsm_is_enabled);
 }
 
-static int clk_alpha_pll_determine_rate(struct clk_hw *hw,
-					struct clk_rate_request *req)
+static long clk_alpha_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *prate)
 {
 	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, alpha_width = pll_alpha_width(pll);
@@ -1090,44 +969,8 @@ static int clk_alpha_pll_determine_rate(struct clk_hw *hw,
 	min_freq = pll->vco_table[0].min_freq;
 	max_freq = pll->vco_table[pll->num_vco - 1].max_freq;
 
-	req->rate = clamp(req->rate, min_freq, max_freq);
-
-	return 0;
+	return clamp(rate, min_freq, max_freq);
 }
-
-void clk_huayra_2290_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
-				   const struct alpha_pll_config *config)
-{
-	u32 val;
-
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL(pll), config->config_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U(pll), config->config_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U1(pll), config->config_ctl_hi1_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll), config->test_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U(pll), config->test_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U1(pll), config->test_ctl_hi1_val);
-	clk_alpha_pll_write_config(regmap, PLL_L_VAL(pll), config->l);
-	clk_alpha_pll_write_config(regmap, PLL_ALPHA_VAL(pll), config->alpha);
-	clk_alpha_pll_write_config(regmap, PLL_USER_CTL(pll), config->user_ctl_val);
-
-	/* Set PLL_BYPASSNL */
-	regmap_update_bits(regmap, PLL_MODE(pll), PLL_BYPASSNL, PLL_BYPASSNL);
-	regmap_read(regmap, PLL_MODE(pll), &val);
-
-	/* Wait 5 us between setting BYPASS and deasserting reset */
-	udelay(5);
-
-	/* Take PLL out from reset state */
-	regmap_update_bits(regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
-	regmap_read(regmap, PLL_MODE(pll), &val);
-
-	/* Wait 50us for PLL_LOCK_DET bit to go high */
-	usleep_range(50, 55);
-
-	/* Enable PLL output */
-	regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, PLL_OUTCTRL);
-}
-EXPORT_SYMBOL_GPL(clk_huayra_2290_pll_configure);
 
 static unsigned long
 alpha_huayra_pll_calc_rate(u64 prate, u32 l, u32 a)
@@ -1273,15 +1116,12 @@ static int alpha_pll_huayra_set_rate(struct clk_hw *hw, unsigned long rate,
 	return 0;
 }
 
-static int alpha_pll_huayra_determine_rate(struct clk_hw *hw,
-					   struct clk_rate_request *req)
+static long alpha_pll_huayra_round_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long *prate)
 {
 	u32 l, a;
 
-	req->rate = alpha_huayra_pll_round_rate(req->rate,
-						req->best_parent_rate, &l, &a);
-
-	return 0;
+	return alpha_huayra_pll_round_rate(rate, *prate, &l, &a);
 }
 
 /*
@@ -1552,7 +1392,7 @@ const struct clk_ops clk_alpha_pll_ops = {
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = clk_alpha_pll_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_alpha_pll_set_rate,
 	.init = clk_alpha_pll_init,
 	.debug_init = clk_common_debug_init,
@@ -1626,7 +1466,7 @@ const struct clk_ops clk_alpha_pll_huayra_ops = {
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = alpha_pll_huayra_recalc_rate,
-	.determine_rate = alpha_pll_huayra_determine_rate,
+	.round_rate = alpha_pll_huayra_round_rate,
 	.set_rate = alpha_pll_huayra_set_rate,
 	.init = clk_alpha_pll_huayra_init,
 	.debug_init = clk_common_debug_init,
@@ -1643,7 +1483,7 @@ const struct clk_ops clk_alpha_pll_hwfsm_ops = {
 	.disable = clk_alpha_pll_hwfsm_disable,
 	.is_enabled = clk_alpha_pll_hwfsm_is_enabled,
 	.recalc_rate = clk_alpha_pll_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_alpha_pll_hwfsm_set_rate,
 	.init = clk_alpha_pll_init,
 	.debug_init = clk_common_debug_init,
@@ -1757,8 +1597,9 @@ static const struct clk_div_table clk_alpha_2bit_div_table[] = {
 	{ }
 };
 
-static int clk_alpha_pll_postdiv_determine_rate(struct clk_hw *hw,
-						struct clk_rate_request *req)
+static long
+clk_alpha_pll_postdiv_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *prate)
 {
 	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 	const struct clk_div_table *table;
@@ -1768,12 +1609,13 @@ static int clk_alpha_pll_postdiv_determine_rate(struct clk_hw *hw,
 	else
 		table = clk_alpha_div_table;
 
-	return divider_determine_rate(hw, req, table, pll->width,
-				      CLK_DIVIDER_POWER_OF_TWO);
+	return divider_round_rate(hw, rate, prate, table,
+				  pll->width, CLK_DIVIDER_POWER_OF_TWO);
 }
 
-static int clk_alpha_pll_postdiv_ro_determine_rate(struct clk_hw *hw,
-						   struct clk_rate_request *req)
+static long
+clk_alpha_pll_postdiv_round_ro_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long *prate)
 {
 	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 	struct clk_hw *parent_hw;
@@ -1793,7 +1635,7 @@ static int clk_alpha_pll_postdiv_ro_determine_rate(struct clk_hw *hw,
 		*prate = clk_hw_round_rate(parent_hw, div * rate);
 	}
 
-	return 0;
+	return DIV_ROUND_UP_ULL((u64)*prate, div);
 }
 
 static int clk_alpha_pll_postdiv_set_rate(struct clk_hw *hw, unsigned long rate,
@@ -1812,13 +1654,13 @@ static int clk_alpha_pll_postdiv_set_rate(struct clk_hw *hw, unsigned long rate,
 
 const struct clk_ops clk_alpha_pll_postdiv_ops = {
 	.recalc_rate = clk_alpha_pll_postdiv_recalc_rate,
-	.determine_rate = clk_alpha_pll_postdiv_determine_rate,
+	.round_rate = clk_alpha_pll_postdiv_round_rate,
 	.set_rate = clk_alpha_pll_postdiv_set_rate,
 };
 EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_ops);
 
 const struct clk_ops clk_alpha_pll_postdiv_ro_ops = {
-	.determine_rate = clk_alpha_pll_postdiv_ro_determine_rate,
+	.round_rate = clk_alpha_pll_postdiv_round_ro_rate,
 	.recalc_rate = clk_alpha_pll_postdiv_recalc_rate,
 };
 EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_ro_ops);
@@ -2201,13 +2043,14 @@ clk_trion_pll_postdiv_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 	return (parent_rate / div);
 }
 
-static int clk_trion_pll_postdiv_determine_rate(struct clk_hw *hw,
-						struct clk_rate_request *req)
+static long
+clk_trion_pll_postdiv_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *prate)
 {
 	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 
-	return divider_determine_rate(hw, req, pll->post_div_table, pll->width,
-				      CLK_DIVIDER_ROUND_CLOSEST);
+	return divider_round_rate(hw, rate, prate, pll->post_div_table,
+				  pll->width, CLK_DIVIDER_ROUND_CLOSEST);
 };
 
 static int
@@ -2238,18 +2081,18 @@ clk_trion_pll_postdiv_set_rate(struct clk_hw *hw, unsigned long rate,
 
 const struct clk_ops clk_alpha_pll_postdiv_trion_ops = {
 	.recalc_rate = clk_trion_pll_postdiv_recalc_rate,
-	.determine_rate = clk_trion_pll_postdiv_determine_rate,
+	.round_rate = clk_trion_pll_postdiv_round_rate,
 	.set_rate = clk_trion_pll_postdiv_set_rate,
 };
 EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_trion_ops);
 
-static int clk_alpha_pll_postdiv_fabia_determine_rate(struct clk_hw *hw,
-						      struct clk_rate_request *req)
+static long clk_alpha_pll_postdiv_fabia_round_rate(struct clk_hw *hw,
+				unsigned long rate, unsigned long *prate)
 {
 	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 
-	return divider_determine_rate(hw, req, pll->post_div_table, pll->width,
-				      CLK_DIVIDER_ROUND_CLOSEST);
+	return divider_round_rate(hw, rate, prate, pll->post_div_table,
+				pll->width, CLK_DIVIDER_ROUND_CLOSEST);
 }
 
 static int clk_alpha_pll_postdiv_fabia_set_rate(struct clk_hw *hw,
@@ -2284,7 +2127,7 @@ static int clk_alpha_pll_postdiv_fabia_set_rate(struct clk_hw *hw,
 
 const struct clk_ops clk_alpha_pll_postdiv_fabia_ops = {
 	.recalc_rate = clk_alpha_pll_postdiv_fabia_recalc_rate,
-	.determine_rate = clk_alpha_pll_postdiv_fabia_determine_rate,
+	.round_rate = clk_alpha_pll_postdiv_fabia_round_rate,
 	.set_rate = clk_alpha_pll_postdiv_fabia_set_rate,
 };
 EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_fabia_ops);
@@ -2561,7 +2404,7 @@ const struct clk_ops clk_alpha_pll_trion_ops = {
 	.disable = clk_trion_pll_disable,
 	.is_enabled = clk_trion_pll_is_enabled,
 	.recalc_rate = clk_trion_pll_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = alpha_pll_trion_set_rate,
 	.debug_init = clk_common_debug_init,
 	.init = clk_trion_pll_init,
@@ -2641,7 +2484,7 @@ const struct clk_ops clk_alpha_pll_lucid_ops = {
 	.disable = clk_trion_pll_disable,
 	.is_enabled = clk_trion_pll_is_enabled,
 	.recalc_rate = clk_trion_pll_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = alpha_pll_trion_set_rate,
 	.debug_init = clk_common_debug_init,
 	.init = clk_lucid_pll_init,
@@ -2651,7 +2494,7 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_lucid_ops);
 
 const struct clk_ops clk_alpha_pll_postdiv_lucid_ops = {
 	.recalc_rate = clk_alpha_pll_postdiv_fabia_recalc_rate,
-	.determine_rate = clk_alpha_pll_postdiv_fabia_determine_rate,
+	.round_rate = clk_alpha_pll_postdiv_fabia_round_rate,
 	.set_rate = clk_alpha_pll_postdiv_fabia_set_rate,
 };
 EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_lucid_ops);
@@ -2760,7 +2603,7 @@ const struct clk_ops clk_alpha_pll_agera_ops = {
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = alpha_pll_fabia_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_alpha_pll_agera_set_rate,
 	.debug_init = clk_common_debug_init,
 	.init = clk_agera_pll_init,
@@ -2787,8 +2630,9 @@ static int alpha_pll_lucid_5lpe_enable(struct clk_hw *hw)
 	}
 
 	/* Check if PLL is already enabled, return if enabled */
-	if (trion_pll_is_enabled(pll, pll->clkr.regmap))
-		return 0;
+	ret = trion_pll_is_enabled(pll, pll->clkr.regmap);
+	if (ret < 0)
+		return ret;
 
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
 	if (ret)
@@ -2934,7 +2778,7 @@ const struct clk_ops clk_alpha_pll_lucid_5lpe_ops = {
 	.disable = alpha_pll_lucid_5lpe_disable,
 	.is_enabled = clk_trion_pll_is_enabled,
 	.recalc_rate = clk_trion_pll_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = alpha_pll_lucid_5lpe_set_rate,
 	.debug_init = clk_common_debug_init,
 	.init = clk_lucid_pll_init,
@@ -2960,7 +2804,7 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_fixed_lucid_5lpe_ops);
 
 const struct clk_ops clk_alpha_pll_postdiv_lucid_5lpe_ops = {
 	.recalc_rate = clk_alpha_pll_postdiv_fabia_recalc_rate,
-	.determine_rate = clk_alpha_pll_postdiv_fabia_determine_rate,
+	.round_rate = clk_alpha_pll_postdiv_fabia_round_rate,
 	.set_rate = clk_lucid_5lpe_pll_postdiv_set_rate,
 };
 EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_lucid_5lpe_ops);
@@ -3068,16 +2912,6 @@ static void clk_zonda_pll_disable(struct clk_hw *hw)
 
 	/* Place the PLL mode in OFF state */
 	regmap_write(regmap, PLL_OPMODE(pll), 0x0);
-}
-
-static void zonda_pll_adjust_l_val(unsigned long rate, unsigned long prate, u32 *l)
-{
-	u64 remainder, quotient;
-
-	quotient = rate;
-	remainder = do_div(quotient, prate);
-
-	*l = rate + (u32)(remainder * 2 >= prate);
 }
 
 static int clk_zonda_pll_set_rate(struct clk_hw *hw, unsigned long rate,
@@ -3219,7 +3053,7 @@ const struct clk_ops clk_alpha_pll_zonda_ops = {
 	.disable = clk_zonda_pll_disable,
 	.is_enabled = clk_trion_pll_is_enabled,
 	.recalc_rate = clk_trion_pll_recalc_rate,
-	.determine_rate = clk_alpha_pll_determine_rate,
+	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_zonda_pll_set_rate,
 	.debug_init = clk_common_debug_init,
 	.init = clk_alpha_pll_zonda_init,
@@ -3252,6 +3086,7 @@ static int clk_zonda_5lpe_pll_enable(struct clk_hw *hw)
 	else if (ret) {
 		pr_warn("%s PLL is already enabled\n", alpha_pll_name(pll));
 		return 0;
+	}
 
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll),
 						 PLL_RESET_N | PLL_BYPASSNL,
@@ -4560,134 +4395,6 @@ int clk_rivian_evo_pll_configure(struct clk_alpha_pll *pll,
 }
 EXPORT_SYMBOL(clk_rivian_evo_pll_configure);
 
-static int alpha_pll_pongo_elu_enable(struct clk_hw *hw)
-{
-	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	struct regmap *regmap = pll->clkr.regmap;
-	int ret;
-
-	/* Check if PLL is already enabled */
-	if (trion_pll_is_enabled(pll, regmap))
-		return 0;
-
-	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
-	if (ret)
-		return ret;
-
-	/* Set operation mode to RUN */
-	regmap_write(regmap, PLL_OPMODE(pll), PLL_RUN);
-
-	ret = wait_for_pll_enable_lock(pll);
-	if (ret)
-		return ret;
-
-	/* Enable the global PLL outputs */
-	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, PLL_OUTCTRL);
-	if (ret)
-		return ret;
-
-	/* Ensure that the write above goes through before returning. */
-	mb();
-
-	return ret;
-}
-
-static void alpha_pll_pongo_elu_disable(struct clk_hw *hw)
-{
-	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	struct regmap *regmap = pll->clkr.regmap;
-	int ret;
-
-	/* Disable the global PLL output */
-	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, 0);
-	if (ret)
-		return;
-
-	/* Place the PLL mode in STANDBY */
-	regmap_write(regmap, PLL_OPMODE(pll), PLL_STANDBY);
-}
-
-static unsigned long alpha_pll_pongo_elu_recalc_rate(struct clk_hw *hw,
-						     unsigned long parent_rate)
-{
-	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	struct regmap *regmap = pll->clkr.regmap;
-	u32 l;
-
-	if (regmap_read(regmap, PLL_L_VAL(pll), &l))
-		return 0;
-
-	l &= PONGO_PLL_L_VAL_MASK;
-
-	return alpha_pll_calc_rate(parent_rate, l, 0, pll_alpha_width(pll));
-}
-
-const struct clk_ops clk_alpha_pll_pongo_elu_ops = {
-	.prepare = alpha_pll_pongo_elu_prepare,
-	.enable = alpha_pll_pongo_elu_enable,
-	.disable = alpha_pll_pongo_elu_disable,
-	.recalc_rate = alpha_pll_pongo_elu_recalc_rate,
-};
-EXPORT_SYMBOL_GPL(clk_alpha_pll_pongo_elu_ops);
-
-void clk_pongo_elu_pll_configure(struct clk_alpha_pll *pll,
-				 struct regmap *regmap,
-				 const struct alpha_pll_config *config)
-{
-	u32 val;
-
-	regmap_update_bits(regmap, PLL_USER_CTL(pll), PONGO_PLL_OUT_MASK,
-			   PONGO_PLL_OUT_MASK);
-
-	if (trion_pll_is_enabled(pll, regmap))
-		return;
-
-	if (regmap_read(regmap, PLL_L_VAL(pll), &val))
-		return;
-	val &= PONGO_PLL_L_VAL_MASK;
-	if (val)
-		return;
-
-	clk_alpha_pll_write_config(regmap, PLL_L_VAL(pll), config->l);
-	clk_alpha_pll_write_config(regmap, PLL_ALPHA_VAL(pll), config->alpha);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL(pll), config->config_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U(pll), config->config_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U1(pll), config->config_ctl_hi1_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U2(pll), config->config_ctl_hi2_val);
-	clk_alpha_pll_write_config(regmap, PLL_USER_CTL(pll),
-				   config->user_ctl_val | PONGO_PLL_OUT_MASK);
-	clk_alpha_pll_write_config(regmap, PLL_USER_CTL_U(pll), config->user_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll), config->test_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U(pll), config->test_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U1(pll), config->test_ctl_hi1_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U2(pll), config->test_ctl_hi2_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U3(pll), config->test_ctl_hi3_val);
-
-	/* Disable PLL output */
-	regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, 0);
-}
-EXPORT_SYMBOL_GPL(clk_pongo_elu_pll_configure);
-
-void clk_rivian_evo_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
-				  const struct alpha_pll_config *config)
-{
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL(pll), config->config_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U(pll), config->config_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U1(pll), config->config_ctl_hi1_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll), config->test_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U(pll), config->test_ctl_hi_val);
-	clk_alpha_pll_write_config(regmap, PLL_L_VAL(pll), config->l);
-	clk_alpha_pll_write_config(regmap, PLL_USER_CTL(pll), config->user_ctl_val);
-	clk_alpha_pll_write_config(regmap, PLL_USER_CTL_U(pll), config->user_ctl_hi_val);
-
-	regmap_write(regmap, PLL_OPMODE(pll), PLL_STANDBY);
-
-	regmap_update_bits(regmap, PLL_MODE(pll),
-			   PLL_RESET_N | PLL_BYPASSNL | PLL_OUTCTRL,
-			   PLL_RESET_N | PLL_BYPASSNL);
-}
-EXPORT_SYMBOL_GPL(clk_rivian_evo_pll_configure);
-
 static unsigned long clk_rivian_evo_pll_recalc_rate(struct clk_hw *hw,
 						    unsigned long parent_rate)
 {
@@ -4700,25 +4407,22 @@ static unsigned long clk_rivian_evo_pll_recalc_rate(struct clk_hw *hw,
 	return parent_rate * l;
 }
 
-static int clk_rivian_evo_pll_determine_rate(struct clk_hw *hw,
-					     struct clk_rate_request *req)
+static long clk_rivian_evo_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+					  unsigned long *prate)
 {
 	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	unsigned long min_freq, max_freq;
 	u32 l;
 	u64 a;
 
-	req->rate = alpha_pll_round_rate(req->rate, req->best_parent_rate, &l,
-					 &a, 0);
-	if (!pll->vco_table || alpha_pll_find_vco(pll, req->rate))
-		return 0;
+	rate = alpha_pll_round_rate(rate, *prate, &l, &a, 0);
+	if (!pll->vco_table || alpha_pll_find_vco(pll, rate))
+		return rate;
 
 	min_freq = pll->vco_table[0].min_freq;
 	max_freq = pll->vco_table[pll->num_vco - 1].max_freq;
 
-	req->rate = clamp(req->rate, min_freq, max_freq);
-
-	return 0;
+	return clamp(rate, min_freq, max_freq);
 }
 
 static void clk_rivian_evo_pll_list_registers(struct seq_file *f, struct clk_hw *hw)

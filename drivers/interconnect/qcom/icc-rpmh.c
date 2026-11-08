@@ -70,38 +70,6 @@ static void qcom_icc_reapply_qos(struct qcom_icc_provider *qp,
 	qn->qosbox->initialized = active;
 }
 
-/* QNOC QoS */
-#define QOSGEN_MAINCTL_LO(p, qp)	(0x8 + (p->port_offsets[qp]))
-#define QOS_SLV_URG_MSG_EN_MASK		GENMASK(3, 3)
-#define QOS_DFLT_PRIO_MASK		GENMASK(6, 4)
-#define QOS_DISABLE_MASK		GENMASK(24, 24)
-
-/**
- * qcom_icc_set_qos - initialize static QoS configurations
- * @qp: qcom icc provider to which @node belongs
- * @node: qcom icc node to operate on
- */
-static void qcom_icc_set_qos(struct qcom_icc_provider *qp,
-			     struct qcom_icc_node *node)
-{
-	const struct qcom_icc_qosbox *qos = node->qosbox;
-	int port;
-
-	for (port = 0; port < qos->num_ports; port++) {
-		regmap_update_bits(qp->regmap, QOSGEN_MAINCTL_LO(qos, port),
-				   QOS_DISABLE_MASK,
-				   FIELD_PREP(QOS_DISABLE_MASK, qos->prio_fwd_disable));
-
-		regmap_update_bits(qp->regmap, QOSGEN_MAINCTL_LO(qos, port),
-				   QOS_DFLT_PRIO_MASK,
-				   FIELD_PREP(QOS_DFLT_PRIO_MASK, qos->prio));
-
-		regmap_update_bits(qp->regmap, QOSGEN_MAINCTL_LO(qos, port),
-				   QOS_SLV_URG_MSG_EN_MASK,
-				   FIELD_PREP(QOS_SLV_URG_MSG_EN_MASK, qos->urg_fwd));
-	}
-}
-
 /**
  * qcom_icc_pre_aggregate - cleans up stale values from prior icc_set
  * @node: icc node to operate on
@@ -537,7 +505,6 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 	data = devm_kzalloc(dev, struct_size(data, nodes, num_nodes), GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
-	data->num_nodes = num_nodes;
 
 	qp->stub = of_property_read_bool(pdev->dev.of_node, "qcom,stub");
 	qp->skip_qos = of_property_read_bool(pdev->dev.of_node, "qcom,skip-qos");
@@ -622,19 +589,13 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 		node->data = qn;
 		icc_node_add(node, provider);
 
-		for (j = 0; j < qn->num_links; j++) {
-			if (desc->alloc_dyn_id)
-				icc_link_nodes(node, &qn->link_nodes[j]->node);
-			else
-				icc_link_create(node, qn->links[j]);
-		}
+		for (j = 0; j < qn->num_links; j++)
+			icc_link_create(node, qn->links[j]);
 
 		data->nodes[i] = node;
 	}
 
-	if (desc->config) {
-		struct resource *res;
-		void __iomem *base;
+	data->num_nodes = num_nodes;
 
 	if (!qp->skip_qos) {
 		ret = qcom_icc_rpmh_configure_qos(qp);
@@ -679,13 +640,15 @@ err_remove_nodes:
 }
 EXPORT_SYMBOL_GPL(qcom_icc_rpmh_probe);
 
-void qcom_icc_rpmh_remove(struct platform_device *pdev)
+int qcom_icc_rpmh_remove(struct platform_device *pdev)
 {
 	struct qcom_icc_provider *qp = platform_get_drvdata(pdev);
 	icc_provider_deregister(&qp->provider);
 	qcom_icc_debug_unregister(&qp->provider);
 	clk_bulk_put_all(qp->num_clks, qp->clks);
 	icc_nodes_remove(&qp->provider);
+
+	return 0;
 }
 EXPORT_SYMBOL_GPL(qcom_icc_rpmh_remove);
 

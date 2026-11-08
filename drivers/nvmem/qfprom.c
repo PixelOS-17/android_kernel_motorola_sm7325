@@ -467,18 +467,6 @@ static int qfprom_reg_read(void *context,
 	return 0;
 }
 
-/* Align reads to word boundary */
-static void qfprom_fixup_dt_cell_info(struct nvmem_device *nvmem,
-				      struct nvmem_cell_info *cell)
-{
-	unsigned int byte_offset = cell->offset % sizeof(u32);
-
-	cell->bit_offset += byte_offset * BITS_PER_BYTE;
-	cell->offset -= byte_offset;
-	if (byte_offset && !cell->nbits)
-		cell->nbits = cell->bytes * BITS_PER_BYTE;
-}
-
 static void qfprom_runtime_disable(void *data)
 {
 	pm_runtime_disable(data);
@@ -502,12 +490,10 @@ static int qfprom_probe(struct platform_device *pdev)
 {
 	struct nvmem_config econfig = {
 		.name = "qfprom",
-		.add_legacy_fixed_of_cells = true,
-		.stride = 4,
-		.word_size = 4,
+		.stride = 1,
+		.word_size = 1,
 		.id = NVMEM_DEVID_AUTO,
 		.reg_read = qfprom_reg_read,
-		.fixup_dt_cell_info = qfprom_fixup_dt_cell_info,
 	};
 	struct device *dev = &pdev->dev;
 	struct resource *res;
@@ -520,7 +506,8 @@ static int qfprom_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	/* The corrected section is always provided */
-	priv->qfpcorrected = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	priv->qfpcorrected = devm_ioremap_resource(dev, res);
 	if (IS_ERR(priv->qfpcorrected))
 		return PTR_ERR(priv->qfpcorrected);
 
@@ -547,10 +534,12 @@ static int qfprom_probe(struct platform_device *pdev)
 		priv->qfpraw = devm_ioremap_resource(dev, res);
 		if (IS_ERR(priv->qfpraw))
 			return PTR_ERR(priv->qfpraw);
-		priv->qfpconf = devm_platform_ioremap_resource(pdev, 2);
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+		priv->qfpconf = devm_ioremap_resource(dev, res);
 		if (IS_ERR(priv->qfpconf))
 			return PTR_ERR(priv->qfpconf);
-		priv->qfpsecurity = devm_platform_ioremap_resource(pdev, 3);
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 3);
+		priv->qfpsecurity = devm_ioremap_resource(dev, res);
 		if (IS_ERR(priv->qfpsecurity))
 			return PTR_ERR(priv->qfpsecurity);
 
@@ -569,12 +558,16 @@ static int qfprom_probe(struct platform_device *pdev)
 		if (IS_ERR(priv->vcc))
 			return PTR_ERR(priv->vcc);
 
-		priv->secclk = devm_clk_get_optional(dev, "core");
-		if (IS_ERR(priv->secclk))
-			return dev_err_probe(dev, PTR_ERR(priv->secclk), "Error getting clock\n");
+		priv->secclk = devm_clk_get(dev, "core");
+		if (IS_ERR(priv->secclk)) {
+			ret = PTR_ERR(priv->secclk);
+			if (ret != -EPROBE_DEFER)
+				dev_err(dev, "Error getting clock: %d\n", ret);
+			return ret;
+		}
 
-		/* Only enable writing if we have SoC data and a valid clock */
-		if (priv->soc_data && priv->secclk)
+		/* Only enable writing if we have SoC data. */
+		if (priv->soc_data)
 			econfig.reg_write = qfprom_reg_write;
 	}
 

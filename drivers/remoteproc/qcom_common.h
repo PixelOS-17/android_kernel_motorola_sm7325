@@ -26,7 +26,6 @@ struct reg_info {
 	int uA;
 };
 
-struct qcom_glink_smem;
 struct qcom_sysmon;
 
 struct qcom_rproc_glink {
@@ -86,9 +85,6 @@ void qcom_rproc_update_recovery_status(struct rproc *rproc, bool enable);
 struct qcom_ssr_subsystem *qcom_ssr_get_subsys(const char *name);
 int qcom_notify_ssr_clients(struct qcom_ssr_subsystem *info, int state,
 							struct qcom_ssr_notify_data *data);
-
-void qcom_add_pdm_subdev(struct rproc *rproc, struct qcom_rproc_pdm *pdm);
-void qcom_remove_pdm_subdev(struct rproc *rproc, struct qcom_rproc_pdm *pdm);
 
 #if IS_ENABLED(CONFIG_QCOM_SYSMON)
 struct qcom_sysmon *qcom_add_sysmon_subdev(struct rproc *rproc,

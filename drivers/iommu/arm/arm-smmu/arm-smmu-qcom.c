@@ -367,80 +367,25 @@ static void qcom_adreno_smmu_set_stall(const void *cookie, bool enabled)
 {
 	struct arm_smmu_domain *smmu_domain = (void *)cookie;
 	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
-	struct arm_smmu_device *smmu = smmu_domain->smmu;
-	struct qcom_smmu *qsmmu = to_qcom_smmu(smmu);
-	u32 mask = BIT(cfg->cbndx);
-	bool stall_changed = !!(qsmmu->stall_enabled & mask) != enabled;
-	unsigned long flags;
+	struct qcom_smmu *qsmmu = to_qcom_smmu(smmu_domain->smmu);
 
 	if (enabled)
-		qsmmu->stall_enabled |= mask;
+		qsmmu->stall_enabled |= BIT(cfg->cbndx);
 	else
-		qsmmu->stall_enabled &= ~mask;
-
-	/*
-	 * If the device is on and we changed the setting, update the register.
-	 * The spec pseudocode says that CFCFG is resampled after a fault, and
-	 * we believe that no implementations cache it in the TLB, so it should
-	 * be safe to change it without a TLB invalidation.
-	 */
-	if (stall_changed && pm_runtime_get_if_active(smmu->dev) > 0) {
-		u32 reg;
-
-		spin_lock_irqsave(&smmu_domain->cb_lock, flags);
-		reg = arm_smmu_cb_read(smmu, cfg->cbndx, ARM_SMMU_CB_SCTLR);
-
-		if (enabled)
-			reg |= ARM_SMMU_SCTLR_CFCFG;
-		else
-			reg &= ~ARM_SMMU_SCTLR_CFCFG;
-
-		arm_smmu_cb_write(smmu, cfg->cbndx, ARM_SMMU_CB_SCTLR, reg);
-		spin_unlock_irqrestore(&smmu_domain->cb_lock, flags);
-
-		pm_runtime_put_autosuspend(smmu->dev);
-	}
+		qsmmu->stall_enabled &= ~BIT(cfg->cbndx);
 }
 
-static void qcom_adreno_smmu_set_prr_bit(const void *cookie, bool set)
+static void qcom_adreno_smmu_resume_translation(const void *cookie, bool terminate)
 {
 	struct arm_smmu_domain *smmu_domain = (void *)cookie;
-	struct arm_smmu_device *smmu = smmu_domain->smmu;
 	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
-	u32 reg = 0;
-	int ret;
-
-	ret = pm_runtime_resume_and_get(smmu->dev);
-	if (ret < 0) {
-		dev_err(smmu->dev, "failed to get runtime PM: %d\n", ret);
-		return;
-	}
-
-	reg =  arm_smmu_cb_read(smmu, cfg->cbndx, ARM_SMMU_CB_ACTLR);
-	reg &= ~GFX_ACTLR_PRR;
-	if (set)
-		reg |= FIELD_PREP(GFX_ACTLR_PRR, 1);
-	arm_smmu_cb_write(smmu, cfg->cbndx, ARM_SMMU_CB_ACTLR, reg);
-	pm_runtime_put_autosuspend(smmu->dev);
-}
-
-static void qcom_adreno_smmu_set_prr_addr(const void *cookie, phys_addr_t page_addr)
-{
-	struct arm_smmu_domain *smmu_domain = (void *)cookie;
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
-	int ret;
+	u32 reg = 0;
 
-	ret = pm_runtime_resume_and_get(smmu->dev);
-	if (ret < 0) {
-		dev_err(smmu->dev, "failed to get runtime PM: %d\n", ret);
-		return;
-	}
+	if (terminate)
+		reg |= ARM_SMMU_RESUME_TERMINATE;
 
-	writel_relaxed(lower_32_bits(page_addr),
-				smmu->base + ARM_SMMU_GFX_PRR_CFG_LADDR);
-	writel_relaxed(upper_32_bits(page_addr),
-				smmu->base + ARM_SMMU_GFX_PRR_CFG_UADDR);
-	pm_runtime_put_autosuspend(smmu->dev);
+	arm_smmu_cb_write(smmu, cfg->cbndx, ARM_SMMU_CB_RESUME, reg);
 }
 
 #define QCOM_ADRENO_SMMU_GPU_SID 0
@@ -557,22 +502,12 @@ static const struct of_device_id __maybe_unused qcom_smmu_impl_of_match[];
 static int qcom_adreno_smmu_init_context(struct arm_smmu_domain *smmu_domain,
 		struct io_pgtable_cfg *pgtbl_cfg, struct device *dev)
 {
-	const struct device_node *np = smmu_domain->smmu->dev->of_node;
-	struct arm_smmu_device *smmu = smmu_domain->smmu;
-	struct qcom_smmu *qsmmu = to_qcom_smmu(smmu);
-	const struct of_device_id *client_match;
-	int cbndx = smmu_domain->cfg.cbndx;
 	struct adreno_smmu_priv *priv;
 	const struct device_node *np = smmu_domain->smmu->dev->of_node;
 	struct qcom_io_pgtable_info *input_info =
 		container_of(pgtbl_cfg, struct qcom_io_pgtable_info, cfg);
 
 	smmu_domain->cfg.flush_walk_prefer_tlbiasid = true;
-
-	client_match = qsmmu->data->client_match;
-
-	if (client_match)
-		qcom_smmu_set_actlr_dev(dev, smmu, cbndx, client_match);
 
 	/* Only enable split pagetables for the GPU device (SID 0) */
 	if (!qcom_adreno_smmu_is_gpu_device(dev))
@@ -620,40 +555,21 @@ static const struct of_device_id qcom_smmu_client_of_match[] __maybe_unused = {
 	{ .compatible = "qcom,adreno-gmu" },
 	{ .compatible = "qcom,mdp4" },
 	{ .compatible = "qcom,mdss" },
-	{ .compatible = "qcom,qcm2290-mdss" },
-	{ .compatible = "qcom,sar2130p-mdss" },
 	{ .compatible = "qcom,sc7180-mdss" },
 	{ .compatible = "qcom,sc7180-mss-pil" },
 	{ .compatible = "qcom,sc7280-mdss" },
 	{ .compatible = "qcom,sc7280-mss-pil" },
 	{ .compatible = "qcom,sc8180x-mdss" },
-	{ .compatible = "qcom,sc8280xp-mdss" },
-	{ .compatible = "qcom,sdm670-mdss" },
+	{ .compatible = "qcom,sm8250-mdss" },
 	{ .compatible = "qcom,sdm845-mdss" },
 	{ .compatible = "qcom,sdm845-mss-pil" },
-	{ .compatible = "qcom,sm6115-mdss" },
-	{ .compatible = "qcom,sm6350-mdss" },
-	{ .compatible = "qcom,sm6375-mdss" },
-	{ .compatible = "qcom,sm8150-mdss" },
-	{ .compatible = "qcom,sm8250-mdss" },
-	{ .compatible = "qcom,x1e80100-mdss" },
 	{ }
 };
 
 static int qcom_smmu_init_context(struct arm_smmu_domain *smmu_domain,
 		struct io_pgtable_cfg *pgtbl_cfg, struct device *dev)
 {
-	struct arm_smmu_device *smmu = smmu_domain->smmu;
-	struct qcom_smmu *qsmmu = to_qcom_smmu(smmu);
-	const struct of_device_id *client_match;
-	int cbndx = smmu_domain->cfg.cbndx;
-
 	smmu_domain->cfg.flush_walk_prefer_tlbiasid = true;
-
-	client_match = qsmmu->data->client_match;
-
-	if (client_match)
-		qcom_smmu_set_actlr_dev(dev, smmu, cbndx, client_match);
 
 	return 0;
 }
@@ -670,15 +586,8 @@ static int qcom_smmu_cfg_probe(struct arm_smmu_device *smmu)
 	 * MSM8998 LPASS SMMU reports 13 context banks, but accessing
 	 * the last context bank crashes the system.
 	 */
-	if (of_device_is_compatible(smmu->dev->of_node, "qcom,msm8998-smmu-v2") &&
-	    smmu->num_context_banks == 13) {
+	if (of_device_is_compatible(smmu->dev->of_node, "qcom,msm8998-smmu-v2") && smmu->num_context_banks == 13)
 		smmu->num_context_banks = 12;
-	} else if (of_device_is_compatible(smmu->dev->of_node, "qcom,sdm630-smmu-v2")) {
-		if (smmu->num_context_banks == 21) /* SDM630 / SDM660 A2NOC SMMU */
-			smmu->num_context_banks = 7;
-		else if (smmu->num_context_banks == 14) /* SDM630 / SDM660 LPASS SMMU */
-			smmu->num_context_banks = 13;
-	}
 
 	/*
 	 * Some platforms support more than the Arm SMMU architected maximum of
@@ -744,19 +653,6 @@ static int qcom_smmu_cfg_probe(struct arm_smmu_device *smmu)
 	return 0;
 }
 
-static int qcom_adreno_smmuv2_cfg_probe(struct arm_smmu_device *smmu)
-{
-	/* Support for 16K pages is advertised on some SoCs, but it doesn't seem to work */
-	smmu->features &= ~ARM_SMMU_FEAT_FMT_AARCH64_16K;
-
-	/* TZ protects several last context banks, hide them from Linux */
-	if (of_device_is_compatible(smmu->dev->of_node, "qcom,sdm630-smmu-v2") &&
-	    smmu->num_context_banks == 5)
-		smmu->num_context_banks = 2;
-
-	return 0;
-}
-
 static void qcom_smmu_write_s2cr(struct arm_smmu_device *smmu, int idx)
 {
 	struct arm_smmu_s2cr *s2cr = smmu->s2crs + idx;
@@ -804,8 +700,6 @@ static int qcom_sdm845_smmu500_reset(struct arm_smmu_device *smmu)
 {
 	int ret;
 
-	arm_mmu500_reset(smmu);
-
 	/*
 	 * To address performance degradation in non-real time clients,
 	 * such as USB and UFS, turn off wait-for-safe on sdm845 based boards,
@@ -819,38 +713,25 @@ static int qcom_sdm845_smmu500_reset(struct arm_smmu_device *smmu)
 	return ret;
 }
 
-static const struct arm_smmu_impl qcom_smmu_v2_impl = {
-	.init_context = qcom_smmu_init_context,
-	.cfg_probe = qcom_smmu_cfg_probe,
-	.def_domain_type = qcom_smmu_def_domain_type,
-	.write_s2cr = qcom_smmu_write_s2cr,
-	.tlb_sync = qcom_smmu_tlb_sync,
-};
+static int qcom_smmu500_reset(struct arm_smmu_device *smmu)
+{
+	const struct device_node *np = smmu->dev->of_node;
 
-static const struct arm_smmu_impl qcom_smmu_500_impl = {
-	.init_context = qcom_smmu_init_context,
-	.cfg_probe = qcom_smmu_cfg_probe,
-	.def_domain_type = qcom_smmu_def_domain_type,
-	.reset = arm_mmu500_reset,
-	.write_s2cr = qcom_smmu_write_s2cr,
-	.tlb_sync = qcom_smmu_tlb_sync,
-#ifdef CONFIG_ARM_SMMU_QCOM_DEBUG
-	.context_fault = qcom_smmu_context_fault,
-	.context_fault_needs_threaded_irq = true,
-#endif
-};
+	arm_mmu500_reset(smmu);
 
-static const struct arm_smmu_impl sdm845_smmu_500_impl = {
+	if (of_device_is_compatible(np, "qcom,sdm845-smmu-500"))
+		return qcom_sdm845_smmu500_reset(smmu);
+
+	return 0;
+}
+
+static const struct arm_smmu_impl qcom_smmu_impl = {
 	.init_context = qcom_smmu_init_context,
 	.cfg_probe = qcom_smmu_cfg_probe,
 	.def_domain_type = qcom_smmu_def_domain_type,
-	.reset = qcom_sdm845_smmu500_reset,
+	.reset = qcom_smmu500_reset,
 	.write_s2cr = qcom_smmu_write_s2cr,
 	.tlb_sync = qcom_smmu_tlb_sync,
-#ifdef CONFIG_ARM_SMMU_QCOM_DEBUG
-	.context_fault = qcom_smmu_context_fault,
-	.context_fault_needs_threaded_irq = true,
-#endif
 };
 
 #define TBUID_SHIFT			10
@@ -3512,14 +3393,4 @@ struct arm_smmu_device *qsmmuv2_impl_init(struct arm_smmu_device *smmu)
 		return ERR_PTR(ret);
 
 	return &data->smmu;
-}
-
-int __init qcom_smmu_module_init(void)
-{
-	return platform_driver_register(&qcom_smmu_tbu_driver);
-}
-
-void __exit qcom_smmu_module_exit(void)
-{
-	platform_driver_unregister(&qcom_smmu_tbu_driver);
 }

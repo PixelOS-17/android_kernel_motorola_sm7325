@@ -32,7 +32,7 @@ struct qcom_glink_pipe {
 
 	size_t (*avail)(struct qcom_glink_pipe *glink_pipe);
 
-	void (*peek)(struct qcom_glink_pipe *glink_pipe, void *data,
+	void (*peak)(struct qcom_glink_pipe *glink_pipe, void *data,
 		     unsigned int offset, size_t count);
 	void (*advance)(struct qcom_glink_pipe *glink_pipe, size_t count);
 
@@ -43,7 +43,6 @@ struct qcom_glink_pipe {
 	void (*reset)(struct qcom_glink_pipe *glink_pipe);
 };
 
-struct device;
 struct qcom_glink;
 extern const struct dev_pm_ops glink_native_pm_ops;
 
@@ -54,7 +53,6 @@ struct qcom_glink *qcom_glink_native_probe(struct device *dev,
 					   bool intentless);
 int qcom_glink_native_start(struct qcom_glink *glink);
 void qcom_glink_native_remove(struct qcom_glink *glink);
-void qcom_glink_native_rx(struct qcom_glink *glink);
 
 void qcom_glink_native_unregister(struct qcom_glink *glink);
 

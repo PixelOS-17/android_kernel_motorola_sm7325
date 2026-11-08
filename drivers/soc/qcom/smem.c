@@ -16,7 +16,6 @@
 #include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/smem.h>
-#include <linux/soc/qcom/socinfo.h>
 
 /*
  * The Qualcomm shared memory system is a allocate only heap structure that
@@ -298,7 +297,7 @@ struct qcom_smem {
 	struct smem_partition partitions[SMEM_HOST_COUNT];
 
 	unsigned num_regions;
-	struct smem_region regions[] __counted_by(num_regions);
+	struct smem_region regions[];
 };
 
 static void *
@@ -508,8 +507,6 @@ static int qcom_smem_alloc_global(struct qcom_smem *smem,
  *
  * Allocate space for a given smem item of size @size, given that the item is
  * not yet allocated.
- *
- * Return: 0 on success, negative errno on failure.
  */
 int qcom_smem_alloc(unsigned host, unsigned item, size_t size)
 {
@@ -549,7 +546,7 @@ int qcom_smem_alloc(unsigned host, unsigned item, size_t size)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(qcom_smem_alloc);
+EXPORT_SYMBOL(qcom_smem_alloc);
 
 static void *qcom_smem_get_global(struct qcom_smem *smem,
 				  unsigned item,
@@ -709,12 +706,12 @@ invalid_canary:
  *
  * Looks up smem item and returns pointer to it. Size of smem
  * item is returned in @size.
- *
- * Return: a pointer to an SMEM item on success, ERR_PTR() on failure.
  */
 void *qcom_smem_get(unsigned int host, unsigned int item, size_t *size)
 {
 	struct smem_partition *part;
+	unsigned long flags;
+	int ret;
 	void *ptr = ERR_PTR(-EPROBE_DEFER);
 
 	if (!__smem)
@@ -722,6 +719,12 @@ void *qcom_smem_get(unsigned int host, unsigned int item, size_t *size)
 
 	if (WARN_ON(item >= __smem->item_count))
 		return ERR_PTR(-EINVAL);
+
+	ret = hwspin_lock_timeout_irqsave(__smem->hwlock,
+					  HWSPINLOCK_TIMEOUT,
+					  &flags);
+	if (ret)
+		return ERR_PTR(ret);
 
 	if (host < SMEM_HOST_COUNT && __smem->partitions[host].virt_base) {
 		part = &__smem->partitions[host];
@@ -733,9 +736,12 @@ void *qcom_smem_get(unsigned int host, unsigned int item, size_t *size)
 		ptr = qcom_smem_get_global(__smem, item, size);
 	}
 
+	hwspin_unlock_irqrestore(__smem->hwlock, &flags);
+
 	return ptr;
+
 }
-EXPORT_SYMBOL_GPL(qcom_smem_get);
+EXPORT_SYMBOL(qcom_smem_get);
 
 /**
  * qcom_smem_get_free_space() - retrieve amount of free space in a partition
@@ -743,8 +749,6 @@ EXPORT_SYMBOL_GPL(qcom_smem_get);
  *
  * To be used by smem clients as a quick way to determine if any new
  * allocations has been made.
- *
- * Return: number of available bytes on success, negative errno on failure.
  */
 int qcom_smem_get_free_space(unsigned host)
 {
@@ -782,7 +786,7 @@ int qcom_smem_get_free_space(unsigned host)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(qcom_smem_get_free_space);
+EXPORT_SYMBOL(qcom_smem_get_free_space);
 
 static bool addr_in_range(void __iomem *base, size_t size, void *addr)
 {
@@ -794,7 +798,7 @@ static bool addr_in_range(void __iomem *base, size_t size, void *addr)
  * with an smem item pointer (previously returned by qcom_smem_get()
  * @p:	the virtual address to convert
  *
- * Return: physical address of the SMEM item (if found), 0 otherwise
+ * Returns 0 if the pointer provided is not within any smem region.
  */
 phys_addr_t qcom_smem_virt_to_phys(void *p)
 {
@@ -833,62 +837,7 @@ phys_addr_t qcom_smem_virt_to_phys(void *p)
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(qcom_smem_virt_to_phys);
-
-/**
- * qcom_smem_get_soc_id() - return the SoC ID
- * @id:	On success, we return the SoC ID here.
- *
- * Look up SoC ID from HW/SW build ID and return it.
- *
- * Return: 0 on success, negative errno on failure.
- */
-int qcom_smem_get_soc_id(u32 *id)
-{
-	struct socinfo *info;
-
-	info = qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_HW_SW_BUILD_ID, NULL);
-	if (IS_ERR(info))
-		return PTR_ERR(info);
-
-	*id = __le32_to_cpu(info->id);
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(qcom_smem_get_soc_id);
-
-/**
- * qcom_smem_get_feature_code() - return the feature code
- * @code: On success, return the feature code here.
- *
- * Look up the feature code identifier from SMEM and return it.
- *
- * Return: 0 on success, negative errno on failure.
- */
-int qcom_smem_get_feature_code(u32 *code)
-{
-	struct socinfo *info;
-	u32 raw_code;
-
-	info = qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_HW_SW_BUILD_ID, NULL);
-	if (IS_ERR(info))
-		return PTR_ERR(info);
-
-	/* This only makes sense for socinfo >= 16 */
-	if (__le32_to_cpu(info->fmt) < SOCINFO_VERSION(0, 16))
-		return -EOPNOTSUPP;
-
-	raw_code = __le32_to_cpu(info->feature_code);
-
-	/* Ensure the value makes sense */
-	if (raw_code > SOCINFO_FC_INT_MAX)
-		raw_code = SOCINFO_FC_UNKNOWN;
-
-	*code = raw_code;
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(qcom_smem_get_feature_code);
+EXPORT_SYMBOL(qcom_smem_virt_to_phys);
 
 static int qcom_smem_get_sbl_version(struct qcom_smem *smem)
 {
@@ -1154,6 +1103,7 @@ static int qcom_smem_probe(struct platform_device *pdev)
 	struct reserved_mem *rmem;
 	struct qcom_smem *smem;
 	unsigned long flags;
+	size_t array_size;
 	int num_regions;
 	int hwlock_id;
 	u32 version;
@@ -1162,7 +1112,7 @@ static int qcom_smem_probe(struct platform_device *pdev)
 	int i;
 
 	num_regions = 1;
-	if (of_property_present(pdev->dev.of_node, "qcom,rpm-msg-ram"))
+	if (of_find_property(pdev->dev.of_node, "qcom,rpm-msg-ram", NULL))
 		num_regions++;
 
 	array_size = num_regions * sizeof(struct smem_region);
@@ -1283,7 +1233,7 @@ release:
 	return ret;
 }
 
-static void qcom_smem_remove(struct platform_device *pdev)
+static int qcom_smem_remove(struct platform_device *pdev)
 {
 	platform_device_unregister(__smem->socinfo);
 
@@ -1296,6 +1246,8 @@ static void qcom_smem_remove(struct platform_device *pdev)
 	 */
 	kfree(__smem);
 	__smem = NULL;
+
+	return 0;
 }
 
 static int qcom_smem_freeze(struct device *dev)

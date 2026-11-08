@@ -317,7 +317,7 @@ static struct qmi_elem_info slimbus_select_inst_req_msg_v01_ei[] = {
 	},
 };
 
-static const struct qmi_elem_info slimbus_select_inst_resp_msg_v01_ei[] = {
+static struct qmi_elem_info slimbus_select_inst_resp_msg_v01_ei[] = {
 	{
 		.data_type  = QMI_STRUCT,
 		.elem_len   = 1,
@@ -339,7 +339,7 @@ static const struct qmi_elem_info slimbus_select_inst_resp_msg_v01_ei[] = {
 	},
 };
 
-static const struct qmi_elem_info slimbus_power_req_msg_v01_ei[] = {
+static struct qmi_elem_info slimbus_power_req_msg_v01_ei[] = {
 	{
 		.data_type  = QMI_UNSIGNED_4_BYTE,
 		.elem_len   = 1,
@@ -379,7 +379,7 @@ static const struct qmi_elem_info slimbus_power_req_msg_v01_ei[] = {
 	},
 };
 
-static const struct qmi_elem_info slimbus_power_resp_msg_v01_ei[] = {
+static struct qmi_elem_info slimbus_power_resp_msg_v01_ei[] = {
 	{
 		.data_type  = QMI_STRUCT,
 		.elem_len   = 1,
@@ -1948,8 +1948,10 @@ static int of_qcom_slim_ngd_register(struct device *parent,
 		ngd->id = id;
 		ngd->pdev->dev.parent = parent;
 
-		ret = device_set_driver_override(&ngd->pdev->dev,
-						 QCOM_SLIM_NGD_DRV_NAME);
+		ret = driver_set_override(&ngd->pdev->dev,
+					  &ngd->pdev->driver_override,
+					  QCOM_SLIM_NGD_DRV_NAME,
+					  strlen(QCOM_SLIM_NGD_DRV_NAME));
 		if (ret) {
 			platform_device_put(ngd->pdev);
 			kfree(ngd);
@@ -2023,7 +2025,7 @@ static int qcom_slim_ngd_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, ctrl);
 	pm_runtime_use_autosuspend(dev);
-	pm_runtime_set_autosuspend_delay(dev, 100);
+	pm_runtime_set_autosuspend_delay(dev, QCOM_SLIM_NGD_AUTOSUSPEND);
 	pm_runtime_set_suspended(dev);
 	pm_runtime_enable(dev);
 	pm_runtime_get_noresume(dev);
@@ -2182,13 +2184,6 @@ static int qcom_slim_ngd_ctrl_probe(struct platform_device *pdev)
 	init_completion(&ctrl->sync_done);
 	init_completion(&ctrl->tx_sent);
 
-	INIT_WORK(&ctrl->m_work, qcom_slim_ngd_master_worker);
-	INIT_WORK(&ctrl->ngd_up_work, qcom_slim_ngd_up_worker);
-
-	ctrl->mwq = create_singlethread_workqueue("ngd_master");
-	if (!ctrl->mwq)
-		return dev_err_probe(dev, -ENOMEM, "Failed to start master worker\n");
-
 	ctrl->pdr = pdr_handle_alloc(slim_pd_status, ctrl);
 	if (IS_ERR(ctrl->pdr)) {
 		ret = dev_err_probe(dev, PTR_ERR(ctrl->pdr),
@@ -2231,8 +2226,6 @@ err_unregister_ngd:
 	qcom_slim_ngd_unregister(ctrl);
 err_pdr_release:
 	pdr_handle_release(ctrl->pdr);
-err_destroy_mwq:
-	destroy_workqueue(ctrl->mwq);
 
 remove_ipc_sysfs:
 	if (ctrl->ipc_slimbus_log)
@@ -2265,11 +2258,12 @@ static void qcom_slim_ngd_remove(struct platform_device *pdev)
 {
 	struct qcom_slim_ngd_ctrl *ctrl = platform_get_drvdata(pdev);
 
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
 	slim_unregister_controller(&ctrl->ctrl);
 	qcom_slim_ngd_exit_dma(ctrl);
 	qcom_slim_ngd_qmi_svc_event_deinit(&ctrl->qmi);
+	if (ctrl->mwq)
+		destroy_workqueue(ctrl->mwq);
 
 	kfree(ctrl->ngd);
 	ctrl->ngd = NULL;

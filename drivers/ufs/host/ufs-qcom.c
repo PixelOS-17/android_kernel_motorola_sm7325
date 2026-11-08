@@ -5,18 +5,15 @@
  */
 
 #include <linux/acpi.h>
+#include <linux/time.h>
 #include <linux/clk.h>
-#include <linux/cleanup.h>
 #include <linux/delay.h>
-#include <linux/devfreq.h>
-#include <linux/gpio/consumer.h>
-#include <linux/interconnect.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/bitfield.h>
 #include <linux/platform_device.h>
 #include <linux/phy/phy.h>
-#include <linux/platform_device.h>
+#include <linux/gpio/consumer.h>
 #include <linux/reset-controller.h>
 #include <linux/interconnect.h>
 #include <linux/phy/phy-qcom-ufs.h>
@@ -538,204 +535,39 @@ static int ufs_qcom_get_connected_rx_lanes(struct ufs_hba *hba, u32 *rx_lanes)
 static int ufs_qcom_host_clk_get(struct device *dev,
 		const char *name, struct clk **clk_out, bool optional)
 {
-	struct ufs_hba *hba = host->hba;
-	static const uint8_t val[4] = { NUM_RX_R1W0, NUM_TX_R0W1, NUM_RX_R1W1, NUM_TX_R1W1 };
-	u32 config;
+	struct clk *clk;
+	int err = 0;
 
-	if (!(host->caps & UFS_QCOM_CAP_ICE_CONFIG) ||
-			!(host->hba->caps & UFSHCD_CAP_CRYPTO))
-		return;
-
-	config = get_unaligned_le32(val);
-
-	ufshcd_writel(hba, ICE_ALLOCATOR_TYPE, REG_UFS_MEM_ICE_CONFIG);
-	ufshcd_writel(hba, config, REG_UFS_MEM_ICE_NUM_CORE);
-}
-
-static inline void ufs_qcom_ice_enable(struct ufs_qcom_host *host)
-{
-	if (host->hba->caps & UFSHCD_CAP_CRYPTO)
-		qcom_ice_enable(host->ice);
-}
-
-static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops; /* forward decl */
-
-static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
-{
-	struct ufs_hba *hba = host->hba;
-	struct blk_crypto_profile *profile = &hba->crypto_profile;
-	struct device *dev = hba->dev;
-	struct qcom_ice *ice;
-	union ufs_crypto_capabilities caps;
-	union ufs_crypto_cap_entry cap;
-	int err;
-	int i;
-
-	ice = devm_of_qcom_ice_get(dev);
-	if (ice == ERR_PTR(-EOPNOTSUPP)) {
-		dev_warn(dev, "Disabling inline encryption support\n");
-		ice = NULL;
+	clk = devm_clk_get(dev, name);
+	if (!IS_ERR(clk)) {
+		*clk_out = clk;
+		return 0;
 	}
 
-	if (IS_ERR_OR_NULL(ice))
-		return PTR_ERR_OR_ZERO(ice);
+	err = PTR_ERR(clk);
 
-	host->ice = ice;
+	if (optional && err == -ENOENT) {
+		*clk_out = NULL;
+		return 0;
+	}
 
-	/* Initialize the blk_crypto_profile */
+	if (err != -EPROBE_DEFER)
+		dev_err(dev, "failed to get %s err %d\n", name, err);
 
-	caps.reg_val = cpu_to_le32(ufshcd_readl(hba, REG_UFS_CCAP));
+	return err;
+}
 
-	/* The number of keyslots supported is (CFGC+1) */
-	err = devm_blk_crypto_profile_init(dev, profile, caps.config_count + 1);
+static int ufs_qcom_host_clk_enable(struct device *dev,
+		const char *name, struct clk *clk)
+{
+	int err = 0;
+
+	err = clk_prepare_enable(clk);
 	if (err)
-		return err;
+		dev_err(dev, "%s: %s enable failed %d\n", __func__, name, err);
 
-	profile->ll_ops = ufs_qcom_crypto_ops;
-	profile->max_dun_bytes_supported = 8;
-	profile->key_types_supported = qcom_ice_get_supported_key_type(ice);
-	profile->dev = dev;
-
-	/*
-	 * Currently this driver only supports AES-256-XTS.  All known versions
-	 * of ICE support it, but to be safe make sure it is really declared in
-	 * the crypto capability registers.  The crypto capability registers
-	 * also give the supported data unit size(s).
-	 */
-	for (i = 0; i < caps.num_crypto_cap; i++) {
-		cap.reg_val = cpu_to_le32(ufshcd_readl(hba,
-						       REG_UFS_CRYPTOCAP +
-						       i * sizeof(__le32)));
-		if (cap.algorithm_id == UFS_CRYPTO_ALG_AES_XTS &&
-		    cap.key_size == UFS_CRYPTO_KEY_SIZE_256)
-			profile->modes_supported[BLK_ENCRYPTION_MODE_AES_256_XTS] |=
-				cap.sdus_mask * 512;
-	}
-
-	hba->caps |= UFSHCD_CAP_CRYPTO;
-	hba->quirks |= UFSHCD_QUIRK_CUSTOM_CRYPTO_PROFILE;
-	return 0;
-}
-
-static inline int ufs_qcom_ice_resume(struct ufs_qcom_host *host)
-{
-	if (host->hba->caps & UFSHCD_CAP_CRYPTO)
-		return qcom_ice_resume(host->ice);
-
-	return 0;
-}
-
-static inline int ufs_qcom_ice_suspend(struct ufs_qcom_host *host)
-{
-	if (host->hba->caps & UFSHCD_CAP_CRYPTO)
-		return qcom_ice_suspend(host->ice);
-
-	return 0;
-}
-
-static int ufs_qcom_ice_keyslot_program(struct blk_crypto_profile *profile,
-					const struct blk_crypto_key *key,
-					unsigned int slot)
-{
-	struct ufs_hba *hba = ufs_hba_from_crypto_profile(profile);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	int err;
-
-	ufshcd_hold(hba);
-	err = qcom_ice_program_key(host->ice, slot, key);
-	ufshcd_release(hba);
 	return err;
 }
-
-static int ufs_qcom_ice_keyslot_evict(struct blk_crypto_profile *profile,
-				      const struct blk_crypto_key *key,
-				      unsigned int slot)
-{
-	struct ufs_hba *hba = ufs_hba_from_crypto_profile(profile);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	int err;
-
-	ufshcd_hold(hba);
-	err = qcom_ice_evict_key(host->ice, slot);
-	ufshcd_release(hba);
-	return err;
-}
-
-static int ufs_qcom_ice_derive_sw_secret(struct blk_crypto_profile *profile,
-					 const u8 *eph_key, size_t eph_key_size,
-					 u8 sw_secret[BLK_CRYPTO_SW_SECRET_SIZE])
-{
-	struct ufs_hba *hba = ufs_hba_from_crypto_profile(profile);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-
-	return qcom_ice_derive_sw_secret(host->ice, eph_key, eph_key_size,
-					 sw_secret);
-}
-
-static int ufs_qcom_ice_import_key(struct blk_crypto_profile *profile,
-				   const u8 *raw_key, size_t raw_key_size,
-				   u8 lt_key[BLK_CRYPTO_MAX_HW_WRAPPED_KEY_SIZE])
-{
-	struct ufs_hba *hba = ufs_hba_from_crypto_profile(profile);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-
-	return qcom_ice_import_key(host->ice, raw_key, raw_key_size, lt_key);
-}
-
-static int ufs_qcom_ice_generate_key(struct blk_crypto_profile *profile,
-				     u8 lt_key[BLK_CRYPTO_MAX_HW_WRAPPED_KEY_SIZE])
-{
-	struct ufs_hba *hba = ufs_hba_from_crypto_profile(profile);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-
-	return qcom_ice_generate_key(host->ice, lt_key);
-}
-
-static int ufs_qcom_ice_prepare_key(struct blk_crypto_profile *profile,
-				    const u8 *lt_key, size_t lt_key_size,
-				    u8 eph_key[BLK_CRYPTO_MAX_HW_WRAPPED_KEY_SIZE])
-{
-	struct ufs_hba *hba = ufs_hba_from_crypto_profile(profile);
-	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-
-	return qcom_ice_prepare_key(host->ice, lt_key, lt_key_size, eph_key);
-}
-
-static const struct blk_crypto_ll_ops ufs_qcom_crypto_ops = {
-	.keyslot_program	= ufs_qcom_ice_keyslot_program,
-	.keyslot_evict		= ufs_qcom_ice_keyslot_evict,
-	.derive_sw_secret	= ufs_qcom_ice_derive_sw_secret,
-	.import_key		= ufs_qcom_ice_import_key,
-	.generate_key		= ufs_qcom_ice_generate_key,
-	.prepare_key		= ufs_qcom_ice_prepare_key,
-};
-
-#else
-
-static inline void ufs_qcom_ice_enable(struct ufs_qcom_host *host)
-{
-}
-
-static int ufs_qcom_ice_init(struct ufs_qcom_host *host)
-{
-	return 0;
-}
-
-static inline int ufs_qcom_ice_resume(struct ufs_qcom_host *host)
-{
-	return 0;
-}
-
-static inline int ufs_qcom_ice_suspend(struct ufs_qcom_host *host)
-{
-	return 0;
-}
-
-static void ufs_qcom_config_ice_allocator(struct ufs_qcom_host *host)
-{
-}
-
-#endif
 
 static void ufs_qcom_disable_lane_clks(struct ufs_qcom_host *host)
 {
@@ -755,8 +587,13 @@ static void ufs_qcom_disable_lane_clks(struct ufs_qcom_host *host)
 static int ufs_qcom_enable_lane_clks(struct ufs_qcom_host *host)
 {
 	int err;
+	struct device *dev = host->hba->dev;
 
-	err = clk_bulk_prepare_enable(host->num_clks, host->clks);
+	if (host->is_lane_clks_enabled)
+		return 0;
+
+	err = ufs_qcom_host_clk_enable(dev, "rx_lane0_sync_clk",
+		host->rx_l0_sync_clk);
 	if (err)
 		return err;
 
@@ -783,11 +620,20 @@ static int ufs_qcom_enable_lane_clks(struct ufs_qcom_host *host)
 	host->is_lane_clks_enabled = true;
 
 	return 0;
+
+disable_rx_l1:
+	clk_disable_unprepare(host->rx_l1_sync_clk);
+disable_tx_l0:
+	clk_disable_unprepare(host->tx_l0_sync_clk);
+disable_rx_l0:
+	clk_disable_unprepare(host->rx_l0_sync_clk);
+
+	return err;
 }
 
 static int ufs_qcom_init_lane_clks(struct ufs_qcom_host *host)
 {
-	int err;
+	int err = 0;
 	struct device *dev = host->hba->dev;
 
 	if (has_acpi_companion(dev))
@@ -876,7 +722,7 @@ out:
 static int ufs_qcom_check_hibern8(struct ufs_hba *hba)
 {
 	int err;
-	u32 tx_fsm_val;
+	u32 tx_fsm_val = 0;
 	unsigned long timeout = jiffies + msecs_to_jiffies(HBRN8_POLL_TOUT_MS);
 
 	do {
@@ -915,7 +761,9 @@ static int ufs_qcom_check_hibern8(struct ufs_hba *hba)
 
 static void ufs_qcom_select_unipro_mode(struct ufs_qcom_host *host)
 {
-	ufshcd_rmwl(host->hba, QUNIPRO_SEL, QUNIPRO_SEL, REG_UFS_CFG1);
+	ufshcd_rmwl(host->hba, QUNIPRO_SEL,
+		   ufs_qcom_cap_qunipro(host) ? QUNIPRO_SEL : 0,
+		   REG_UFS_CFG1);
 
 	if (host->hw_ver.major >= 0x05) {
 		ufshcd_rmwl(host->hba, QUNIPRO_G4_SEL, 0, REG_UFS_CFG0);
@@ -928,9 +776,9 @@ static void ufs_qcom_select_unipro_mode(struct ufs_qcom_host *host)
  */
 static int ufs_qcom_host_reset(struct ufs_hba *hba)
 {
-	int ret;
+	int ret = 0;
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	bool reenable_intr;
+	bool reenable_intr = false;
 
 	host->reset_in_progress = true;
 
@@ -940,7 +788,8 @@ static int ufs_qcom_host_reset(struct ufs_hba *hba)
 	}
 
 	reenable_intr = hba->is_irq_enabled;
-	ufshcd_disable_irq(hba);
+	disable_irq(hba->irq);
+	hba->is_irq_enabled = false;
 
 	ret = reset_control_assert(host->core_reset);
 	if (ret) {
@@ -957,11 +806,9 @@ static int ufs_qcom_host_reset(struct ufs_hba *hba)
 	usleep_range(200, 210);
 
 	ret = reset_control_deassert(host->core_reset);
-	if (ret) {
+	if (ret)
 		dev_err(hba->dev, "%s: core_reset deassert failed, err = %d\n",
 				 __func__, ret);
-		return ret;
-	}
 
 	usleep_range(1000, 1100);
 	/*
@@ -972,8 +819,10 @@ static int ufs_qcom_host_reset(struct ufs_hba *hba)
 	 */
 	ufs_qcom_ice_disable(host);
 
-	if (reenable_intr)
-		ufshcd_enable_irq(hba);
+	if (reenable_intr) {
+		enable_irq(hba->irq);
+		hba->is_irq_enabled = true;
+	}
 
 out:
 	host->vdd_hba_pc = false;
@@ -1025,7 +874,6 @@ static int ufs_qcom_phy_power_off(struct ufs_hba *hba)
 static int ufs_qcom_power_up_sequence(struct ufs_hba *hba)
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	struct ufs_host_params *host_params = &host->host_params;
 	struct phy *phy = host->generic_phy;
 	int ret = 0;
 
@@ -1049,12 +897,6 @@ static int ufs_qcom_power_up_sequence(struct ufs_hba *hba)
 		dev_err(hba->dev, "%s: Failed to calibrate PHY %d\n",
 				  __func__, ret);
 		goto out;
-	}
-
-	ret = phy_calibrate(phy);
-	if (ret) {
-		dev_err(hba->dev, "Failed to calibrate PHY: %d\n", ret);
-		goto out_disable_phy;
 	}
 
 	ufs_qcom_select_unipro_mode(host);
@@ -1157,7 +999,7 @@ static int ufs_qcom_hce_enable_notify(struct ufs_hba *hba,
 				      enum ufs_notify_change_status status)
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
-	int err;
+	int err = 0;
 
 	switch (status) {
 	case PRE_CHANGE:
@@ -1205,13 +1047,8 @@ static int ufs_qcom_hce_enable_notify(struct ufs_hba *hba,
 	return err;
 }
 
-/**
- * ufs_qcom_cfg_timers - Configure ufs qcom cfg timers
- *
- * @hba: host controller instance
- * @is_pre_scale_up: flag to check if pre scale up condition.
- * @freq: target opp freq
- * Return: zero for success and non-zero in case of a failure.
+/*
+ * Returns zero for success and non-zero in case of a failure
  */
 static int __ufs_qcom_cfg_timers(struct ufs_hba *hba, u32 gear,
 			       u32 hs, u32 rate, bool update_link_startup_timer,
@@ -1219,8 +1056,29 @@ static int __ufs_qcom_cfg_timers(struct ufs_hba *hba, u32 gear,
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
 	struct ufs_clk_info *clki;
-	unsigned long clk_freq = 0;
-	u32 core_clk_cycles_per_us;
+	u32 core_clk_period_in_ns;
+	u32 tx_clk_cycles_per_us = 0;
+	unsigned long core_clk_rate = 0;
+	u32 core_clk_cycles_per_us = 0;
+
+	static u32 pwm_fr_table[][2] = {
+		{UFS_PWM_G1, 0x1},
+		{UFS_PWM_G2, 0x1},
+		{UFS_PWM_G3, 0x1},
+		{UFS_PWM_G4, 0x1},
+	};
+
+	static u32 hs_fr_table_rA[][2] = {
+		{UFS_HS_G1, 0x1F},
+		{UFS_HS_G2, 0x3e},
+		{UFS_HS_G3, 0x7D},
+	};
+
+	static u32 hs_fr_table_rB[][2] = {
+		{UFS_HS_G1, 0x24},
+		{UFS_HS_G2, 0x49},
+		{UFS_HS_G3, 0x92},
+	};
 
 	/*
 	 * The Qunipro controller does not use following registers:
@@ -1237,10 +1095,9 @@ static int __ufs_qcom_cfg_timers(struct ufs_hba *hba, u32 gear,
 	       host->hw_ver.major >= 4)))
 		return 0;
 
-	if (hba->use_pm_opp && freq != ULONG_MAX) {
-		clk_freq = ufs_qcom_opp_freq_to_clk_freq(hba, freq, "core_clk");
-		if (clk_freq)
-			goto cfg_timers;
+	if (gear == 0) {
+		dev_err(hba->dev, "%s: invalid gear = %d\n", __func__, gear);
+		return -EINVAL;
 	}
 
 	list_for_each_entry(clki, &hba->clk_list_head, list) {
@@ -1252,12 +1109,11 @@ static int __ufs_qcom_cfg_timers(struct ufs_hba *hba, u32 gear,
 		}
 	}
 
-cfg_timers:
 	/* If frequency is smaller than 1MHz, set to 1MHz */
-	if (clk_freq < DEFAULT_CLK_RATE_HZ)
-		clk_freq = DEFAULT_CLK_RATE_HZ;
+	if (core_clk_rate < DEFAULT_CLK_RATE_HZ)
+		core_clk_rate = DEFAULT_CLK_RATE_HZ;
 
-	core_clk_cycles_per_us = clk_freq / USEC_PER_SEC;
+	core_clk_cycles_per_us = core_clk_rate / USEC_PER_SEC;
 	if (ufshcd_readl(hba, REG_UFS_SYS1CLK_1US) != core_clk_cycles_per_us) {
 		ufshcd_writel(hba, core_clk_cycles_per_us, REG_UFS_SYS1CLK_1US);
 		/*
@@ -1814,8 +1670,7 @@ static int ufs_qcom_cpu_online(unsigned int cpu)
 
 static void ufs_qcom_toggle_pri_affinity(struct ufs_hba *hba, bool on)
 {
-	ufshcd_fixup_dev_quirks(hba, ufs_qcom_dev_fixups);
-}
+	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
 
 	if (on && atomic_read(&host->therm_mitigation))
 		return;
@@ -6129,7 +5984,7 @@ ret:
  * ufs_qcom_probe - probe routine of the driver
  * @pdev: pointer to Platform device handle
  *
- * Return: zero for success and non-zero for failure.
+ * Return zero for success and non-zero for failure
  */
 static int ufs_qcom_probe(struct platform_device *pdev)
 {
@@ -6178,7 +6033,7 @@ static int ufs_qcom_probe(struct platform_device *pdev)
  *
  * Always returns 0
  */
-static void ufs_qcom_remove(struct platform_device *pdev)
+static int ufs_qcom_remove(struct platform_device *pdev)
 {
 	struct ufs_hba *hba;
 	struct ufs_qcom_host *host;
@@ -6445,5 +6300,4 @@ static struct platform_driver ufs_qcom_pltform = {
 };
 module_platform_driver(ufs_qcom_pltform);
 
-MODULE_DESCRIPTION("Qualcomm UFS host controller driver");
 MODULE_LICENSE("GPL v2");

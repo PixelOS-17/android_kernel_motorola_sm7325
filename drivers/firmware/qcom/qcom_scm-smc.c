@@ -3,7 +3,6 @@
  * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
-#include <linux/cleanup.h>
 #include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/delay.h>
@@ -11,7 +10,6 @@
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/firmware/qcom/qcom_scm.h>
-#include <linux/firmware/qcom/qcom_tzmem.h>
 #include <linux/arm-smccc.h>
 #include <linux/dma-mapping.h>
 #include <linux/qtee_shmbridge.h>
@@ -183,9 +181,6 @@ static int __scm_smc_do(struct device *dev, struct arm_smccc_args *smc,
 		up(&qcom_scm_sem_lock);
 		if (!multi_smc_call)
 			mutex_unlock(&qcom_scm_lock);
-		if (ret)
-			return ret;
-
 		if (ret)
 			return ret;
 
