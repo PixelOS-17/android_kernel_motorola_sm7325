@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: GPL-2.0-only
+DATAIPADRVTOP = $(srctree)/techpack/dataipa/drivers/platform/msm
+
+# Built in for lahaina (CONFIG_QTI_DATAIPA_LAHAINA)
+ifeq ($(CONFIG_QTI_DATAIPA_LAHAINA), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/lahainadataipaconf.h
+include $(srctree)/techpack/dataipa/config/lahainadataipa.conf
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3) $(CONFIG_GSI),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/include
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/include/linux
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/include/uapi
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi/gsihal
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/ipahal
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_clients
+ifneq (,$(filter $(CONFIG_IPA_KERNEL_TESTS_MODULE),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_test_module
+endif
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP_IPA_4_5),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump/ipa4.5
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP_IPA_5_0),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump/ipa5.0
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP_IPA_5_5),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump/ipa5.5
+endif
+
+
+obj-$(CONFIG_GSI) += gsi/
+obj-$(CONFIG_IPA3) += ipa/
