@@ -6,7 +6,7 @@ SRC=$(cd "$(dirname "$0")" && pwd)
 OUT=${1:-$SRC/../out}
 CLANG=${CLANG:-$HOME/pos/prebuilts/clang/host/linux-x86/clang-r596125/bin}
 export KBUILD_BUILD_HOST=${KBUILD_BUILD_HOST:-localhost}
-export PATH=$CLANG:$PATH
+export PATH=$CLANG:$HOME/pos/prebuilts/kernel-build-tools/linux-x86/bin:$PATH
 M="make -C $SRC O=$OUT ARCH=arm64 LLVM=1 LLVM_IAS=1"
 mkdir -p "$OUT"
 $M gki_defconfig
