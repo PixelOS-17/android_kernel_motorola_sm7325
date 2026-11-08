@@ -234,6 +234,7 @@ extern int register_walt_callback(void);
 extern int input_boost_init(void);
 extern int core_ctl_init(void);
 extern void rebuild_sched_domains(void);
+extern bool can_fit_low_prio_task(struct task_struct *p, int cpu);
 void update_freq_relation(struct walt_sched_cluster *cluster);
 
 extern atomic64_t walt_irq_work_lastq_ws;
@@ -880,10 +881,13 @@ static inline bool task_fits_max(struct task_struct *p, int dst_cpu)
 	} else { /* mid cap cpu */
 		if (task_boost > TASK_BOOST_ON_MID)
 			return false;
-		if (!task_in_related_thread_group(p) && p->prio >= 124)
-			/* a non topapp low prio task fits on gold */
-			return true;
 	}
+
+	/*
+	 * A non top-app low priority task fits on medium cpus
+	 */
+	if (can_fit_low_prio_task(p, dst_cpu))
+		return true;
 
 	return task_fits_capacity(p, dst_cpu);
 }
