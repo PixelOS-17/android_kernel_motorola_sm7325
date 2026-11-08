@@ -663,9 +663,9 @@ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int32_t cam_flash_i2c_driver_probe(struct i2c_client *client,
-	const struct i2c_device_id *id)
+static int32_t cam_flash_i2c_driver_probe(struct i2c_client *client)
 {
+	const struct i2c_device_id *id = i2c_client_get_device_id(client);
 	int32_t rc = 0, i = 0;
 	struct cam_flash_ctrl *fctrl;
 	struct cam_hw_soc_info *soc_info = NULL;

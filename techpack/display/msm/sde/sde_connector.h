@@ -105,7 +105,7 @@ struct sde_connector_ops {
 	 * Returns: Validity status for specified mode
 	 */
 	enum drm_mode_status (*mode_valid)(struct drm_connector *connector,
-			struct drm_display_mode *mode,
+			const struct drm_display_mode *mode,
 			void *display,
 			const struct msm_resource_caps_info *avail_res);
 

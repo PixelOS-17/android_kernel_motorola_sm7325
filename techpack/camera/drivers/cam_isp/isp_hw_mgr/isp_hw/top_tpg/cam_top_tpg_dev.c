@@ -141,10 +141,9 @@ int cam_top_tpg_probe(struct platform_device *pdev)
 	return rc;
 }
 
-int cam_top_tpg_remove(struct platform_device *pdev)
+void cam_top_tpg_remove(struct platform_device *pdev)
 {
 	component_del(&pdev->dev, &cam_top_tpg_component_ops);
-	return 0;
 }
 
 int cam_top_tpg_hw_init(struct cam_hw_intf **top_tpg_hw,

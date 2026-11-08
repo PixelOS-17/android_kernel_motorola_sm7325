@@ -23,7 +23,7 @@
 #include "kgsl_util.h"
 
 #if (KERNEL_VERSION(6, 3, 0) <= LINUX_VERSION_CODE)
-#include <msm_hw_fence.h>
+#include <linux/soc/qcom/msm_hw_fence.h>
 #else
 #include <linux/soc/qcom/msm_hw_fence.h>
 #endif

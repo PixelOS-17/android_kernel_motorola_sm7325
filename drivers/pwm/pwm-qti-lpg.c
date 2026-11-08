@@ -1276,7 +1276,7 @@ static int qpnp_lpg_pwm_src_enable(struct qpnp_lpg_channel *lpg, bool en)
 			if (chip->lpg_group[i] == 0)
 				break;
 			lpg_idx = chip->lpg_group[i] - 1;
-			pwm = &chip->pwm_chip->pwms[lpg_idx];
+			pwm = chip->pwm_chip->pwms[lpg_idx];
 			if ((lpg->output_type == PWM_OUTPUT_MODULATED)
 						&& pwm_is_enabled(pwm)) {
 				rc = qpnp_lpg_masked_write(&chip->lpgs[lpg_idx],
@@ -2095,7 +2095,7 @@ static int pwm_restore(struct device *dev)
 	int rc = 0, i;
 
 	pr_debug("Restoring from hibernation via pwm restore\n");
-	rc = qpnp_lpg_pwm_apply(&chip->pwm_chip, pwm,
+	rc = qpnp_lpg_pwm_apply(chip->pwm_chip, pwm,
 				&pwm->state);
 	if (rc < 0)
 		return rc;

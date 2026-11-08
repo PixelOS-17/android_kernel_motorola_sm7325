@@ -17,6 +17,21 @@
 #include <linux/gpio/consumer.h>
 #endif
 
+/**
+ * struct gpio - a structure describing a GPIO with configuration
+ * @gpio:	the GPIO number
+ * @flags:	GPIO configuration as specified by GPIOF_*
+ * @label:	a literal description string of this GPIO
+ */
+struct gpio {
+	unsigned int	gpio;
+	unsigned long	flags;
+	const char	*label;
+};
+
+int gpio_request_array(const struct gpio *array, size_t num);
+void gpio_free_array(const struct gpio *array, size_t num);
+
 #ifdef CONFIG_GPIOLIB_LEGACY
 
 struct device;

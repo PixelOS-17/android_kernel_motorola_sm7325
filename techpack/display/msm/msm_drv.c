@@ -53,6 +53,9 @@
 #include <drm/drm_irq.h>
 #endif
 
+/* All msm ioctls run unlocked; the flag is gone on 6.18 */
+#define DRM_UNLOCKED 0
+
 #include "msm_drv.h"
 #include "msm_gem.h"
 #include "msm_kms.h"
@@ -158,7 +161,6 @@ int msm_atomic_check(struct drm_device *dev,
 
 static const struct drm_mode_config_funcs mode_config_funcs = {
 	.fb_create = msm_framebuffer_create,
-	.output_poll_changed = msm_fb_output_poll_changed,
 	.atomic_check = msm_atomic_check,
 	.atomic_commit = msm_atomic_commit,
 	.atomic_state_alloc = msm_atomic_state_alloc,
@@ -624,7 +626,7 @@ static int msm_init_vram(struct drm_device *dev)
 		 * Grab the entire CMA chunk carved out in early startup in
 		 * mach-msm:
 		 */
-	} else if (!iommu_present(&platform_bus_type)) {
+	} else if (!IS_ENABLED(CONFIG_IOMMU_API)) {
 		u32 vram_size;
 
 		ret = of_property_read_u32(dev->dev->of_node,
@@ -1117,33 +1119,6 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
 		kms->funcs->preclose(kms, file);
 }
 
-static void msm_postclose(struct drm_device *dev, struct drm_file *file)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_file_private *ctx = file->driver_priv;
-	struct msm_kms *kms = priv->kms;
-
-	if (!kms)
-		return;
-
-	if (kms->funcs && kms->funcs->postclose)
-		kms->funcs->postclose(kms, file);
-
-	mutex_lock(&msm_gem_struct_mutex);
-	if (ctx == priv->lastctx)
-		priv->lastctx = NULL;
-	mutex_unlock(&msm_gem_struct_mutex);
-
-	mutex_lock(&ctx->power_lock);
-	if (ctx->enable_refcnt) {
-		SDE_EVT32(ctx->enable_refcnt);
-		pm_runtime_put_sync(dev->dev);
-	}
-	mutex_unlock(&ctx->power_lock);
-
-	context_close(ctx);
-}
-
 static void msm_lastclose(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
@@ -1215,6 +1190,38 @@ static void msm_lastclose(struct drm_device *dev)
 	if (kms->funcs && kms->funcs->lastclose)
 		kms->funcs->lastclose(kms);
 }
+
+static void msm_postclose(struct drm_device *dev, struct drm_file *file)
+{
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_file_private *ctx = file->driver_priv;
+	struct msm_kms *kms = priv->kms;
+
+	if (!kms)
+		return;
+
+	if (kms->funcs && kms->funcs->postclose)
+		kms->funcs->postclose(kms, file);
+
+	mutex_lock(&msm_gem_struct_mutex);
+	if (ctx == priv->lastctx)
+		priv->lastctx = NULL;
+	mutex_unlock(&msm_gem_struct_mutex);
+
+	mutex_lock(&ctx->power_lock);
+	if (ctx->enable_refcnt) {
+		SDE_EVT32(ctx->enable_refcnt);
+		pm_runtime_put_sync(dev->dev);
+	}
+	mutex_unlock(&ctx->power_lock);
+
+	context_close(ctx);
+
+	/* 6.18 has no drm_driver.lastclose: open_count drops after this */
+	if (atomic_read(&dev->open_count) == 1)
+		msm_lastclose(dev);
+}
+
 
 /*
  * DRM ioctls:
@@ -1829,7 +1836,6 @@ static struct drm_driver msm_driver = {
 				DRIVER_MODESET,
 	.open               = msm_open,
 	.postclose          = msm_postclose,
-	.lastclose          = msm_lastclose,
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 	.irq_handler        = msm_irq,
 	.irq_preinstall     = msm_irq_preinstall,
@@ -1850,13 +1856,11 @@ static struct drm_driver msm_driver = {
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_import   = msm_gem_prime_import,
 	.gem_prime_import_sg_table = msm_gem_prime_import_sg_table,
-	.gem_prime_mmap     = msm_gem_prime_mmap,
 	.ioctls             = msm_ioctls,
 	.num_ioctls         = ARRAY_SIZE(msm_ioctls),
 	.fops               = &fops,
 	.name               = "msm_drm",
 	.desc               = "MSM Snapdragon DRM",
-	.date               = "20130625",
 	.major              = MSM_VERSION_MAJOR,
 	.minor              = MSM_VERSION_MINOR,
 	.patchlevel         = MSM_VERSION_PATCHLEVEL,
@@ -2085,7 +2089,7 @@ static int add_components_mdp(struct device *mdp_dev,
 	return 0;
 }
 
-static int compare_name_mdp(struct device *dev, void *data)
+static int compare_name_mdp(struct device *dev, const void *data)
 {
 	return (strnstr(dev_name(dev), "mdp", strlen("mdp")) != NULL);
 }
@@ -2228,7 +2232,7 @@ msm_gem_smmu_address_space_get(struct drm_device *dev,
 	const struct msm_kms_funcs *funcs;
 	struct msm_gem_address_space *aspace;
 
-	if (!iommu_present(&platform_bus_type))
+	if (!IS_ENABLED(CONFIG_IOMMU_API))
 		return ERR_PTR(-ENODEV);
 
 	if ((!dev) || (!dev->dev_private))

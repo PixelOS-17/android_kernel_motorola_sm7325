@@ -2749,7 +2749,7 @@ int mmi_unregister_charger_driver(struct mmi_charger_driver *driver)
 }
 EXPORT_SYMBOL(mmi_unregister_charger_driver);
 
-static enum alarmtimer_restart mmi_heartbeat_alarm_cb(struct alarm *alarm,
+static void mmi_heartbeat_alarm_cb(struct alarm *alarm,
 						      ktime_t now)
 {
 	struct mmi_charger_chip *chip = container_of(alarm,
@@ -2764,7 +2764,7 @@ static enum alarmtimer_restart mmi_heartbeat_alarm_cb(struct alarm *alarm,
 	schedule_delayed_work(&chip->heartbeat_work,
 			      msecs_to_jiffies(500));
 
-	return ALARMTIMER_NORESTART;
+	return;
 }
 
 static int mmi_psy_notifier_call(struct notifier_block *nb, unsigned long val,

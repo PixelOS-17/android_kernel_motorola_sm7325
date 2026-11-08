@@ -208,7 +208,7 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 	 */
 	if (is_vmid_cp_pixel) {
 		attach_dev = kms->funcs->get_address_space_device(kms, MSM_SMMU_DOMAIN_SECURE);
-	} else if (!iommu_present(&platform_bus_type) || is_vmid_tvm || is_vmid_cam_preview
+	} else if (!IS_ENABLED(CONFIG_IOMMU_API) || is_vmid_tvm || is_vmid_cam_preview
 			|| is_vmid_sec_display) {
 		attach_dev = dev->dev;
 		lazy_unmap = false;

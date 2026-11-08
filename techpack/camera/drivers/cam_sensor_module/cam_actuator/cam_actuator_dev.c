@@ -201,9 +201,9 @@ static int cam_actuator_init_subdev(struct cam_actuator_ctrl_t *a_ctrl)
 	return rc;
 }
 
-static int32_t cam_actuator_driver_i2c_probe(struct i2c_client *client,
-	const struct i2c_device_id *id)
+static int32_t cam_actuator_driver_i2c_probe(struct i2c_client *client)
 {
+	const struct i2c_device_id *id = i2c_client_get_device_id(client);
 	int32_t                         rc = 0;
 	int32_t                         i = 0;
 	struct cam_actuator_ctrl_t      *a_ctrl;
@@ -431,11 +431,10 @@ const static struct component_ops cam_actuator_component_ops = {
 	.unbind = cam_actuator_component_unbind,
 };
 
-static int32_t cam_actuator_platform_remove(
+static void cam_actuator_platform_remove(
 	struct platform_device *pdev)
 {
 	component_del(&pdev->dev, &cam_actuator_component_ops);
-	return 0;
 }
 
 static const struct of_device_id cam_actuator_driver_dt_match[] = {

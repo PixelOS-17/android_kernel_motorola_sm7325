@@ -1570,7 +1570,7 @@ static int cam_soc_util_get_gpio_info(struct cam_hw_soc_info *soc_info)
 		return -EINVAL;
 	}
 
-	gpio_array_size = of_gpio_named_count(of_node, "gpios");
+	gpio_array_size = of_count_phandle_with_args(of_node, "gpios", "#gpio-cells");
 
 	if (gpio_array_size <= 0)
 		return 0;
