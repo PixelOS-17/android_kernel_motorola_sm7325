@@ -5518,6 +5518,13 @@ try_onemore:
 			f2fs_err(sbi, "Cannot turn on quotas: error %d", err);
 	}
 
+	/*
+	 * DEBUG (k61.data=ro): a read-only test mount must not replay fsync data
+	 * or clean up orphans. Both write, and the bio barrier stops the run.
+	 */
+	if (k61_stop_data_ro && f2fs_readonly(sb))
+		set_opt(sbi, NORECOVERY);
+
 	quota_enabled = f2fs_recover_quota_begin(sbi);
 #endif
 	/* if there are any orphan inodes, free them */

@@ -1011,6 +1011,10 @@ int f2fs_recover_orphan_inodes(struct f2fs_sb_info *sbi)
 	if (!is_set_ckpt_flags(sbi, CP_ORPHAN_PRESENT_FLAG))
 		return 0;
 
+	/* DEBUG (k61.data=ro): see f2fs_fill_super() */
+	if (test_opt(sbi, NORECOVERY))
+		return 0;
+
 	if (f2fs_hw_is_readonly(sbi)) {
 		f2fs_info(sbi, "write access unavailable, skipping orphan cleanup");
 		return 0;
