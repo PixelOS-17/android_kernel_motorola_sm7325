@@ -7421,10 +7421,7 @@ static int cnss_pci_register_mhi(struct cnss_pci_data *pci_priv)
 	mhi_ctrl->cntrl_dev = &pci_dev->dev;
 
 	mhi_ctrl->fw_image = plat_priv->firmware_name;
-#if IS_ENABLED(CONFIG_MHI_BUS_MISC) && \
-(LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
 	mhi_ctrl->fallback_fw_image = plat_priv->fw_fallback_name;
-#endif
 
 	mhi_ctrl->regs = pci_priv->bar;
 	mhi_ctrl->reg_len = pci_resource_len(pci_priv->pci_dev, PCI_BAR_NUM);
