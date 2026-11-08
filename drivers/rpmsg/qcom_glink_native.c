@@ -1442,8 +1442,10 @@ static void qcom_glink_handle_intent(struct qcom_glink *glink,
 				intent->id, intent->id + 1, GFP_ATOMIC);
 		spin_unlock_irqrestore(&channel->intent_lock, flags);
 
-		if (ret < 0)
+		if (ret < 0) {
 			dev_err(glink->dev, "failed to store remote intent\n");
+			kfree(intent);
+		}
 	}
 
 	atomic_inc(&channel->intent_req_completed);
