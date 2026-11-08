@@ -17,7 +17,7 @@
 #include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
-#include <linux/unaligned.h>
+#include <linux/suspend.h>
 
 #include <asm/byteorder.h>
 
@@ -54,18 +54,15 @@ struct qcom_uefi_rtc_info {
 } __packed;
 
 /**
- * struct pm8xxx_rtc -  RTC driver internal structure
- * @rtc:		RTC device
- * @regmap:		regmap used to access registers
- * @allow_set_time:	whether the time can be set
- * @use_uefi:		use UEFI variable as fallback for offset
- * @alarm_irq:		alarm irq number
- * @regs:		register description
- * @dev:		device structure
- * @rtc_info:		qcom uefi rtc-info structure
- * @nvmem_cell:		nvmem cell for offset
- * @offset:		offset from epoch in seconds
- * @offset_dirty:	offset needs to be stored on shutdown
+ * struct pm8xxx_rtc -  rtc driver internal structure
+ * @rtc:		rtc device for this driver.
+ * @regmap:		regmap used to access RTC registers
+ * @allow_set_time:	indicates whether writing to the RTC is allowed
+ * @rtc_alarm_irq:	rtc alarm irq number.
+ * @regs:		rtc registers description.
+ * @rtc_dev:		device structure.
+ * @ctrl_reg_lock:	spinlock protecting access to ctrl_reg.
+ * @deepsleep_support:	deepsleep_support used to check the status of enablement
  */
 struct pm8xxx_rtc {
 	struct rtc_device *rtc;
@@ -74,11 +71,9 @@ struct pm8xxx_rtc {
 	bool use_uefi;
 	int alarm_irq;
 	const struct pm8xxx_rtc_regs *regs;
-	struct device *dev;
-	struct qcom_uefi_rtc_info rtc_info;
-	struct nvmem_cell *nvmem_cell;
-	u32 offset;
-	bool offset_dirty;
+	struct device *rtc_dev;
+	spinlock_t ctrl_reg_lock;
+	bool deepsleep_support;
 };
 
 #ifdef CONFIG_EFI
@@ -552,11 +547,25 @@ static const struct pm8xxx_rtc_regs pmk8350_regs = {
 	.alarm_en	= BIT(7),
 };
 
+static const struct pm8xxx_rtc_regs pm5100_regs = {
+	.ctrl		= 0x6446,
+	.write		= 0x6440,
+	.read		= 0x6448,
+	.alarm_rw	= 0x6540,
+	.alarm_ctrl	= 0x6546,
+	.alarm_ctrl2	= 0x6548,
+	.alarm_en	= BIT(7),
+};
+
+/*
+ * Hardcoded RTC bases until IORESOURCE_REG mapping is figured out
+ */
 static const struct of_device_id pm8xxx_id_table[] = {
 	{ .compatible = "qcom,pm8921-rtc", .data = &pm8921_regs },
 	{ .compatible = "qcom,pm8058-rtc", .data = &pm8058_regs },
 	{ .compatible = "qcom,pm8941-rtc", .data = &pm8941_regs },
 	{ .compatible = "qcom,pmk8350-rtc", .data = &pmk8350_regs },
+	{ .compatible = "qcom,pm5100-rtc", .data = &pm5100_regs },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, pm8xxx_id_table);
@@ -652,10 +661,42 @@ static int pm8xxx_rtc_probe(struct platform_device *pdev)
 		if (rc)
 			return rc;
 
-		devm_device_init_wakeup(&pdev->dev);
-	} else {
-		clear_bit(RTC_FEATURE_ALARM, rtc_dd->rtc->features);
+	if (!of_property_read_bool(pdev->dev.of_node, "qcom,disable-alarm-wakeup")) {
+		rc = dev_pm_set_wake_irq(&pdev->dev, rtc_dd->rtc_alarm_irq);
+		if (rc)
+			return rc;
 	}
+
+	if (of_property_read_bool(pdev->dev.of_node, "qcom,support-deepsleep"))
+		rtc_dd->deepsleep_support = true;
+
+	return 0;
+}
+
+static int pm8xxx_rtc_restore(struct device *dev)
+{
+	struct pm8xxx_rtc *rtc_dd = dev_get_drvdata(dev);
+	int rc;
+
+	/* Request the alarm IRQ */
+	rc = devm_request_any_context_irq(rtc_dd->rtc_dev,
+					  rtc_dd->rtc_alarm_irq,
+					  pm8xxx_alarm_trigger,
+					  IRQF_TRIGGER_RISING,
+					  "pm8xxx_rtc_alarm", rtc_dd);
+	if (rc < 0) {
+		dev_err(rtc_dd->rtc_dev, "Request IRQ failed (%d)\n", rc);
+		return rc;
+	}
+
+	return pm8xxx_rtc_enable(rtc_dd);
+}
+
+static int pm8xxx_rtc_freeze(struct device *dev)
+{
+	struct pm8xxx_rtc *rtc_dd = dev_get_drvdata(dev);
+
+	devm_free_irq(rtc_dd->rtc_dev, rtc_dd->rtc_alarm_irq, rtc_dd);
 
 	return devm_rtc_register_device(rtc_dd->rtc);
 }
@@ -672,12 +713,38 @@ static void pm8xxx_shutdown(struct platform_device *pdev)
 	}
 }
 
+static int pm8xxx_rtc_resume(struct device *dev)
+{
+	struct pm8xxx_rtc *rtc_dd = dev_get_drvdata(dev);
+
+	if (rtc_dd->deepsleep_support && (pm_suspend_target_state == PM_SUSPEND_MEM))
+		return pm8xxx_rtc_restore(dev);
+	return 0;
+}
+
+static int pm8xxx_rtc_suspend(struct device *dev)
+{
+	struct pm8xxx_rtc *rtc_dd = dev_get_drvdata(dev);
+
+	if (rtc_dd->deepsleep_support && (pm_suspend_target_state == PM_SUSPEND_MEM))
+		return pm8xxx_rtc_freeze(dev);
+	return 0;
+}
+
+static const struct dev_pm_ops pm8xxx_rtc_pm_ops = {
+	.freeze = pm8xxx_rtc_freeze,
+	.restore = pm8xxx_rtc_restore,
+	.suspend = pm8xxx_rtc_suspend,
+	.resume = pm8xxx_rtc_resume,
+};
+
 static struct platform_driver pm8xxx_rtc_driver = {
 	.probe		= pm8xxx_rtc_probe,
 	.shutdown	= pm8xxx_shutdown,
 	.driver	= {
 		.name		= "rtc-pm8xxx",
 		.of_match_table	= pm8xxx_id_table,
+		.pm             = &pm8xxx_rtc_pm_ops,
 	},
 };
 

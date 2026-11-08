@@ -118,6 +118,11 @@ spi-pxa2xx-core-y			:= spi-pxa2xx.o spi-pxa2xx-dma.o
 obj-$(CONFIG_SPI_PXA2XX)		+= spi-pxa2xx-platform.o
 obj-$(CONFIG_SPI_PXA2XX_PCI)		+= spi-pxa2xx-pci.o
 obj-$(CONFIG_SPI_QCOM_GENI)		+= spi-geni-qcom.o
+obj-$(CONFIG_SPI_QCOM_GENI_MSM)		+= spi-geni-qcom-msm.o
+obj-$(CONFIG_Q2SPI_MSM_GENI)		+= q2spi-geni.o
+q2spi-geni-y				:= q2spi-msm-geni.o q2spi-gsi.o
+obj-$(CONFIG_SPI_MSM_GENI)		+= spi-msm-geni.o
+obj-$(CONFIG_VIRTIO_SPI)		+= virtio-spi.o
 obj-$(CONFIG_SPI_QCOM_QSPI)		+= spi-qcom-qspi.o
 obj-$(CONFIG_SPI_QPIC_SNAND)            += spi-qpic-snand.o
 obj-$(CONFIG_SPI_QUP)			+= spi-qup.o
@@ -168,6 +173,8 @@ obj-$(CONFIG_SPI_ZYNQ_QSPI)		+= spi-zynq-qspi.o
 obj-$(CONFIG_SPI_ZYNQMP_GQSPI)		+= spi-zynqmp-gqspi.o
 obj-$(CONFIG_SPI_AMD)			+= spi-amd.o spi-amd-pci.o
 
+obj-$(CONFIG_SPI_AMD)			+= spi-amd.o
+obj-$(CONFIG_SPI_QUP)			+=spi_qsd.o
 # SPI slave protocol handlers
 obj-$(CONFIG_SPI_SLAVE_TIME)		+= spi-slave-time.o
 obj-$(CONFIG_SPI_SLAVE_SYSTEM_CONTROL)	+= spi-slave-system-control.o

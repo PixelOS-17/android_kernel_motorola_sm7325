@@ -100,6 +100,8 @@ obj-$(CONFIG_I2C_PXA)		+= i2c-pxa.o
 obj-$(CONFIG_I2C_PXA_PCI)	+= i2c-pxa-pci.o
 obj-$(CONFIG_I2C_QCOM_CCI)	+= i2c-qcom-cci.o
 obj-$(CONFIG_I2C_QCOM_GENI)	+= i2c-qcom-geni.o
+obj-$(CONFIG_I2C_QCOM_GENI_MSM)	+= i2c-qcom-geni-msm.o
+obj-$(CONFIG_I2C_MSM_GENI)	+= i2c-msm-geni.o
 obj-$(CONFIG_I2C_QUP)		+= i2c-qup.o
 obj-$(CONFIG_I2C_RIIC)		+= i2c-riic.o
 obj-$(CONFIG_I2C_RK3X)		+= i2c-rk3x.o
@@ -128,6 +130,7 @@ obj-$(CONFIG_I2C_THUNDERX)	+= i2c-thunderx.o
 i2c-thunderx-y			:= i2c-octeon-core.o i2c-thunderx-pcidrv.o
 obj-$(CONFIG_I2C_XILINX)	+= i2c-xiic.o
 obj-$(CONFIG_I2C_XLP9XX)	+= i2c-xlp9xx.o
+obj-$(CONFIG_I2C_MSM_V2)        += i2c-msm-v2.o
 obj-$(CONFIG_I2C_RCAR)		+= i2c-rcar.o
 obj-$(CONFIG_I2C_GXP)		+= i2c-gxp.o
 
