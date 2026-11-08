@@ -71,7 +71,7 @@ struct qcom_scm {
 	u64 dload_mode_addr;
 };
 
-DEFINE_SEMAPHORE(qcom_scm_sem_lock);
+DEFINE_SEMAPHORE(qcom_scm_sem_lock, 1);
 
 
 #define QCOM_SCM_FLAG_COLDBOOT_CPU0	0x00

@@ -77,11 +77,7 @@ static int ufshcd_crypto_qti_keyslot_program(
 		return -EINVAL;
 	}
 
-	err = ufshcd_hold(hba);
-	if (err) {
-		pr_err("%s: failed to enable clocks, err %d\n", __func__, err);
-		goto out;
-	}
+	ufshcd_hold(hba);
 
 	get_mmio_data(&mmio_data, host);
 	err = crypto_qti_keyslot_program(&mmio_data, key, slot,
@@ -112,11 +108,7 @@ static int ufshcd_crypto_qti_keyslot_evict(
 		return -EINVAL;
 	}
 
-	err = ufshcd_hold(hba);
-	if (err) {
-		pr_err("%s: failed to enable clocks, err %d\n", __func__, err);
-		return err;
-	}
+	ufshcd_hold(hba);
 
 	get_mmio_data(&mmio_data, host);
 	err = crypto_qti_keyslot_evict(&mmio_data, slot, UFS_CE);
@@ -144,11 +136,7 @@ static int ufshcd_crypto_qti_derive_raw_secret(
 		return -EINVAL;
 	}
 
-	err = ufshcd_hold(hba);
-	if (err) {
-		pr_err("%s: failed to enable clocks, err %d\n", __func__, err);
-		return err;
-	}
+	ufshcd_hold(hba);
 
 	get_mmio_data(&mmio_data, host);
 	err =  crypto_qti_derive_raw_secret(&mmio_data, eph_key, eph_key_size,

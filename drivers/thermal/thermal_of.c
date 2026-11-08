@@ -225,7 +225,7 @@ static void thermal_of_parameters_init(struct device_node *np,
 	tzp->no_hwmon = true;
 
 	if (!of_property_read_string(np, "thermal-governor", &governor))
-		strscpy(tzp->governor_name, governor, THERMAL_NAME_LENGTH);
+		tzp->governor_name = governor;
 
 	if (!of_property_read_u32(np, "sustainable-power", &prop))
 		tzp->sustainable_power = prop;
