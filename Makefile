@@ -1098,7 +1098,9 @@ NOSTDINC_FLAGS += -nostdinc
 # the kernel uses only C99 flexible arrays for dynamically sized trailing
 # arrays. Enforce this for everything that may examine structure sizes and
 # perform bounds checking.
-KBUILD_CFLAGS += $(call cc-option, -fstrict-flex-arrays=3)
+# tundra: the vendor drivers use trailing [0] and [1] arrays as flexible arrays
+# throughout, and UBSAN_TRAP makes every such access fatal at the stricter levels.
+KBUILD_CFLAGS += $(call cc-option, -fstrict-flex-arrays=1)
 
 # disable invalid "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= -fno-strict-overflow
