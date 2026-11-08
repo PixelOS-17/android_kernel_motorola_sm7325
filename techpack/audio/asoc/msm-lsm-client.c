@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.​
  */
+#include <linux/uio.h>
 #include <linux/compat.h>
 #include <linux/init.h>
 #include <linux/err.h>
@@ -5012,6 +5013,24 @@ static int msm_asoc_lsm_probe(struct snd_soc_component *component)
 	return 0;
 }
 
+
+/* 6.18 hands the PCM copy an iov_iter; these handlers take the user pointer */
+static int msm_lsm_pcm_copy_iter(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int channel,
+		unsigned long pos, struct iov_iter *iter, unsigned long bytes)
+{
+	int ret;
+
+	if (!user_backed_iter(iter))
+		return -EINVAL;
+
+	ret = msm_lsm_pcm_copy(component, substream, channel, pos, iter_iov_addr(iter), bytes);
+	if (!ret)
+		iov_iter_advance(iter, bytes);
+
+	return ret;
+}
+
 static struct snd_soc_component_driver msm_soc_component = {
 	.name			= DRV_NAME,
 	.open			= msm_lsm_open,
@@ -5022,7 +5041,7 @@ static struct snd_soc_component_driver msm_soc_component = {
 #endif
 	.prepare		= msm_lsm_prepare,
 	.hw_params      	= msm_lsm_hw_params,
-	.copy_user      	= msm_lsm_pcm_copy,
+	.copy      	= msm_lsm_pcm_copy_iter,
 	.pointer        	= msm_lsm_pcm_pointer,
 	.pcm_construct	= msm_asoc_lsm_new,
 	.probe		= msm_asoc_lsm_probe,

@@ -145,11 +145,24 @@ static const char *const aw882xx_spin[] = {"spin_0", "spin_90",
  *
  ******************************************************/
 #ifdef AW_KERNEL_VER_OVER_4_19_1
+static aw_snd_soc_codec_t *aw_kcontrol_chip(struct snd_kcontrol *kcontrol)
+{
+	return snd_kcontrol_chip(kcontrol);
+}
+
+static void aw_unregister_component(struct device *dev)
+{
+	struct snd_soc_component *component = snd_soc_lookup_component(dev, NULL);
+
+	if (component)
+		snd_soc_unregister_component_by_driver(dev, component->driver);
+}
+
 static struct aw_componet_codec_ops aw_componet_codec_ops = {
-	.kcontrol_codec = snd_kcontrol_chip,
+	.kcontrol_codec = aw_kcontrol_chip,
 	.codec_get_drvdata = snd_soc_component_get_drvdata,
 	.add_codec_controls = snd_soc_add_component_controls,
-	.unregister_codec = snd_soc_unregister_component,
+	.unregister_codec = aw_unregister_component,
 	.register_codec = snd_soc_register_component,
 };
 #else
@@ -365,7 +378,7 @@ static int aw882xx_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) !=
-			SND_SOC_DAIFMT_CBS_CFS) {
+			SND_SOC_DAIFMT_CBC_CFC) {
 			aw_dev_err(codec->dev, "invalid codec master mode");
 			return -EINVAL;
 		}
@@ -2497,7 +2510,7 @@ static int aw882xx_gpio_request(struct aw882xx *aw882xx)
 
 	if (gpio_is_valid(aw882xx->irq_gpio)) {
 		ret = devm_gpio_request_one(aw882xx->dev, aw882xx->irq_gpio,
-			GPIOF_DIR_IN, "aw882xx_int");
+			GPIOF_IN, "aw882xx_int");
 		if (ret) {
 			aw_dev_err(aw882xx->dev, "int request failed");
 			return ret;

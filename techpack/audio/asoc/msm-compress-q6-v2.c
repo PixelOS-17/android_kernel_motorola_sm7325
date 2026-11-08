@@ -3092,7 +3092,7 @@ static int msm_compr_trigger(struct snd_soc_component *component,
 
 static int msm_compr_pointer(struct snd_soc_component *component,
 			    struct snd_compr_stream *cstream,
-			    struct snd_compr_tstamp *arg)
+			    struct snd_compr_tstamp64 *arg)
 {
 	struct snd_compr_runtime *runtime = cstream->runtime;
 	struct msm_compr_audio *prtd = runtime->private_data;
@@ -5683,7 +5683,7 @@ fail:
 	return ret;
 }
 
-int msm_compr_new(struct snd_soc_pcm_runtime *rtd, int num)
+int msm_compr_new(struct snd_soc_pcm_runtime *rtd)
 {
 	int rc = 0;
 
@@ -5691,7 +5691,7 @@ int msm_compr_new(struct snd_soc_pcm_runtime *rtd, int num)
 		pr_err("%s: RTD is NULL\n", __func__);
 		return 0;
 	}
-	rc = snd_soc_new_compress(rtd, num);
+	rc = snd_soc_new_compress(rtd);
 	if (rc)
 		pr_err("%s: Fail to create pcm for compress\n", __func__);
 

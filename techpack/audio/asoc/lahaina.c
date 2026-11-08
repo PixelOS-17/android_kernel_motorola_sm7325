@@ -4,6 +4,7 @@
  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/cpu.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
@@ -5669,7 +5670,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_dai **codec_dais = &rtd->dais[rtd->dai_link->num_cpus];
 	/* Rx and Tx DAIs should use same clk index */
 	int index = (cpu_dai->id) / 2;
-	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	unsigned int fmt = SND_SOC_DAIFMT_CBC_CFC;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int sample_rate = 0;
@@ -5760,7 +5761,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 
 		for(i = 0; i < rtd->dai_link->num_codecs; i++) {
 			ret = snd_soc_dai_set_fmt(codec_dais[i],
-				SND_SOC_DAIFMT_CBS_CFS | SND_SOC_DAIFMT_I2S);
+				SND_SOC_DAIFMT_CBC_CFC | SND_SOC_DAIFMT_I2S);
 			if (ret) {
 				dev_err(rtd->card->dev, "%s: Failed to set codec fmt, error %d\n",
 					__func__, ret);
@@ -5787,7 +5788,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		}
 	}
 	if (!mi2s_intf_conf[index].msm_is_mi2s_master)
-		fmt = SND_SOC_DAIFMT_CBM_CFM;
+		fmt = SND_SOC_DAIFMT_CBP_CFP;
 	ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
 	if (ret < 0) {
 		pr_err("%s: set fmt cpu dai failed for MI2S (%d), err:%d\n",

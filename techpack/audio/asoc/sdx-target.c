@@ -411,7 +411,7 @@ static int mdm_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBS_CFS);
+					SND_SOC_DAIFMT_CBC_CFC);
 			if (ret < 0) {
 				mdm_mi2s_clk_ctl(rtd, false,
 						0, pdata->prim_mi2s_mode);
@@ -421,7 +421,7 @@ static int mdm_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(codec_dai,
-					SND_SOC_DAIFMT_CBS_CFS |
+					SND_SOC_DAIFMT_CBC_CFC |
 					SND_SOC_DAIFMT_I2S);
 			if (ret < 0) {
 				mdm_mi2s_clk_ctl(rtd, false,
@@ -453,7 +453,7 @@ static int mdm_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBM_CFM);
+					SND_SOC_DAIFMT_CBP_CFP);
 			if (ret < 0) {
 				dev_err(card->dev,
 					"%s Set fmt for cpu dai failed\n",
@@ -560,7 +560,7 @@ static int mdm_sec_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBS_CFS);
+					SND_SOC_DAIFMT_CBC_CFC);
 			if (ret < 0) {
 				ret = mdm_sec_mi2s_clk_ctl(rtd, false,
 						0, pdata->sec_mi2s_mode);
@@ -586,7 +586,7 @@ static int mdm_sec_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBM_CFM);
+					SND_SOC_DAIFMT_CBP_CFP);
 			if (ret < 0)
 				dev_err(card->dev,
 					"%s Set fmt for cpu dai failed\n",

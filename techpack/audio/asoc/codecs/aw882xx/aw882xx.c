@@ -1449,7 +1449,7 @@ static int aw882xx_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) !=
-			SND_SOC_DAIFMT_CBS_CFS) {
+			SND_SOC_DAIFMT_CBC_CFC) {
 			dev_err(component->dev, "%s: invalid codec master mode\n",
 				__func__);
 			return -EINVAL;
@@ -3509,7 +3509,7 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c)
 
 	if (gpio_is_valid(aw882xx->irq_gpio)) {
 		ret = devm_gpio_request_one(&i2c->dev, aw882xx->irq_gpio,
-			GPIOF_DIR_IN, "aw882xx_int");
+			GPIOF_IN, "aw882xx_int");
 		if (ret) {
 			dev_err(&i2c->dev, "%s: int request failed\n",
 				__func__);

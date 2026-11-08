@@ -7035,7 +7035,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_dai_link *dai_link = rtd->dai_link;
 	/* Rx and Tx DAIs should use same clk index */
 	int index = (cpu_dai->id) / 2;
-	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	unsigned int fmt = SND_SOC_DAIFMT_CBC_CFC;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int data_format;
@@ -7065,7 +7065,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	mutex_lock(&mi2s_intf_conf[index].lock);
 	if (++mi2s_intf_conf[index].ref_cnt == 1) {
 		if (data_format == AFE_DSD_DATA)
-			fmt = SND_SOC_DAIFMT_CBM_CFS;
+			fmt = SND_SOC_DAIFMT_CBP_CFC;
 		/* Check if msm needs to provide the clock to the interface */
 		if (!mi2s_intf_conf[index].msm_is_mi2s_master)
 			mi2s_clk[index].clk_id = mi2s_ebit_clk[index];
@@ -7106,7 +7106,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		}
 	}
 	if (!mi2s_intf_conf[index].msm_is_mi2s_master)
-		fmt = SND_SOC_DAIFMT_CBM_CFM;
+		fmt = SND_SOC_DAIFMT_CBP_CFP;
 	ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
 	if (ret < 0) {
 		pr_err("%s: set fmt cpu dai failed for MI2S (%d), err:%d\n",
@@ -7284,7 +7284,7 @@ static int msm_meta_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	int index = cpu_dai->id;
 	int member_port = 0;
-	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	unsigned int fmt = SND_SOC_DAIFMT_CBC_CFC;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	u16 port_id = 0;
@@ -7308,7 +7308,7 @@ static int msm_meta_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		if (!mi2s_intf_conf[member_port].msm_is_mi2s_master) {
 			mi2s_clk[member_port].clk_id =
 				mi2s_ebit_clk[member_port];
-			fmt = SND_SOC_DAIFMT_CBM_CFM;
+			fmt = SND_SOC_DAIFMT_CBP_CFP;
 		}
 
 		ret = msm_meta_mi2s_set_sclk(substream, member_port, true);

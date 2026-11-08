@@ -82,8 +82,19 @@
 #define SND_AUDIOCODEC_BESPOKE               ((__u32) 0x0000000E)
 #define SND_AUDIOCODEC_ALAC                  ((__u32) 0x0000000F)
 #define SND_AUDIOCODEC_APE                   ((__u32) 0x00000010)
+#define SND_AUDIOCODEC_TRUEHD                ((__u32) 0x00001001)
+#define SND_AUDIOCODEC_DTS_PASS_THROUGH      ((__u32) 0x00001002)
+#define SND_AUDIOCODEC_DTS_LBR               ((__u32) 0x00001003)
+#define SND_AUDIOCODEC_DTS_TRANSCODE_LOOPBACK ((__u32) 0x00001004)
+#define SND_AUDIOCODEC_PASS_THROUGH          ((__u32) 0x00001005)
+#define SND_AUDIOCODEC_MP2                   ((__u32) 0x00001006)
+#define SND_AUDIOCODEC_DTS_LBR_PASS_THROUGH  ((__u32) 0x00001007)
+#define SND_AUDIOCODEC_AC3                   ((__u32) 0x00001008)
+#define SND_AUDIOCODEC_AC3_PASS_THROUGH      ((__u32) 0x00001009)
+#define SND_AUDIOCODEC_DTS                   ((__u32) 0x0000100A)
+#define SND_AUDIOCODEC_EAC3                  ((__u32) 0x0000100B)
 #define SND_AUDIOCODEC_OPUS_RAW              ((__u32) 0x00000011)
-#define SND_AUDIOCODEC_MAX                   SND_AUDIOCODEC_OPUS_RAW
+#define SND_AUDIOCODEC_MAX                   SND_AUDIOCODEC_EAC3
 
 /*
  * Profile and modes are listed with bit masks. This allows for a
@@ -324,98 +335,12 @@ struct snd_enc_generic {
 	__s32 reserved[15];	/* Can be used for SND_AUDIOCODEC_BESPOKE */
 } __attribute__((packed, aligned(4)));
 
-struct snd_dec_flac {
-	__u16 sample_size;
-	__u16 min_blk_size;
-	__u16 max_blk_size;
-	__u16 min_frame_size;
-	__u16 max_frame_size;
-	__u16 reserved;
-} __attribute__((packed, aligned(4)));
-
-struct snd_dec_wma {
-	__u32 encoder_option;
-	__u32 adv_encoder_option;
-	__u32 adv_encoder_option2;
-	__u32 reserved;
-} __attribute__((packed, aligned(4)));
-
-struct snd_dec_alac {
-	__u32 frame_length;
-	__u8 compatible_version;
-	__u8 pb;
-	__u8 mb;
-	__u8 kb;
-	__u32 max_run;
-	__u32 max_frame_bytes;
-} __attribute__((packed, aligned(4)));
-
-struct snd_dec_ape {
-	__u16 compatible_version;
-	__u16 compression_level;
-	__u32 format_flags;
-	__u32 blocks_per_frame;
-	__u32 final_frame_blocks;
-	__u32 total_frames;
-	__u32 seek_table_present;
-} __attribute__((packed, aligned(4)));
-
-/**
- * struct snd_dec_opus - Opus decoder parameters (raw opus packets)
- * @version: Usually should be '1' but can be split into major (4 upper bits)
- * and minor (4 lower bits) sub-fields.
- * @num_channels: Number of output channels.
- * @pre_skip: Number of samples to discard at 48 kHz.
- * @sample_rate: Sample rate of original input.
- * @output_gain: Gain to apply when decoding (in Q7.8 format).
- * @mapping_family: Order and meaning of output channels. Only values 0 and 1
- * are expected; values 2..255 are not recommended for playback.
- *
- * @chan_map: Optional channel mapping table. Describes mapping of opus streams
- *            to decoded channels. Fields:
- * @chan_map.stream_count: Number of streams encoded in each Ogg packet.
- * @chan_map.coupled_count: Number of streams whose decoders are used
- *                          for two channels.
- * @chan_map.channel_map: Which decoded channel to be used for each one.
- *                        Supports only mapping families 0 and 1,
- *                        max number of channels is 8.
- *
- * These options were extracted from RFC7845 Section 5.
- */
-
-struct snd_dec_opus {
-	__u8 version;
-	__u8 num_channels;
-	__u16 pre_skip;
-	__u32 sample_rate;
-	__u16 output_gain;
-	__u8 mapping_family;
-	struct snd_dec_opus_ch_map {
-		__u8 stream_count;
-		__u8 coupled_count;
-		__u8 channel_map[8];
-	} chan_map;
-} __attribute__((packed, aligned(4)));
-
 union snd_codec_options {
 	struct snd_enc_wma wma;
 	struct snd_enc_vorbis vorbis;
 	struct snd_enc_real real;
 	struct snd_enc_flac flac;
 	struct snd_enc_generic generic;
-	struct snd_dec_flac flac_d;
-	struct snd_dec_wma wma_d;
-	struct snd_dec_alac alac_d;
-	struct snd_dec_ape ape_d;
-	struct snd_dec_opus opus_d;
-	struct {
-		__u32 out_sample_rate;
-	} src_d;
-} __attribute__((packed, aligned(4)));
-
-struct snd_codec_desc_src {
-	__u32 out_sample_rate_min;
-	__u32 out_sample_rate_max;
 } __attribute__((packed, aligned(4)));
 
 /** struct snd_codec_desc - description of codec capabilities
@@ -429,9 +354,6 @@ struct snd_codec_desc_src {
  * @modes: Supported modes. See SND_AUDIOMODE defines
  * @formats: Supported formats. See SND_AUDIOSTREAMFORMAT defines
  * @min_buffer: Minimum buffer size handled by codec implementation
- * @pcm_formats: Output (for decoders) or input (for encoders)
- *               PCM formats (required to accel mode, 0 for other modes)
- * @u_space: union space (for codec dependent data)
  * @reserved: reserved for future use
  *
  * This structure provides a scalar value for profiles, modes and stream
@@ -455,12 +377,7 @@ struct snd_codec_desc {
 	__u32 modes;
 	__u32 formats;
 	__u32 min_buffer;
-	__u32 pcm_formats;
-	union {
-		__u32 u_space[6];
-		struct snd_codec_desc_src src;
-	} __attribute__((packed, aligned(4)));
-	__u32 reserved[8];
+	__u32 reserved[15];
 } __attribute__((packed, aligned(4)));
 
 /** struct snd_codec
@@ -485,8 +402,7 @@ struct snd_codec_desc {
  * @align: Block alignment in bytes of an audio sample.
  *		Only required for PCM or IEC formats.
  * @options: encoder-specific settings
- * @pcm_format: Output (for decoders) or input (for encoders)
- *               PCM formats (required to accel mode, 0 for other modes)
+ * @compr_passthr: compressed bitstream passthrough
  * @reserved: reserved for future use
  */
 
@@ -503,8 +419,8 @@ struct snd_codec {
 	__u32 format;
 	__u32 align;
 	union snd_codec_options options;
-	__u32 pcm_format;
-	__u32 reserved[2];
+	/* reserved[0] is compr_passthr and reserved[1] is flags */
+	__u32 reserved[3];
 } __attribute__((packed, aligned(4)));
 
 /** struct snd_codec_metadata

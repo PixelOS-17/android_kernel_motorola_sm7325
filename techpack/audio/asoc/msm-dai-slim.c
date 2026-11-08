@@ -262,8 +262,8 @@ done:
 }
 
 static int msm_dai_slim_set_channel_map(struct snd_soc_dai *dai,
-	unsigned int tx_num, unsigned int *tx_slot,
-	unsigned int rx_num, unsigned int *rx_slot)
+	unsigned int tx_num, const unsigned int *tx_slot,
+	unsigned int rx_num, const unsigned int *rx_slot)
 {
 	struct msm_dai_slim_drv_data *drv_data = dev_get_drvdata(dai->dev);
 	struct msm_slim_dai_data *dai_data;

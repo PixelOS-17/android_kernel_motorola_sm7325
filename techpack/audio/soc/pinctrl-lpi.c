@@ -488,7 +488,7 @@ static int lpi_gpio_get(struct gpio_chip *chip, unsigned int pin)
 	return value;
 }
 
-static void lpi_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
+static int lpi_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
 {
 	struct lpi_gpio_state *state = gpiochip_get_data(chip);
 	unsigned long config;
@@ -496,6 +496,8 @@ static void lpi_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
 	config = pinconf_to_config_packed(PIN_CONFIG_LEVEL, value);
 
 	lpi_config_set(state->ctrl, pin, &config, 1);
+
+	return 0;
 }
 
 static int lpi_notifier_service_cb(struct notifier_block *this,

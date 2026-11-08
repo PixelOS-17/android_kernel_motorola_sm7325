@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <video/mipi_display.h>
 #include <linux/list.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>

@@ -168,7 +168,7 @@ int of_register_swr_devices(struct swr_master *master)
 
 		dev_dbg(&master->dev, "of_swr:register %s\n", node->full_name);
 
-		if (of_modalias_node(node, info.name, sizeof(info.name)) < 0) {
+		if (of_alias_from_compatible(node, info.name, sizeof(info.name)) < 0) {
 			dev_err(&master->dev, "of_swr:modalias failure %s\n",
 				node->full_name);
 			continue;
@@ -942,12 +942,6 @@ int swr_register_master(struct swr_master *master)
 		return id;
 
 	master->bus_num = id;
-	/* Can't register until driver model init */
-	if (WARN_ON(!soundwire_type.p)) {
-		status = -EAGAIN;
-		goto done;
-	}
-
 	dev_set_name(&master->dev, "swr%u", master->bus_num);
 	master->dev.bus = &soundwire_type;
 	master->dev.type = &swr_master_type;

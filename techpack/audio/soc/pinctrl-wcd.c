@@ -246,7 +246,7 @@ static int wcd_gpio_get(struct gpio_chip *chip, unsigned int pin)
 	return value;
 }
 
-static void wcd_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
+static int wcd_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
 {
 	struct wcd_gpio_priv *priv_data = gpiochip_get_data(chip);
 	unsigned long config;
@@ -254,6 +254,8 @@ static void wcd_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
 	config = pinconf_to_config_packed(PIN_CONFIG_LEVEL, value);
 
 	wcd_config_set(priv_data->ctrl, pin, &config, 1);
+
+	return 0;
 }
 
 static const struct gpio_chip wcd_gpio_chip = {

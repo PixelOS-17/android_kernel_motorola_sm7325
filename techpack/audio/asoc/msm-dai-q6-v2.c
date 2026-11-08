@@ -3580,10 +3580,10 @@ static int msm_dai_q6_cdc_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
+	case SND_SOC_DAIFMT_CBC_CFC:
 		dai_data->port_config.i2s.ws_src = 1; /* CPU is master */
 		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_CBP_CFP:
 		dai_data->port_config.i2s.ws_src = 0; /* CPU is slave */
 		break;
 	default:
@@ -3618,8 +3618,8 @@ static int msm_dai_q6_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 }
 
 static int msm_dai_q6_set_channel_map(struct snd_soc_dai *dai,
-				unsigned int tx_num, unsigned int *tx_slot,
-				unsigned int rx_num, unsigned int *rx_slot)
+				unsigned int tx_num, const unsigned int *tx_slot,
+				unsigned int rx_num, const unsigned int *rx_slot)
 
 {
 	int rc = 0;
@@ -6721,11 +6721,11 @@ static int msm_dai_q6_mi2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
-	case SND_SOC_DAIFMT_CBM_CFS:
+	case SND_SOC_DAIFMT_CBC_CFC:
+	case SND_SOC_DAIFMT_CBP_CFC:
 		mi2s_dai_data->mi2s_dai.mi2s_dai_data.port_config.i2s.ws_src = 1;
 		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_CBP_CFP:
 		mi2s_dai_data->mi2s_dai.mi2s_dai_data.port_config.i2s.ws_src = 0;
 		break;
 	default:
@@ -7938,10 +7938,10 @@ static int msm_dai_q6_meta_mi2s_set_fmt(struct snd_soc_dai *dai,
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
+	case SND_SOC_DAIFMT_CBC_CFC:
 		dai_data->port_config.meta_i2s.ws_src = 1;
 		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_CBP_CFP:
 		dai_data->port_config.meta_i2s.ws_src = 0;
 		break;
 	default:
@@ -11431,8 +11431,8 @@ static int msm_dai_q6_tdm_set_sysclk(struct snd_soc_dai *dai,
 }
 
 static int msm_dai_q6_tdm_set_channel_map(struct snd_soc_dai *dai,
-				unsigned int tx_num, unsigned int *tx_slot,
-				unsigned int rx_num, unsigned int *rx_slot)
+				unsigned int tx_num, const unsigned int *tx_slot,
+				unsigned int rx_num, const unsigned int *rx_slot)
 {
 	int rc = 0;
 	struct msm_dai_q6_tdm_dai_data *dai_data =

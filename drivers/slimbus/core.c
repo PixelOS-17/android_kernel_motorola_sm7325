@@ -360,7 +360,7 @@ static int slim_match_dev(struct device *dev, const void *data)
 	const struct slim_eaddr *e_addr = data;
 	struct slim_device *sbdev = to_slim_device(dev);
 
-	return slim_eaddr_equal(&sbdev->e_addr, e_addr);
+	return slim_eaddr_equal(&sbdev->e_addr, (struct slim_eaddr *)e_addr);
 }
 
 static struct slim_device *find_slim_device(struct slim_controller *ctrl,

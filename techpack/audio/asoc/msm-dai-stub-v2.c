@@ -54,8 +54,8 @@ static const char *  msm_dai_stub_get_aifname(const char *stream_name)
 }
 
 static int msm_dai_stub_set_channel_map(struct snd_soc_dai *dai,
-		unsigned int tx_num, unsigned int *tx_slot,
-		unsigned int rx_num, unsigned int *rx_slot)
+		unsigned int tx_num, const unsigned int *tx_slot,
+		unsigned int rx_num, const unsigned int *rx_slot)
 {
 	pr_debug("%s:\n", __func__);
 

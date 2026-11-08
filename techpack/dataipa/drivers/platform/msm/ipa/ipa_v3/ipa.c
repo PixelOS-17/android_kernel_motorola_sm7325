@@ -9216,7 +9216,7 @@ static inline void ipa3_enable_napi_netdev(void)
 	if (ipa3_ctx->lan_rx_napi_enable || ipa3_ctx->tx_napi_enable) {
 		ipa3_ctx->generic_ndev = alloc_netdev_dummy(0);
 		if (!ipa3_ctx->generic_ndev)
-			return -ENOMEM;
+			return;
 		if(ipa3_ctx->lan_rx_napi_enable) {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(6, 0, 14))
 			netif_napi_add(

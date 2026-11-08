@@ -8506,7 +8506,7 @@ static const struct snd_soc_dapm_widget tavil_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("WDMA3_OUT"),
 };
 
-static int tavil_get_channel_map(struct snd_soc_dai *dai,
+static int tavil_get_channel_map(const struct snd_soc_dai *dai,
 				 unsigned int *tx_num, unsigned int *tx_slot,
 				 unsigned int *rx_num, unsigned int *rx_slot)
 {
@@ -8579,8 +8579,8 @@ static int tavil_get_channel_map(struct snd_soc_dai *dai,
 }
 
 static int tavil_set_channel_map(struct snd_soc_dai *dai,
-				 unsigned int tx_num, unsigned int *tx_slot,
-				 unsigned int rx_num, unsigned int *rx_slot)
+				 unsigned int tx_num, const unsigned int *tx_slot,
+				 unsigned int rx_num, const unsigned int *rx_slot)
 {
 	struct tavil_priv *tavil;
 	struct wcd9xxx *core;
@@ -9025,12 +9025,12 @@ static int tavil_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
+	case SND_SOC_DAIFMT_CBC_CFC:
 		/* CPU is master */
 		snd_soc_component_update_bits(dai->component, i2s_reg,
 					0x2, 0x0);
 		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_CBP_CFP:
 		/* CPU is slave */
 		snd_soc_component_update_bits(dai->component, i2s_reg,
 					0x2, 0x2);

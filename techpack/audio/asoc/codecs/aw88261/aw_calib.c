@@ -1153,7 +1153,7 @@ static void aw_cali_attr_deinit(struct aw_device *aw_dev)
 /*****************************attr   end***************************************************/
 
 /*****************************class node******************************************************/
-static ssize_t aw_cali_class_time_show(struct  class *class, const struct class_attribute *attr, char *buf)
+static ssize_t aw_cali_class_time_show(const struct class *class, const struct class_attribute *attr, char *buf)
 {
 	ssize_t len = 0;
 
@@ -1188,7 +1188,7 @@ static ssize_t aw_cali_class_time_store(const struct class *class,
 	return len;
 }
 
-static ssize_t aw_cali_class_cali_re_show(struct  class *class, const struct class_attribute *attr, char *buf)
+static ssize_t aw_cali_class_cali_re_show(const struct class *class, const struct class_attribute *attr, char *buf)
 {
 	struct list_head *dev_list;
 	struct aw_device *local_dev;
@@ -1247,7 +1247,7 @@ static ssize_t aw_cali_class_cali_re_store(const struct class *class,
 	return len;
 }
 
-static ssize_t aw_cali_class_cali_f0_show(struct  class *class, const struct class_attribute *attr, char *buf)
+static ssize_t aw_cali_class_cali_f0_show(const struct class *class, const struct class_attribute *attr, char *buf)
 {
 	struct list_head *dev_list;
 	struct aw_device *local_dev;
@@ -1302,7 +1302,7 @@ static ssize_t aw_cali_class_cali_f0_store(const struct class *class,
 	return len;
 }
 
-static ssize_t aw_cali_class_f0_show(struct  class *class, const struct class_attribute *attr, char *buf)
+static ssize_t aw_cali_class_f0_show(const struct class *class, const struct class_attribute *attr, char *buf)
 {
 	struct list_head *dev_list;
 	struct aw_device *local_dev;
@@ -1330,7 +1330,7 @@ static ssize_t aw_cali_class_f0_show(struct  class *class, const struct class_at
 	return len;
 }
 
-static ssize_t aw_cali_class_re_show(struct  class *class, const struct class_attribute *attr, char *buf)
+static ssize_t aw_cali_class_re_show(const struct class *class, const struct class_attribute *attr, char *buf)
 {
 	struct list_head *dev_list;
 	struct aw_device *local_dev;
@@ -1381,7 +1381,6 @@ static struct class_attribute class_attr_f0_show = \
 
 static struct class aw_cali_class = {
 	.name = "smartpa",
-	.owner = THIS_MODULE,
 };
 
 static void aw_cali_class_attr_init(struct aw_device *aw_dev)
@@ -2072,7 +2071,7 @@ exit:
 }
 
 static const struct file_operations aw_cali_misc_fops = {
-	.owner = THIS_MODULE,
+	
 	.open = aw_cali_misc_open,
 	.read = aw_cali_misc_read,
 	.write = aw_cali_misc_write,

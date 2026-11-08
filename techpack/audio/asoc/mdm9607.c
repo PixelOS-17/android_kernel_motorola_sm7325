@@ -424,14 +424,14 @@ static int mdm_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBS_CFS);
+					SND_SOC_DAIFMT_CBC_CFC);
 			if (ret < 0) {
 				pr_err("%s Set fmt for cpu dai failed\n",
 					__func__);
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(codec_dai,
-					SND_SOC_DAIFMT_CBS_CFS);
+					SND_SOC_DAIFMT_CBC_CFC);
 			if (ret < 0)
 				pr_err("%s Set fmt for codec dai failed\n",
 					__func__);
@@ -453,7 +453,7 @@ static int mdm_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBM_CFM);
+					SND_SOC_DAIFMT_CBP_CFP);
 			if (ret < 0) {
 				pr_err("%s Set fmt for cpu dai failed\n",
 					__func__);
@@ -619,7 +619,7 @@ static int mdm_sec_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBS_CFS);
+					SND_SOC_DAIFMT_CBC_CFC);
 			if (ret < 0)
 				pr_err("%s Set fmt for cpu dai failed\n",
 					__func__);
@@ -641,7 +641,7 @@ static int mdm_sec_mi2s_startup(struct snd_pcm_substream *substream)
 				goto err;
 			}
 			ret = snd_soc_dai_set_fmt(cpu_dai,
-					SND_SOC_DAIFMT_CBM_CFM);
+					SND_SOC_DAIFMT_CBP_CFP);
 			if (ret < 0)
 				pr_err("%s Set fmt for cpu dai failed\n",
 					__func__);

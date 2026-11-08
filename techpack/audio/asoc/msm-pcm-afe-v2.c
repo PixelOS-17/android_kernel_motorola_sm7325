@@ -4,6 +4,7 @@
  */
 
 
+#include <linux/uio.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/module.h>
@@ -461,10 +462,9 @@ static int msm_afe_open(struct snd_soc_component *component, struct snd_pcm_subs
 	atomic_set(&prtd->rec_bytes_avail, 0);
 	init_waitqueue_head(&prtd->read_wait);
 
-	hrtimer_setup(&prtd->hrt, afe_hrtimer_callback, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-		prtd->hrt.function = afe_hrtimer_rec_callback;
+	hrtimer_setup(&prtd->hrt, substream->stream == SNDRV_PCM_STREAM_CAPTURE ?
+		      afe_hrtimer_rec_callback : afe_hrtimer_callback,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 
 	mutex_unlock(&prtd->lock);
 	ret = snd_pcm_hw_constraint_list(runtime, 0,
@@ -885,12 +885,30 @@ static int msm_afe_afe_probe(struct snd_soc_component *component)
 	return 0;
 }
 
+
+/* 6.18 hands the PCM copy an iov_iter; these handlers take the user pointer */
+static int msm_afe_copy_iter(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int channel,
+		unsigned long pos, struct iov_iter *iter, unsigned long bytes)
+{
+	int ret;
+
+	if (!user_backed_iter(iter))
+		return -EINVAL;
+
+	ret = msm_afe_copy(component, substream, channel, pos, iter_iov_addr(iter), bytes);
+	if (!ret)
+		iov_iter_advance(iter, bytes);
+
+	return ret;
+}
+
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
 	.pcm_construct	= msm_asoc_pcm_new,
 	.probe		= msm_afe_afe_probe,
 	.open           = msm_afe_open,
-	.copy_user      = msm_afe_copy,
+	.copy      = msm_afe_copy_iter,
 	.hw_params	= msm_afe_hw_params,
 	.trigger	= msm_afe_trigger,
 	.close          = msm_afe_close,

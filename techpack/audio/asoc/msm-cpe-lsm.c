@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/uio.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
@@ -3284,6 +3285,24 @@ static int msm_asoc_cpe_lsm_probe(struct snd_soc_component *component)
 	return 0;
 }
 
+
+/* 6.18 hands the PCM copy an iov_iter; these handlers take the user pointer */
+static int msm_cpe_lsm_copy_iter(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int channel,
+		unsigned long pos, struct iov_iter *iter, unsigned long bytes)
+{
+	int ret;
+
+	if (!user_backed_iter(iter))
+		return -EINVAL;
+
+	ret = msm_cpe_lsm_copy(component, substream, channel, pos, iter_iov_addr(iter), bytes);
+	if (!ret)
+		iov_iter_advance(iter, bytes);
+
+	return ret;
+}
+
 static const struct snd_pcm_ops msm_cpe_lsm_ops = {
 	.open = msm_cpe_lsm_open,
 	.close = msm_cpe_lsm_close,
@@ -3291,7 +3310,7 @@ static const struct snd_pcm_ops msm_cpe_lsm_ops = {
 	.prepare = msm_cpe_lsm_prepare,
 	.trigger = msm_cpe_lsm_trigger,
 	.pointer = msm_cpe_lsm_pointer,
-	.copy_user = msm_cpe_lsm_copy,
+	.copy = msm_cpe_lsm_copy_iter,
 	.hw_params = msm_cpe_lsm_hwparams,
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.compat_ioctl = msm_cpe_lsm_ioctl_compat,

@@ -3,6 +3,7 @@
  * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/uio.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/module.h>
@@ -1469,6 +1470,24 @@ static int msm_pcm_hpcm_probe(struct snd_soc_component *component)
 	return 0;
 }
 
+
+/* 6.18 hands the PCM copy an iov_iter; these handlers take the user pointer */
+static int msm_pcm_copy_iter(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int channel,
+		unsigned long pos, struct iov_iter *iter, unsigned long bytes)
+{
+	int ret;
+
+	if (!user_backed_iter(iter))
+		return -EINVAL;
+
+	ret = msm_pcm_copy(component, substream, channel, pos, iter_iov_addr(iter), bytes);
+	if (!ret)
+		iov_iter_advance(iter, bytes);
+
+	return ret;
+}
+
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
 	.pcm_construct	= msm_asoc_pcm_new,
@@ -1478,7 +1497,7 @@ static struct snd_soc_component_driver msm_soc_component = {
 	.prepare        = msm_pcm_prepare,
 	.trigger        = msm_pcm_trigger,
 	.pointer        = msm_pcm_pointer,
-	.copy_user      = msm_pcm_copy,
+	.copy      = msm_pcm_copy_iter,
 	.close          = msm_pcm_close,
 };
 

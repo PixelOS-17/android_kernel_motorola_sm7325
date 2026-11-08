@@ -4406,7 +4406,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	/* Rx and Tx DAIs should use same clk index */
 	int index = (cpu_dai->id) / 2;
-	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	unsigned int fmt = SND_SOC_DAIFMT_CBC_CFC;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int sample_rate = 0;
@@ -4484,7 +4484,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		}
 	}
 	if (!mi2s_intf_conf[index].msm_is_mi2s_master)
-		fmt = SND_SOC_DAIFMT_CBM_CFM;
+		fmt = SND_SOC_DAIFMT_CBP_CFP;
 	ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
 	if (ret < 0) {
 		pr_err("%s: set fmt cpu dai failed for MI2S (%d), err:%d\n",

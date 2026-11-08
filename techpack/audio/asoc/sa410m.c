@@ -4200,7 +4200,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	/* Rx and Tx DAIs should use same clk index */
 	int index = cpu_dai->id;
-	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	unsigned int fmt = SND_SOC_DAIFMT_CBC_CFC;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 
@@ -4226,7 +4226,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		/* Check if msm needs to provide the clock to the interface */
 		if (!mi2s_intf_conf[index].msm_is_mi2s_master) {
 			mi2s_clk[index].clk_id = mi2s_ebit_clk[index];
-			fmt = SND_SOC_DAIFMT_CBM_CFM;
+			fmt = SND_SOC_DAIFMT_CBP_CFP;
 		}
 		ret = msm_mi2s_set_sclk(substream, true);
 		if (ret < 0) {

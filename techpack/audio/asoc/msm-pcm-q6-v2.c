@@ -7,6 +7,7 @@
 */
 
 
+#include <linux/uio.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/module.h>
@@ -3820,10 +3821,28 @@ static snd_pcm_sframes_t __maybe_unused msm_pcm_delay_blk(struct snd_pcm_substre
 }
 #endif /* CONFIG_AUDIO_QGKI */
 
+
+/* 6.18 hands the PCM copy an iov_iter; these handlers take the user pointer */
+static int msm_pcm_copy_iter(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int channel,
+		unsigned long pos, struct iov_iter *iter, unsigned long bytes)
+{
+	int ret;
+
+	if (!user_backed_iter(iter))
+		return -EINVAL;
+
+	ret = msm_pcm_copy(component, substream, channel, pos, iter_iov_addr(iter), bytes);
+	if (!ret)
+		iov_iter_advance(iter, bytes);
+
+	return ret;
+}
+
 static struct snd_soc_component_driver msm_soc_component = {
 	.name			= DRV_NAME,
 	.open           	= msm_pcm_open,
-	.copy_user		= msm_pcm_copy,
+	.copy		= msm_pcm_copy_iter,
 	.hw_params		= msm_pcm_hw_params,
 	.close          	= msm_pcm_close,
 	.ioctl          	= msm_pcm_ioctl,

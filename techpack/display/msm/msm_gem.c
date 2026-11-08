@@ -17,6 +17,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/qcom-dma-mapping.h>
 #include <linux/spinlock.h>
 #include <linux/shmem_fs.h>
