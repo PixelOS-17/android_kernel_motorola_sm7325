@@ -1621,15 +1621,12 @@ static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 	arm_smmu_rpm_put(smmu);
 }
 
-static struct iommu_domain *arm_smmu_domain_alloc(unsigned type)
+static struct iommu_domain *arm_smmu_domain_alloc_type(struct device *dev,
+						       unsigned int type)
 {
+	struct arm_smmu_master_cfg *cfg = dev_iommu_priv_get(dev);
 	struct arm_smmu_domain *smmu_domain;
 
-	if (type != IOMMU_DOMAIN_UNMANAGED && type != IOMMU_DOMAIN_IDENTITY) {
-		if (using_legacy_binding ||
-		    (type != IOMMU_DOMAIN_DMA && type != IOMMU_DOMAIN_DMA_FQ))
-			return NULL;
-	}
 	/*
 	 * Allocate the domain and initialise some of its data structures.
 	 * We can't really do anything meaningful until we've added a
@@ -1644,8 +1641,20 @@ static struct iommu_domain *arm_smmu_domain_alloc(unsigned type)
 	spin_lock_init(&smmu_domain->sync_lock);
 	spin_lock_init(&smmu_domain->iotlb_gather_lock);
 	smmu_domain->secure_vmid = VMID_INVAL;
+	smmu_domain->domain.type = type;
+	smmu_domain->domain.pgsize_bitmap = cfg->smmu->pgsize_bitmap;
 
 	return &smmu_domain->domain;
+}
+
+static struct iommu_domain *arm_smmu_domain_alloc_paging(struct device *dev)
+{
+	return arm_smmu_domain_alloc_type(dev, IOMMU_DOMAIN_UNMANAGED);
+}
+
+static struct iommu_domain *arm_smmu_domain_alloc_identity(struct device *dev)
+{
+	return arm_smmu_domain_alloc_type(dev, IOMMU_DOMAIN_IDENTITY);
 }
 
 static void arm_smmu_domain_free(struct iommu_domain *domain)
@@ -2063,7 +2072,7 @@ static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev)
 	struct arm_smmu_device *smmu;
 	int ret;
 
-	if (!fwspec || fwspec->ops != &arm_smmu_ops.iommu_ops) {
+	if (!fwspec) {
 		dev_err(dev, "cannot attach to SMMU, is it on the same bus?\n");
 		return -ENXIO;
 	}
@@ -2187,7 +2196,12 @@ static int __maybe_unused arm_smmu_map_sg(struct iommu_domain *domain, unsigned 
 	 * does not exist.
 	 */
 	for_each_sg(sg, tmp, nents, i) {
-		ret = ops->map(ops, iova + *mapped, sg_phys(tmp), tmp->length, prot, gfp);
+		{
+			size_t done = 0;
+
+			ret = ops->map_pages(ops, iova + *mapped, sg_phys(tmp),
+					     tmp->length, 1, prot, gfp, &done);
+		}
 		if (ret)
 			break;
 
@@ -2443,7 +2457,7 @@ static struct iommu_device *arm_smmu_probe_device(struct device *dev)
 		fwspec = dev_iommu_fwspec_get(dev);
 		if (ret)
 			goto out_free;
-	} else if (fwspec && fwspec->ops == &arm_smmu_ops.iommu_ops) {
+	} else if (fwspec) {
 		smmu = arm_smmu_get_by_fwnode(fwspec->iommu_fwnode);
 		if (!smmu)
 			return ERR_PTR(-ENODEV);
@@ -2497,7 +2511,6 @@ static struct iommu_device *arm_smmu_probe_device(struct device *dev)
 out_cfg_free:
 	kfree(cfg);
 out_free:
-	iommu_fwspec_free(dev);
 	return ERR_PTR(ret);
 }
 
@@ -2507,7 +2520,7 @@ static void arm_smmu_release_device(struct device *dev)
 	struct arm_smmu_master_cfg *cfg = dev_iommu_priv_get(dev);
 	int ret;
 
-	if (!fwspec || fwspec->ops != &arm_smmu_ops.iommu_ops)
+	if (!fwspec)
 		return;
 
 	cfg  = dev_iommu_priv_get(dev);
@@ -2594,21 +2607,6 @@ finish:
 	return group;
 }
 
-static int arm_smmu_enable_nesting(struct iommu_domain *domain)
-{
-	struct arm_smmu_domain *smmu_domain = to_smmu_domain(domain);
-	int ret = 0;
-
-	mutex_lock(&smmu_domain->init_mutex);
-	if (smmu_domain->smmu)
-		ret = -EPERM;
-	else
-		smmu_domain->stage = ARM_SMMU_DOMAIN_NESTED;
-	mutex_unlock(&smmu_domain->init_mutex);
-
-	return ret;
-}
-
 static int arm_smmu_set_pgtable_quirks(struct iommu_domain *domain,
 		unsigned long quirks)
 {
@@ -2625,7 +2623,8 @@ static int arm_smmu_set_pgtable_quirks(struct iommu_domain *domain,
 	return ret;
 }
 
-static int arm_smmu_of_xlate(struct device *dev, struct of_phandle_args *args)
+static int arm_smmu_of_xlate(struct device *dev,
+			     const struct of_phandle_args *args)
 {
 	u32 mask, fwid = 0;
 
@@ -2908,14 +2907,14 @@ static struct qcom_iommu_ops arm_smmu_ops = {
 		.flush_iotlb_all	= arm_smmu_flush_iotlb_all,
 		.iotlb_sync		= arm_smmu_iotlb_sync,
 		.iova_to_phys		= arm_smmu_iova_to_phys,
-		.enable_nesting		= arm_smmu_enable_nesting,
 		.set_pgtable_quirks	= arm_smmu_set_pgtable_quirks,
 		.free			= arm_smmu_domain_free,
 	},
 
 	.iommu_ops = {
 		.capable		= arm_smmu_capable,
-		.domain_alloc		= arm_smmu_domain_alloc,
+		.domain_alloc_paging	= arm_smmu_domain_alloc_paging,
+		.domain_alloc_identity	= arm_smmu_domain_alloc_identity,
 		.probe_device		= arm_smmu_probe_device,
 		.release_device		= arm_smmu_release_device,
 		.probe_finalize		= arm_smmu_probe_finalize,
@@ -2923,7 +2922,6 @@ static struct qcom_iommu_ops arm_smmu_ops = {
 		.of_xlate		= arm_smmu_of_xlate,
 		.get_resv_regions	= arm_smmu_get_resv_regions,
 		.def_domain_type	= arm_smmu_def_domain_type,
-		.pgsize_bitmap		= -1UL, /* Restricted during device attach */
 		.owner			= THIS_MODULE,
 		.default_domain_ops	= &arm_smmu_ops.domain_ops,
 	},
@@ -3389,10 +3387,6 @@ static int arm_smmu_device_cfg_probe(struct arm_smmu_device *smmu)
 	if (smmu->features & ARM_SMMU_FEAT_FMT_AARCH64_64K)
 		smmu->pgsize_bitmap |= SZ_64K | SZ_512M;
 
-	if (arm_smmu_ops.iommu_ops.pgsize_bitmap == -1UL)
-		arm_smmu_ops.iommu_ops.pgsize_bitmap = smmu->pgsize_bitmap;
-	else
-		arm_smmu_ops.iommu_ops.pgsize_bitmap |= smmu->pgsize_bitmap;
 	dev_notice(smmu->dev, "\tSupported page sizes: 0x%08lx\n",
 		   smmu->pgsize_bitmap);
 
@@ -4029,7 +4023,7 @@ static struct platform_driver arm_smmu_driver = {
 		.suppress_bind_attrs    = true,
 	},
 	.probe	= arm_smmu_device_probe,
-	.remove_new = arm_smmu_device_remove,
+	.remove = arm_smmu_device_remove,
 	.shutdown = arm_smmu_device_shutdown,
 };
 

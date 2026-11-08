@@ -28,6 +28,19 @@
 
 #include "io-pgtable-arm.h"
 
+/* Same names as the shared 6.18 io-pgtable-arm.h, with QC specific arguments */
+#define __arm_lpae_alloc_pages qcom___arm_lpae_alloc_pages
+#define __arm_lpae_free_pages qcom___arm_lpae_free_pages
+#define __arm_lpae_sync_pte qcom___arm_lpae_sync_pte
+#define arm_lpae_restrict_pgsizes qcom_arm_lpae_restrict_pgsizes
+#define arm_64_lpae_alloc_pgtable_s1 qcom_arm_64_lpae_alloc_pgtable_s1
+#define arm_64_lpae_alloc_pgtable_s2 qcom_arm_64_lpae_alloc_pgtable_s2
+#define arm_lpae_free_pgtable qcom_arm_lpae_free_pgtable
+#define arm_lpae_iova_to_phys qcom_arm_lpae_iova_to_phys
+#define arm_lpae_alloc_pgtable qcom_arm_lpae_alloc_pgtable
+#define arm_lpae_install_table qcom_arm_lpae_install_table
+
+
 #define ARM_LPAE_MAX_ADDR_BITS		52
 #define ARM_LPAE_S2_MAX_CONCAT_PAGES	16
 #define ARM_LPAE_MAX_LEVELS		4
@@ -1193,9 +1206,7 @@ arm_lpae_alloc_pgtable(struct io_pgtable_cfg *cfg)
 	data->pgd_bits = va_bits - (data->bits_per_level * (levels - 1));
 
 	data->iop.ops = (struct io_pgtable_ops) {
-		.map		= qcom_arm_lpae_map,
 		.map_pages	= qcom_arm_lpae_map_pages,
-		.unmap		= qcom_arm_lpae_unmap,
 		.unmap_pages	= qcom_arm_lpae_unmap_pages,
 		.iova_to_phys	= arm_lpae_iova_to_phys,
 	};

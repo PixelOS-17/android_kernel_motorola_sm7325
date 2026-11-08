@@ -14,6 +14,7 @@
 #include <linux/device.h>
 #include <linux/dma-direct.h>
 #include <linux/dma-map-ops.h>
+#include <linux/qcom-dma-mapping.h>
 #include <linux/gfp.h>
 #include <linux/huge_mm.h>
 #include <linux/iommu.h>
@@ -730,6 +731,11 @@ static int dma_info_to_prot(enum dma_data_direction dir, bool coherent,
 {
 	int prot;
 
+	if (attrs & DMA_ATTR_FORCE_COHERENT)
+		coherent = true;
+	else if (attrs & DMA_ATTR_FORCE_NON_COHERENT)
+		coherent = false;
+
 	if (attrs & DMA_ATTR_MMIO)
 		prot = IOMMU_MMIO;
 	else
@@ -1421,6 +1427,10 @@ int iommu_dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
 	unsigned long mask = dma_get_seg_boundary(dev);
 	ssize_t ret;
 	int i;
+
+	/* IO-coherent mappings need no CPU cache maintenance */
+	if (attrs & DMA_ATTR_FORCE_COHERENT)
+		attrs |= DMA_ATTR_SKIP_CPU_SYNC;
 
 	if (static_branch_unlikely(&iommu_deferred_attach_enabled)) {
 		ret = iommu_deferred_attach(dev, domain);

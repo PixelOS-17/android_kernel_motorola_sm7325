@@ -745,7 +745,7 @@ static dma_addr_t fast_smmu_dma_map_resource(
 	prot |= IOMMU_MMIO;
 
 	if (iommu_map(mapping->domain, dma_addr, phys_addr - offset,
-			len, prot)) {
+			len, prot, GFP_ATOMIC)) {
 		spin_lock_irqsave(&mapping->lock, flags);
 		__fast_smmu_free_iova(mapping, dma_addr, len);
 		spin_unlock_irqrestore(&mapping->lock, flags);
@@ -1073,8 +1073,7 @@ int fast_smmu_init_mapping(struct device *dev, struct iommu_domain *domain,
 }
 EXPORT_SYMBOL(fast_smmu_init_mapping);
 
-static void __fast_smmu_setup_dma_ops(void *data, struct device *dev,
-					u64 dma_base, u64 dma_limit)
+static void __fast_smmu_setup_dma_ops(void *data, struct device *dev)
 {
 	struct dma_fast_smmu_mapping *fast;
 	struct iommu_domain *domain;
@@ -1095,6 +1094,7 @@ static void __fast_smmu_setup_dma_ops(void *data, struct device *dev,
 	}
 
 	fast_smmu_reserve_iommu_regions(dev, fast);
+	dev->dma_iommu = false;
 	dev->dma_ops = &fast_smmu_dma_ops;
 }
 
@@ -1104,7 +1104,7 @@ static void __fast_smmu_setup_dma_ops(void *data, struct device *dev,
  */
 void fast_smmu_setup_dma_ops(struct device *dev, u64 dma_base, u64 dma_limit)
 {
-	__fast_smmu_setup_dma_ops(NULL, dev, dma_base, dma_limit);
+	__fast_smmu_setup_dma_ops(NULL, dev);
 }
 EXPORT_SYMBOL(fast_smmu_setup_dma_ops);
 

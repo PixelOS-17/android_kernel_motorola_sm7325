@@ -14,6 +14,7 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/shrinker.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/swap.h>
@@ -314,24 +315,21 @@ void dynamic_page_pool_release_pools(struct dynamic_page_pool **pool_list)
 	kfree(pool_list);
 }
 
-static struct shrinker pool_shrinker = {
-	.count_objects = dynamic_page_pool_shrink_count,
-	.scan_objects = dynamic_page_pool_shrink_scan,
-	.seeks = DEFAULT_SEEKS,
-	.batch = 0,
-};
+static struct shrinker *pool_shrinker;
 
 int dynamic_page_pool_init_shrinker(void)
 {
-	int ret;
 	static bool registered;
 
 	if (registered)
 		return 0;
 
-	ret = register_shrinker(&pool_shrinker, "dynamic_page_pool");
-	if (ret)
-		return ret;
+	pool_shrinker = shrinker_alloc(0, "dynamic_page_pool");
+	if (!pool_shrinker)
+		return -ENOMEM;
+	pool_shrinker->count_objects = dynamic_page_pool_shrink_count;
+	pool_shrinker->scan_objects = dynamic_page_pool_shrink_scan;
+	shrinker_register(pool_shrinker);
 
 	registered = true;
 	return 0;
