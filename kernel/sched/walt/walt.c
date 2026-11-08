@@ -4349,7 +4349,7 @@ static inline void __walt_irq_work_locked(bool is_migration, bool is_asym_migrat
 			i++;
 
 			if (!is_migration)
-				walt_update_irqload(rq);
+				walt_update_irqload(cpu_rq(cpu));
 		}
 	}
 
