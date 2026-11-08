@@ -17,6 +17,7 @@
 #ifndef _UAPI__ASM_SIGCONTEXT_H
 #define _UAPI__ASM_SIGCONTEXT_H
 
+#ifdef __aarch64__
 #ifndef __ASSEMBLY__
 
 #include <linux/types.h>
@@ -344,15 +345,36 @@ struct gcs_context {
 #define ZA_SIG_CONTEXT_SIZE(vq) \
 		(ZA_SIG_REGS_OFFSET + ZA_SIG_REGS_SIZE(vq))
 
-#define ZT_SIG_REG_SIZE 512
+#else /* __aarch64__ */
 
-#define ZT_SIG_REG_BYTES (ZT_SIG_REG_SIZE / 8)
-
-#define ZT_SIG_REGS_OFFSET sizeof(struct zt_context)
-
-#define ZT_SIG_REGS_SIZE(n) (ZT_SIG_REG_BYTES * (n))
-
-#define ZT_SIG_CONTEXT_SIZE(n) \
-	(sizeof(struct zt_context) + ZT_SIG_REGS_SIZE(n))
+/*
+ * Signal context structure - contains all info to do with the state
+ * before the signal handler was invoked.  Note: only add new entries
+ * to the end of the structure.
+ */
+struct sigcontext {
+	unsigned long trap_no;
+	unsigned long error_code;
+	unsigned long oldmask;
+	unsigned long arm_r0;
+	unsigned long arm_r1;
+	unsigned long arm_r2;
+	unsigned long arm_r3;
+	unsigned long arm_r4;
+	unsigned long arm_r5;
+	unsigned long arm_r6;
+	unsigned long arm_r7;
+	unsigned long arm_r8;
+	unsigned long arm_r9;
+	unsigned long arm_r10;
+	unsigned long arm_fp;
+	unsigned long arm_ip;
+	unsigned long arm_sp;
+	unsigned long arm_lr;
+	unsigned long arm_pc;
+	unsigned long arm_cpsr;
+	unsigned long fault_address;
+};
+#endif /* __aarch64__ */
 
 #endif /* _UAPI__ASM_SIGCONTEXT_H */

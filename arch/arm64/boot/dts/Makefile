@@ -1,4 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
+dtstree	:= $(srctree)/$(src)
+
+vendor  := $(dtstree)/vendor
+ifeq "$(wildcard $(vendor)/Makefile)" ""
 subdir-y += actions
 subdir-y += airoha
 subdir-y += allwinner
@@ -38,3 +42,7 @@ subdir-y += tesla
 subdir-y += ti
 subdir-y += toshiba
 subdir-y += xilinx
+
+else
+	subdir-y += vendor
+endif

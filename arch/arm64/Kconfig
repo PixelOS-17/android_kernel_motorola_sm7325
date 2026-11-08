@@ -1575,6 +1575,17 @@ config ARM64_PA_BITS
 config ARM64_LPA2
 	def_bool y
 	depends on ARM64_PA_BITS_52 && !ARM64_64K_PAGES
+config ARM64_MEMMAP_ON_MEMORY
+	bool "Support memmap_on_memory"
+	default n
+	depends on MHP_MEMMAP_ON_MEMORY
+	depends on !HUGETLB_PAGE
+	help
+	  Adjust the ARM64 section size such that the size of the
+	  struct page array (the memmap) for a memory block is aligned to
+	  pageblock_nr_pages. When hotplugging memory, this allows the
+	  memmap to be allocated from within the new memory block thus
+	  reducing pressure on existing memory blocks.
 
 choice
 	prompt "Endianness"
@@ -2560,3 +2571,4 @@ source "drivers/acpi/Kconfig"
 source "arch/arm64/kvm/Kconfig"
 
 source "kernel/livepatch/Kconfig"
+source "arch/arm64/gunyah/Kconfig"

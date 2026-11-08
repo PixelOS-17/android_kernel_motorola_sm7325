@@ -82,6 +82,26 @@
 	 *  x20        primary_entry() .. __primary_switch()    CPU boot mode
 	 *  x21        primary_entry() .. start_kernel()        FDT pointer passed at boot in x0
 	 */
+	/*
+	 * Bring-up stage delay: spin for 10s, using only x16/x17 so live
+	 * registers (boot arguments, SCTLR value, ...) are preserved.
+	 */
+	.macro	bringup_delay
+#ifdef CONFIG_TUNDRA_BRINGUP_STAGE_DELAYS
+	mrs	x16, cntfrq_el0
+	mov	x17, #10
+	mul	x16, x16, x17
+	isb
+	mrs	x17, cntvct_el0
+	add	x16, x16, x17
+.Lbringup_delay\@:
+	isb
+	mrs	x17, cntvct_el0
+	cmp	x17, x16
+	b.lo	.Lbringup_delay\@
+#endif
+	.endm
+
 SYM_CODE_START(primary_entry)
 	bl	record_mmu_state
 	bl	preserve_boot_args
