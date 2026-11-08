@@ -1313,18 +1313,17 @@ static enum power_supply_property uusb_props[] = {
 	POWER_SUPPLY_PROP_SCOPE,
 };
 
-static enum power_supply_usb_type usb_psy_supported_types[] = {
-	POWER_SUPPLY_USB_TYPE_UNKNOWN,
-	POWER_SUPPLY_USB_TYPE_SDP,
-	POWER_SUPPLY_USB_TYPE_DCP,
-	POWER_SUPPLY_USB_TYPE_CDP,
-	POWER_SUPPLY_USB_TYPE_ACA,
-	POWER_SUPPLY_USB_TYPE_C,
-	POWER_SUPPLY_USB_TYPE_PD,
-	POWER_SUPPLY_USB_TYPE_PD_DRP,
-	POWER_SUPPLY_USB_TYPE_PD_PPS,
-	POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID,
-};
+#define USB_PSY_SUPPORTED_TYPES ( \
+	BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) | \
+	BIT(POWER_SUPPLY_USB_TYPE_SDP) | \
+	BIT(POWER_SUPPLY_USB_TYPE_DCP) | \
+	BIT(POWER_SUPPLY_USB_TYPE_CDP) | \
+	BIT(POWER_SUPPLY_USB_TYPE_ACA) | \
+	BIT(POWER_SUPPLY_USB_TYPE_C) | \
+	BIT(POWER_SUPPLY_USB_TYPE_PD) | \
+	BIT(POWER_SUPPLY_USB_TYPE_PD_DRP) | \
+	BIT(POWER_SUPPLY_USB_TYPE_PD_PPS) | \
+	BIT(POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID))
 
 static struct power_supply_desc usb_psy_desc[NUM_USB_PORTS] = {
 	[USB_1_PORT_ID] = {
@@ -1334,8 +1333,7 @@ static struct power_supply_desc usb_psy_desc[NUM_USB_PORTS] = {
 		.num_properties		= ARRAY_SIZE(usb_props),
 		.get_property		= usb_psy_get_prop,
 		.set_property		= usb_psy_set_prop,
-		.usb_types		= usb_psy_supported_types,
-		.num_usb_types		= ARRAY_SIZE(usb_psy_supported_types),
+		.usb_types		= USB_PSY_SUPPORTED_TYPES,
 		.property_is_writeable	= usb_psy_prop_is_writeable,
 	},
 
@@ -1346,8 +1344,7 @@ static struct power_supply_desc usb_psy_desc[NUM_USB_PORTS] = {
 		.num_properties		= ARRAY_SIZE(usb_props),
 		.get_property		= usb_psy_get_prop,
 		.set_property		= usb_psy_set_prop,
-		.usb_types		= usb_psy_supported_types,
-		.num_usb_types		= ARRAY_SIZE(usb_psy_supported_types),
+		.usb_types		= USB_PSY_SUPPORTED_TYPES,
 		.property_is_writeable	= usb_psy_prop_is_writeable,
 	}
 };
@@ -1650,7 +1647,7 @@ static int battery_chg_init_psy(struct battery_chg_dev *bcdev)
 	int rc;
 
 	psy_cfg.drv_data = bcdev;
-	psy_cfg.of_node = bcdev->dev->of_node;
+	psy_cfg.fwnode = of_fwnode_handle(bcdev->dev->of_node);
 	if (bcdev->micro_usb) {
 		usb_psy_desc[USB_1_PORT_ID].properties = uusb_props;
 		usb_psy_desc[USB_1_PORT_ID].num_properties = ARRAY_SIZE(uusb_props);

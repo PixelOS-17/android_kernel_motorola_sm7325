@@ -1651,14 +1651,14 @@ static int tavil_codec_set_i2s_rx_ch(struct snd_soc_dapm_widget *w,
 
 	dai = &tavil_p->dai[w->shift];
 	dev_dbg(tavil_p->dev, "%s: %d up/down, %d width, %d rate\n",
-		__func__, up, dai->bit_width, dai->rate);
+		__func__, up, dai->bit_width, dai->symmetric_rate);
 	if (up) {
 		if (dai->bit_width == 16)
 			i2s_bit_mode = 0x01;
 		else
 			i2s_bit_mode = 0x00;
 
-		switch (dai->rate) {
+		switch (dai->symmetric_rate) {
 		case 8000:
 			rx_fs_rate = 0;
 			break;
@@ -1682,7 +1682,7 @@ static int tavil_codec_set_i2s_rx_ch(struct snd_soc_dapm_widget *w,
 			break;
 		default:
 			dev_err(tavil_p->dev, "%s: Invalid RX sample rate: %d\n",
-				__func__, dai->rate);
+				__func__, dai->symmetric_rate);
 			return -EINVAL;
 		};
 		snd_soc_component_update_bits(component, i2s_reg,
@@ -1718,7 +1718,7 @@ static int tavil_codec_set_i2s_tx_ch(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(
 			component, i2s_reg, 0x40, i2s_bit_mode << 6);
 
-		switch (dai->rate) {
+		switch (dai->symmetric_rate) {
 		case 8000:
 			tx_fs_rate = 0;
 			break;
@@ -1742,7 +1742,7 @@ static int tavil_codec_set_i2s_tx_ch(struct snd_soc_dapm_widget *w,
 			break;
 		default:
 			dev_err(tavil_p->dev, "%s: Invalid sample rate: %d\n",
-				__func__, dai->rate);
+				__func__, dai->symmetric_rate);
 			return -EINVAL;
 		};
 
@@ -1861,7 +1861,7 @@ static int tavil_codec_enable_rx(struct snd_soc_dapm_widget *w,
 		tavil_codec_enable_slim_port_intr(dai, component);
 		(void) tavil_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_rx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      &dai->grph);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1956,7 +1956,7 @@ static int tavil_codec_enable_tx(struct snd_soc_dapm_widget *w,
 		tavil_codec_enable_slim_port_intr(dai, component);
 		(void) tavil_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_tx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      &dai->grph);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -2060,7 +2060,7 @@ static int tavil_codec_enable_slimvi_feedback(struct snd_soc_dapm_widget *w,
 		tavil_codec_enable_slim_port_intr(dai, component);
 		(void) tavil_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_tx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      &dai->grph);
 		break;
 	case SND_SOC_DAPM_POST_PMD:

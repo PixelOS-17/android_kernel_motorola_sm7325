@@ -728,7 +728,6 @@ static struct class_attribute capsense_class_attributes[] = {
 
 struct class capsense_class = {
 	.name                   = "capsense",
-	.owner                  = THIS_MODULE,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
 	.class_groups           = capsense_class_groups,
 #else
@@ -1025,7 +1024,6 @@ static bool parse_flip_dt_params(struct sx937x_platform_data *pdata, struct devi
 static int sx937x_parse_dt(struct sx937x_platform_data *pdata, struct device *dev)
 {
 	struct device_node *dNode = dev->of_node;
-	enum of_gpio_flags flags;
 	int i, rc, support_panel_num;
 	const char *panel_name, *current_dsi;
 	const char *reg_group_name = "Semtech,reg-init";
@@ -1048,8 +1046,8 @@ static int sx937x_parse_dt(struct sx937x_platform_data *pdata, struct device *de
 			break;
 		case SX937X_POWER_SUPPLY_TYPE_EXTERNAL_LDO:
 			/* parse the gpio number for external LDO enable pin*/
-			pdata->eldo_gpio = of_get_named_gpio_flags(dNode,
-					"Semtech,eldo-gpio",0,&flags);
+			pdata->eldo_gpio = of_get_named_gpio(dNode,
+					"Semtech,eldo-gpio",0);
 			LOG_INFO("used eLDO_gpio 0x%x \n", pdata->eldo_gpio);
 			break;
 		default:
@@ -1057,8 +1055,8 @@ static int sx937x_parse_dt(struct sx937x_platform_data *pdata, struct device *de
 			break;
 	}
 
-	pdata->irq_gpio= of_get_named_gpio_flags(dNode,
-			"Semtech,nirq-gpio", 0, &flags);
+	pdata->irq_gpio= of_get_named_gpio(dNode,
+			"Semtech,nirq-gpio", 0);
 	irq_gpio_num = pdata->irq_gpio;
 	if (pdata->irq_gpio < 0){
 		LOG_ERR("get irq_gpio error\n");
@@ -1604,9 +1602,6 @@ static int sx937x_probe(struct i2c_client *client)
 				LOG_ERR("Create fsys class failed (%d)\n", err);
 				return err;
 			}
-
-			/*restore sys/class/capsense label*/
-			kobject_uevent(&capsense_class.p->subsys.kobj, KOBJ_CHANGE);
 
 			/* Add Pointer to main platform data struct */
 			pDevice->hw = pplatData;

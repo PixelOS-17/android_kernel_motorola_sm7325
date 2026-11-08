@@ -7,6 +7,7 @@
 #define pr_fmt(fmt)	"UCSI: %s: " fmt, __func__
 
 #include <clocksource/arm_arch_timer.h>
+#include <linux/unaligned.h>
 #include <linux/device.h>
 #include <linux/ipc_logging.h>
 #include <linux/module.h>
@@ -433,13 +434,13 @@ static void ucsi_qti_notify_work(struct work_struct *work)
 }
 
 static void ucsi_qti_notify(struct ucsi_dev *udev, unsigned int offset,
-			    struct ucsi_connector_status *status, size_t len)
+			    const void *status, size_t len)
 {
 	u8 conn_partner_type;
 	bool cmd_requested;
 	struct constat_info_entry *entry;
 
-	if (len != sizeof(*status))
+	if (len < sizeof(u32))
 		return;
 
 	mutex_lock(&udev->notify_lock);
@@ -452,7 +453,8 @@ static void ucsi_qti_notify(struct ucsi_dev *udev, unsigned int offset,
 			return;
 
 		INIT_LIST_HEAD(&entry->node);
-		conn_partner_type = UCSI_CONSTAT_PARTNER_TYPE(status->flags);
+		/* CONNECTOR_STATUS byte layout: partner type is bits 13-15 of bytes 2-3 */
+		conn_partner_type = (get_unaligned_le16(status + 2) >> 13) & 0x7;
 
 		switch (conn_partner_type) {
 		case UCSI_CONSTAT_PARTNER_TYPE_AUDIO:
@@ -529,10 +531,53 @@ out:
 	return rc;
 }
 
+static int ucsi_qti_read_version(struct ucsi *ucsi, u16 *version)
+{
+	return ucsi_qti_read(ucsi, UCSI_VERSION, version, sizeof(*version));
+}
+
+static int ucsi_qti_read_cci(struct ucsi *ucsi, u32 *cci)
+{
+	return ucsi_qti_read(ucsi, UCSI_CCI, cci, sizeof(*cci));
+}
+
+static int ucsi_qti_read_message_in(struct ucsi *ucsi, void *val, size_t val_len)
+{
+	return ucsi_qti_read(ucsi, UCSI_MESSAGE_IN, val, val_len);
+}
+
+static int ucsi_qti_async_control(struct ucsi *ucsi, u64 command)
+{
+	return ucsi_qti_async_write(ucsi, UCSI_CONTROL, &command, sizeof(command));
+}
+
+static int ucsi_qti_sync_control(struct ucsi *ucsi, u64 command, u32 *cci,
+				 void *data, size_t size)
+{
+	int rc;
+
+	rc = ucsi_qti_sync_write(ucsi, UCSI_CONTROL, &command, sizeof(command));
+	if (rc)
+		return rc;
+
+	if (cci) {
+		rc = ucsi_qti_read_cci(ucsi, cci);
+		if (rc)
+			return rc;
+	}
+
+	if (data && (!cci || !(*cci & UCSI_CCI_ERROR)))
+		rc = ucsi_qti_read_message_in(ucsi, data, size);
+
+	return rc;
+}
+
 static const struct ucsi_operations ucsi_qti_ops = {
-	.read = ucsi_qti_read,
-	.sync_write = ucsi_qti_sync_write,
-	.async_write = ucsi_qti_async_write
+	.read_version = ucsi_qti_read_version,
+	.read_cci = ucsi_qti_read_cci,
+	.read_message_in = ucsi_qti_read_message_in,
+	.sync_control = ucsi_qti_sync_control,
+	.async_control = ucsi_qti_async_control,
 };
 
 static int ucsi_setup(struct ucsi_dev *udev)

@@ -1581,10 +1581,8 @@ static int register_switch_device(struct qti_flash_led *led,
 
 	snode->on_time_ms = 0;
 	snode->off_time_ms = 0;
-	hrtimer_init(&snode->on_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	hrtimer_init(&snode->off_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	snode->on_timer.function = on_timer_function;
-	snode->off_timer.function = off_timer_function;
+	hrtimer_setup(&snode->on_timer, on_timer_function, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	hrtimer_setup(&snode->off_timer, off_timer_function, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 
 	snode->led = led;
 	snode->cdev.brightness_set = qti_flash_led_switch_brightness_set;
@@ -1813,7 +1811,7 @@ static int qti_flash_led_register_device(struct qti_flash_led *led,
 
 		scnprintf(buffer, sizeof(buffer), "hw_strobe_gpio%d", i);
 		rc = devm_gpio_request_one(&led->pdev->dev,
-				led->hw_strobe_gpio[i], GPIOF_DIR_OUT,
+				led->hw_strobe_gpio[i], GPIOF_OUT_INIT_LOW,
 				buffer);
 		if (rc < 0) {
 			pr_err("Failed to acquire gpio rc = %d\n", rc);

@@ -6122,7 +6122,7 @@ static int tomtom_codec_enable_slimrx(struct snd_soc_dapm_widget *w,
 		tomtom_codec_enable_int_port(dai, component);
 		(void) tomtom_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_rx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      dai->direction);
 		dev_dbg(component->dev, "%s: Enabling RX port and channels done, ret =%d\n",
 				__func__, ret);
@@ -6193,7 +6193,7 @@ static int tomtom_codec_enable_slimvi_feedback(struct snd_soc_dapm_widget *w,
 		tomtom_codec_enable_int_port(dai, component);
 		(void) tomtom_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_tx(core, &dai->wcd9xxx_ch_list,
-					dai->rate, dai->bit_width,
+					dai->symmetric_rate, dai->bit_width,
 					dai->direction);
 		break;
 	case SND_SOC_DAPM_POST_PMD:

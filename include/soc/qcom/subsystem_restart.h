@@ -272,7 +272,6 @@ static inline void wakeup_source_trash(struct wakeup_source *ws)
 	if (!ws)
 		return;
 
-	wakeup_source_remove(ws);
 	__pm_relax(ws);
 }
 

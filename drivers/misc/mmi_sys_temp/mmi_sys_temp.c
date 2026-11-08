@@ -66,7 +66,7 @@ struct thermal_zone_device *thermal_zone_device_register(const char *type, int n
                                                         const struct thermal_zone_params *tzp, int passive_delay,
                                                         int polling_delay)
 {
-       return thermal_zone_device_register_with_trips(type, NULL, ntrips, mask,
+       return thermal_zone_device_register_with_trips(type, NULL, 0,
                                                       devdata, ops, tzp,
                                                       passive_delay, polling_delay);
 }
@@ -97,7 +97,7 @@ static int uevent_generate(struct mmi_sys_temp_dev *data, int index)
 	add_uevent_var(env, "TEMP=%d", data->sensor[index].temp);
 	add_uevent_var(env, "TRIP=%d", 0);
 
-	ret = kobject_uevent_env(&data->sensor[index].tz_dev->device.kobj, KOBJ_CHANGE, env->envp);
+	ret = kobject_uevent_env(&thermal_zone_device(data->sensor[index].tz_dev)->kobj, KOBJ_CHANGE, env->envp);
 
 	devm_kfree(&data->pdev->dev, env);
 
@@ -237,7 +237,7 @@ static struct miscdevice mmi_sys_temp_misc = {
 static int mmi_sys_temp_get(struct thermal_zone_device *thermal,
 			    int *temp)
 {
-	struct mmi_sys_temp_sensor *sensor = thermal->devdata;
+	struct mmi_sys_temp_sensor *sensor = thermal_zone_device_priv(thermal);
 
 	if (!sensor)
 		return -EINVAL;

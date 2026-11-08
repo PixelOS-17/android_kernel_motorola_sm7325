@@ -3045,7 +3045,7 @@ static int tasha_codec_enable_slimrx(struct snd_soc_dapm_widget *w,
 		tasha_codec_enable_int_port(dai, component);
 		(void) tasha_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_rx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      dai->direction);
 		dev_dbg(component->dev, "%s: Enabling RX port and channels done, ret =%d\n",
 				__func__, ret);
@@ -3167,7 +3167,7 @@ static int tasha_codec_enable_slimvi_feedback(struct snd_soc_dapm_widget *w,
 		tasha_codec_enable_int_port(dai, component);
 		(void) tasha_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_tx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      dai->direction);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -3249,7 +3249,7 @@ static int __tasha_codec_enable_slimtx(struct snd_soc_component *component,
 		tasha_codec_enable_int_port(dai, component);
 		(void) tasha_codec_enable_slim_chmask(dai, true);
 		ret = wcd9xxx_cfg_slim_sch_tx(core, &dai->wcd9xxx_ch_list,
-					      dai->rate, dai->bit_width,
+					      dai->symmetric_rate, dai->bit_width,
 					      dai->direction);
 		dev_dbg(component->dev, "%s: Enabling tx ports and channels done\n", __func__);
 		break;
@@ -3314,7 +3314,7 @@ static void tasha_codec_cpe_pp_set_cfg(struct snd_soc_component *component,
 		snd_soc_component_update_bits(component,
 				WCD9335_CPE_SS_TX_PP_CFG, 0x0F, bit_width);
 
-		switch (dai->rate) {
+		switch (dai->symmetric_rate) {
 		case 384000:
 			rate = 0x30;
 			break;
@@ -3332,7 +3332,7 @@ static void tasha_codec_cpe_pp_set_cfg(struct snd_soc_component *component,
 		snd_soc_component_update_bits(component,
 				WCD9335_CPE_SS_TX_PP_CFG, 0x70, rate);
 
-		buf_period = (dai->rate * (dai->bit_width/8)) / (16*1000);
+		buf_period = (dai->symmetric_rate * (dai->bit_width/8)) / (16*1000);
 		snd_soc_component_update_bits(component,
 				WCD9335_CPE_SS_TX_PP_BUF_INT_PERIOD,
 				0xFF, buf_period);

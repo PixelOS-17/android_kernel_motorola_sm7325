@@ -103,7 +103,7 @@ static struct egis_key_map_t key_maps[] = {
 };
 
 int egisfp_probe(struct platform_device *pdev);
-int egisfp_remove(struct platform_device *pdev);
+void egisfp_remove(struct platform_device *pdev);
 
 /* -------------------------------------------------------------------- */
 

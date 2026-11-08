@@ -1087,11 +1087,11 @@ static int snd_compress_simple_ioctls(struct file *file,
 #endif
 
 	case _IOC_NR(SNDRV_COMPRESS_TSTAMP):
-		retval = snd_compr_tstamp(stream, arg);
+		retval = snd_compr_tstamp(stream, arg, true);
 		break;
 
 	case _IOC_NR(SNDRV_COMPRESS_AVAIL):
-		retval = snd_compr_ioctl_avail(stream, arg);
+		retval = snd_compr_ioctl_avail(stream, arg, true);
 		break;
 
 	case _IOC_NR(SNDRV_COMPRESS_DRAIN):

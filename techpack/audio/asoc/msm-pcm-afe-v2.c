@@ -461,9 +461,8 @@ static int msm_afe_open(struct snd_soc_component *component, struct snd_pcm_subs
 	atomic_set(&prtd->rec_bytes_avail, 0);
 	init_waitqueue_head(&prtd->read_wait);
 
-	hrtimer_init(&prtd->hrt, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	hrtimer_setup(&prtd->hrt, afe_hrtimer_callback, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		prtd->hrt.function = afe_hrtimer_callback;
 	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		prtd->hrt.function = afe_hrtimer_rec_callback;
 

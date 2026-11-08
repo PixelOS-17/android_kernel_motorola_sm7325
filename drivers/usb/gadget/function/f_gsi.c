@@ -1907,7 +1907,7 @@ static int gsi_function_ctrl_port_init(struct f_gsi *gsi)
 	if (!ctrl_dev_create)
 		return 0;
 
-	minor = ida_simple_get(&gsi_ida, 0, MAX_CDEV_INSTANCES, GFP_KERNEL);
+	minor = ida_alloc_max(&gsi_ida, (MAX_CDEV_INSTANCES) - 1, GFP_KERNEL);
 	if (minor < 0) {
 		pr_err("%s: No more minor numbers left! rc:%d\n", __func__,
 				minor);

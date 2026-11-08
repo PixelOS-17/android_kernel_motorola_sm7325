@@ -3436,8 +3436,7 @@ static void aw882xx_monitor_work_func(struct work_struct *work)
 void init_aw882xx_monitor(struct aw882xx_monitor *monitor)
 {
 	pr_info("%s: enter\n", __func__);
-	hrtimer_init(&monitor->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	monitor->timer.function = aw882xx_monitor_timer_func;
+	hrtimer_setup(&monitor->timer, aw882xx_monitor_timer_func, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&monitor->work, aw882xx_monitor_work_func);
 	monitor->pre_vol = 0;
 	monitor->vol_count = 0;

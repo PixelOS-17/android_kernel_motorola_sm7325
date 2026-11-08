@@ -3408,7 +3408,7 @@ static int qti_charger_init(struct qti_charger *chg)
 				"mmi,main-battery-enabled")) {
 		struct power_supply_config psy_cfg = {};
 		psy_cfg.drv_data = chg;
-		psy_cfg.of_node = chg->dev->of_node;
+		psy_cfg.fwnode = of_fwnode_handle(chg->dev->of_node);
 		chg->batt_psy = devm_power_supply_register(chg->dev,
 						&batt_psy_desc,
 						&psy_cfg);

@@ -71,14 +71,14 @@ void pm6125_flash_gpio_select_state(PM6125_FLASH_GPIO_STATE s, enum camera_flash
 		}
 
 		pstate.enabled = true;
-		rc = pwm_apply_state(pwm, &pstate);
+		rc = pwm_apply_might_sleep(pwm, &pstate);
 
 		PM6125_FLASH_PRINT("[pm6125_flash_gpio]Active duty_cycle = %u, period = %u, opcode = %u, real_current = %u\n",
 						pstate.duty_cycle, pstate.period, opcode, real_current);
 		break;
 	case PM6125_FLASH_GPIO_STATE_SUSPEND:
 		pstate.enabled = false;
-		rc = pwm_apply_state(pwm, &pstate);
+		rc = pwm_apply_might_sleep(pwm, &pstate);
 		PM6125_FLASH_PRINT("[pm6125_flash_gpio]Suspend");
 		break;
 	default:

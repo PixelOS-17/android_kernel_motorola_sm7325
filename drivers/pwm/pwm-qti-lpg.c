@@ -213,7 +213,7 @@ struct qpnp_lpg_channel {
 };
 
 struct qpnp_lpg_chip {
-	struct pwm_chip		pwm_chip;
+	struct pwm_chip		*pwm_chip;
 	struct regmap		*regmap;
 	struct device		*dev;
 	struct qpnp_lpg_channel	*lpgs;
@@ -394,8 +394,7 @@ static struct qpnp_lpg_channel *pwm_dev_to_qpnp_lpg(struct pwm_chip *pwm_chip,
 				struct pwm_device *pwm)
 {
 
-	struct qpnp_lpg_chip *chip = container_of(pwm_chip,
-			struct qpnp_lpg_chip, pwm_chip);
+	struct qpnp_lpg_chip *chip = pwmchip_get_drvdata(pwm_chip);
 	u32 hw_idx = pwm->hwpwm;
 
 	if (hw_idx >= chip->num_lpgs) {
@@ -1135,7 +1134,7 @@ static int qpnp_lpg_pwm_config(struct pwm_chip *pwm_chip,
 
 	lpg = pwm_dev_to_qpnp_lpg(pwm_chip, pwm);
 	if (lpg == NULL) {
-		dev_err(pwm_chip->dev, "lpg not found\n");
+		dev_err(pwmchip_parent(pwm_chip), "lpg not found\n");
 		return -ENODEV;
 	}
 
@@ -1277,7 +1276,7 @@ static int qpnp_lpg_pwm_src_enable(struct qpnp_lpg_channel *lpg, bool en)
 			if (chip->lpg_group[i] == 0)
 				break;
 			lpg_idx = chip->lpg_group[i] - 1;
-			pwm = &chip->pwm_chip.pwms[lpg_idx];
+			pwm = &chip->pwm_chip->pwms[lpg_idx];
 			if ((lpg->output_type == PWM_OUTPUT_MODULATED)
 						&& pwm_is_enabled(pwm)) {
 				rc = qpnp_lpg_masked_write(&chip->lpgs[lpg_idx],
@@ -1320,7 +1319,7 @@ int qpnp_lpg_pwm_set_output_type(struct pwm_device *pwm,
 
 	lpg = pwm_dev_to_qpnp_lpg(pwm->chip, pwm);
 	if (lpg == NULL) {
-		dev_err(pwm->chip->dev, "lpg not found\n");
+		dev_err(pwmchip_parent(pwm->chip), "lpg not found\n");
 		return -ENODEV;
 	}
 
@@ -1348,7 +1347,7 @@ int qpnp_lpg_pwm_set_output_type(struct pwm_device *pwm,
 		 */
 		rc = qpnp_lpg_pwm_src_enable(lpg, false);
 		if (rc < 0) {
-			dev_err(pwm->chip->dev, "Enable PWM output failed for channel %d, rc=%d\n",
+			dev_err(pwmchip_parent(pwm->chip), "Enable PWM output failed for channel %d, rc=%d\n",
 					lpg->lpg_idx, rc);
 			return rc;
 		}
@@ -1370,7 +1369,7 @@ int qpnp_lpg_pwm_set_output_type(struct pwm_device *pwm,
 
 		rc = qpnp_lpg_set_ramp_config(lpg);
 		if (rc < 0) {
-			dev_err(pwm->chip->dev, "Config LPG%d ramping failed, rc=%d\n",
+			dev_err(pwmchip_parent(pwm->chip), "Config LPG%d ramping failed, rc=%d\n",
 					lpg->lpg_idx, rc);
 			return rc;
 		}
@@ -1381,14 +1380,14 @@ int qpnp_lpg_pwm_set_output_type(struct pwm_device *pwm,
 	if (is_enabled) {
 		rc = qpnp_lpg_set_pwm_config(lpg);
 		if (rc < 0) {
-			dev_err(pwm->chip->dev, "Config PWM failed for channel %d, rc=%d\n",
+			dev_err(pwmchip_parent(pwm->chip), "Config PWM failed for channel %d, rc=%d\n",
 							lpg->lpg_idx, rc);
 			return rc;
 		}
 
 		rc = qpnp_lpg_pwm_src_enable(lpg, true);
 		if (rc < 0) {
-			dev_err(pwm->chip->dev, "Enable PWM output failed for channel %d, rc=%d\n",
+			dev_err(pwmchip_parent(pwm->chip), "Enable PWM output failed for channel %d, rc=%d\n",
 					lpg->lpg_idx, rc);
 			return rc;
 		}
@@ -1412,7 +1411,7 @@ int qpnp_lpg_pwm_get_output_types_supported(struct pwm_device *pwm)
 
 	lpg = pwm_dev_to_qpnp_lpg(pwm->chip, pwm);
 	if (lpg == NULL) {
-		dev_err(pwm->chip->dev, "lpg not found\n");
+		dev_err(pwmchip_parent(pwm->chip), "lpg not found\n");
 		return -ENODEV;
 	}
 
@@ -1431,7 +1430,7 @@ static int qpnp_lpg_pwm_enable(struct pwm_chip *pwm_chip,
 
 	lpg = pwm_dev_to_qpnp_lpg(pwm_chip, pwm);
 	if (lpg == NULL) {
-		dev_err(pwm_chip->dev, "lpg not found\n");
+		dev_err(pwmchip_parent(pwm_chip), "lpg not found\n");
 		return -ENODEV;
 	}
 
@@ -1457,7 +1456,7 @@ static int qpnp_lpg_pwm_enable(struct pwm_chip *pwm_chip,
 
 	rc = qpnp_lpg_pwm_src_enable(lpg, true);
 	if (rc < 0)
-		dev_err(pwm_chip->dev, "Enable PWM output failed for channel %d, rc=%d\n",
+		dev_err(pwmchip_parent(pwm_chip), "Enable PWM output failed for channel %d, rc=%d\n",
 						lpg->lpg_idx, rc);
 
 	return rc;
@@ -1471,13 +1470,13 @@ static void qpnp_lpg_pwm_disable(struct pwm_chip *pwm_chip,
 
 	lpg = pwm_dev_to_qpnp_lpg(pwm_chip, pwm);
 	if (lpg == NULL) {
-		dev_err(pwm_chip->dev, "lpg not found\n");
+		dev_err(pwmchip_parent(pwm_chip), "lpg not found\n");
 		return;
 	}
 
 	rc = qpnp_lpg_pwm_src_enable(lpg, false);
 	if (rc < 0) {
-		dev_err(pwm_chip->dev, "Disable PWM output failed for channel %d, rc=%d\n",
+		dev_err(pwmchip_parent(pwm_chip), "Disable PWM output failed for channel %d, rc=%d\n",
 						lpg->lpg_idx, rc);
 		return;
 	}
@@ -1521,7 +1520,6 @@ static int qpnp_lpg_pwm_apply(struct pwm_chip *pwm_chip, struct pwm_device *pwm,
 
 static const struct pwm_ops qpnp_lpg_pwm_ops = {
 	.apply = qpnp_lpg_pwm_apply,
-	.owner = THIS_MODULE,
 };
 
 static int qpnp_get_lpg_channels(struct qpnp_lpg_chip *chip, u32 *base)
@@ -2061,12 +2059,13 @@ static int qpnp_lpg_probe(struct platform_device *pdev)
 	}
 
 	dev_set_drvdata(chip->dev, chip);
-	chip->pwm_chip.dev = chip->dev;
-	chip->pwm_chip.base = -1;
-	chip->pwm_chip.npwm = chip->num_lpgs;
-	chip->pwm_chip.ops = &qpnp_lpg_pwm_ops;
+	chip->pwm_chip = devm_pwmchip_alloc(chip->dev, chip->num_lpgs, 0);
+	if (IS_ERR(chip->pwm_chip))
+		return PTR_ERR(chip->pwm_chip);
+	pwmchip_set_drvdata(chip->pwm_chip, chip);
+	chip->pwm_chip->ops = &qpnp_lpg_pwm_ops;
 
-	rc = pwmchip_add(&chip->pwm_chip);
+	rc = pwmchip_add(chip->pwm_chip);
 	if (rc < 0) {
 		dev_err(chip->dev, "Add pwmchip failed, rc=%d\n", rc);
 		goto err_out;
@@ -2083,7 +2082,7 @@ static void qpnp_lpg_remove(struct platform_device *pdev)
 	struct qpnp_lpg_chip *chip = dev_get_drvdata(&pdev->dev);
 
 	of_node_put(chip->pbs_dev_node);
-	pwmchip_remove(&chip->pwm_chip);
+	pwmchip_remove(chip->pwm_chip);
 	mutex_destroy(&chip->bus_lock);
 	dev_set_drvdata(chip->dev, NULL);
 }
@@ -2092,7 +2091,7 @@ static int pwm_restore(struct device *dev)
 {
 	struct qpnp_lpg_chip *chip = dev_get_drvdata(dev);
 	struct qpnp_lpg_channel *lpg;
-	struct pwm_device *pwm = chip->pwm_chip.pwms;
+	struct pwm_device *pwm = chip->pwm_chip->pwms;
 	int rc = 0, i;
 
 	pr_debug("Restoring from hibernation via pwm restore\n");

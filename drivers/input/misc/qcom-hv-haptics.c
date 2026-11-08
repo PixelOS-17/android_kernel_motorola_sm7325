@@ -5180,8 +5180,7 @@ static int haptics_probe(struct platform_device *pdev)
 	mutex_init(&chip->play.lock);
 	disable_irq_nosync(chip->fifo_empty_irq);
 	chip->fifo_empty_irq_en = false;
-	hrtimer_init(&chip->hbst_off_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	chip->hbst_off_timer.function = haptics_disable_hbst_timer;
+	hrtimer_setup(&chip->hbst_off_timer, haptics_disable_hbst_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_DELAYED_WORK(&chip->stop_work, haptics_stop_constant_effect_play);
 	INIT_WORK(&chip->set_gain_work, haptics_set_gain_work);
 

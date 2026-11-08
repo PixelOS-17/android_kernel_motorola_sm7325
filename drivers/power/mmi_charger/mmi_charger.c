@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/alarmtimer.h>
 #include <linux/version.h>
 #include <linux/alarmtimer.h>
 #include <linux/device.h>
@@ -3080,7 +3081,7 @@ static int mmi_charger_probe(struct platform_device *pdev)
 	chip->name = "mmi_charger";
 	chip->dev = &pdev->dev;
 	psy_cfg.drv_data = chip;
-	psy_cfg.of_node = chip->dev->of_node;
+	psy_cfg.fwnode = of_fwnode_handle(chip->dev->of_node);
 	chip->suspended = 0;
 	chip->combo_status = 0;
 	chip->combo_age = 100;

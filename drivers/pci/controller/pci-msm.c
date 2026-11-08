@@ -819,7 +819,7 @@ struct msm_aer_err_info {
 
 	unsigned int status;		/* COR/UNCOR Error Status */
 	unsigned int mask;		/* COR/UNCOR Error Mask */
-	struct aer_header_log_regs tlp;	/* TLP Header */
+	struct pcie_tlp_log tlp;	/* TLP Header */
 
 	u32 l1ss_ctl1;			/* PCI_L1SS_CTL1 reg value */
 	u16 lnksta;			/* PCI_EXP_LNKSTA reg value */
@@ -7117,13 +7117,8 @@ static int msm_pcie_config_device_info(struct pci_dev *pcidev, void *pdev)
 
 	if (pcie_dev->aer_enable) {
 		if (pci_pcie_type(pcidev) == PCI_EXP_TYPE_ROOT_PORT)
-			pcie_dev->aer_stats = pcidev->aer_stats;
+			pcie_dev->aer_stats = NULL;	/* private to the 6.18 AER core */
 
-		if (pci_enable_pcie_error_reporting(pcidev))
-			PCIE_ERR(pcie_dev,
-				 "PCIe: RC%d: PCIE error reporting unavailable on %02x:%02x:%01x\n",
-				 pcie_dev->rc_idx, pcidev->bus->number,
-				 PCI_SLOT(pcidev->devfn), PCI_FUNC(pcidev->devfn));
 	}
 
 	return 0;
@@ -7727,7 +7722,7 @@ static void msm_pci_dev_aer_stats_incr(struct pci_dev *pdev,
 	unsigned long status = info->status & ~info->mask;
 	int i, max = -1;
 	u64 *counter = NULL;
-	struct aer_stats *aer_stats = pdev->aer_stats;
+	struct aer_stats *aer_stats = NULL;
 
 	if (!aer_stats)
 		return;
@@ -7757,7 +7752,7 @@ static void msm_pci_dev_aer_stats_incr(struct pci_dev *pdev,
 static void msm_pci_rootport_aer_stats_incr(struct pci_dev *pdev,
 					    struct aer_err_source *e_src)
 {
-	struct aer_stats *aer_stats = pdev->aer_stats;
+	struct aer_stats *aer_stats = NULL;
 
 	if (!aer_stats)
 		return;
@@ -9898,7 +9893,7 @@ static void msm_pcie_remove(struct platform_device *pdev)
 out:
 	mutex_unlock(&pcie_drv.drv_lock);
 
-	return ret;
+	return;
 }
 
 static int msm_pcie_link_retrain(struct msm_pcie_dev_t *pcie_dev,

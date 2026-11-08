@@ -130,7 +130,7 @@ static int __tri_led_config_pwm(struct qpnp_led_dev *led,
 		return rc;
 	}
 
-	rc = pwm_apply_state(led->pwm_dev, &pstate);
+	rc = pwm_apply_might_sleep(led->pwm_dev, &pstate);
 	if (rc < 0)
 		dev_err(led->chip->dev, "Apply PWM state for %s led failed, rc=%d\n",
 					led->cdev.name, rc);

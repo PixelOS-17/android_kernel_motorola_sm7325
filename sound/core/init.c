@@ -1132,7 +1132,7 @@ EXPORT_SYMBOL(snd_card_file_remove);
  */
 void snd_card_change_online_state(struct snd_card *card, int online)
 {
-	snd_printd("snd card %s state change %d -> %d\n",
+	pr_debug("snd card %s state change %d -> %d\n",
 		card->shortname, !card->offline, online);
 	card->offline = !online;
 	/* make sure offline is updated prior to wake up */

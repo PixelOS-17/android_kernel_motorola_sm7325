@@ -839,6 +839,27 @@ config_err:
  * then initialized and any private data can be allocated. This also calls
  * startup for the cpu DAI, component, machine and codec DAI.
  */
+/* ASoC no host IO hardware */
+static const struct snd_pcm_hardware no_host_hardware = {
+	.info			= SNDRV_PCM_INFO_MMAP |
+				  SNDRV_PCM_INFO_MMAP_VALID |
+				  SNDRV_PCM_INFO_INTERLEAVED |
+				  SNDRV_PCM_INFO_PAUSE |
+				  SNDRV_PCM_INFO_RESUME,
+	.formats		= SNDRV_PCM_FMTBIT_S16_LE |
+				  SNDRV_PCM_FMTBIT_S32_LE,
+	.period_bytes_min	= PAGE_SIZE >> 2,
+	.period_bytes_max	= PAGE_SIZE >> 1,
+	.periods_min		= 2,
+	.periods_max		= 4,
+	/*
+	 * Increase the max buffer bytes as PAGE_SIZE bytes is
+	 * not enough to encompass all the scenarios sent by
+	 * userspapce.
+	 */
+	.buffer_bytes_max	= PAGE_SIZE * 4,
+};
+
 static int __soc_pcm_open(struct snd_soc_pcm_runtime *rtd,
 			  struct snd_pcm_substream *substream)
 {

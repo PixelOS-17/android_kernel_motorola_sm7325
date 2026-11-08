@@ -121,6 +121,7 @@ struct blkdev {
 	size_t size;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0) || defined(CONFIG_MMI_UTAG_RW_BIO)
 	struct block_device *bdev;
+	struct file *bdev_file;
 #endif
 };
 
@@ -468,18 +469,16 @@ static int open_utags(struct blkdev *cb)
 	if (cb->bdev != NULL)
 		return 0;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
-	bdev = blkdev_get_by_path(cb->name, FMODE_READ | FMODE_WRITE, cb, NULL);
-#else
-	bdev = blkdev_get_by_path(cb->name, FMODE_READ | FMODE_WRITE, cb);
-#endif
+	cb->bdev_file = bdev_file_open_by_path(cb->name,
+					       BLK_OPEN_READ | BLK_OPEN_WRITE, cb, NULL);
+	bdev = IS_ERR(cb->bdev_file) ? ERR_CAST(cb->bdev_file) : file_bdev(cb->bdev_file);
 	if (IS_ERR(bdev)) {
 		pr_err("(%s) failed get block device\n", cb->name);
 		return -EIO;
 	}
 
 	cb->bdev = bdev;
-	cb->size = i_size_read(bdev->bd_inode);
+	cb->size = bdev_nr_bytes(bdev);
 	cb->filep = NULL;
 	pr_debug("%s: read inode size %lu\n", __func__, cb->size);
 #else
@@ -2250,11 +2249,11 @@ static void utags_remove(struct platform_device *pdev)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
 	if (ctrl->main.bdev) {
-		blkdev_put(ctrl->main.bdev, &ctrl->main);
+		fput(ctrl->main.bdev_file);
 		ctrl->main.bdev = NULL;
 	}
 	if (ctrl->backup.bdev) {
-		blkdev_put(ctrl->backup.bdev, &ctrl->backup);
+		fput(ctrl->backup.bdev_file);
 		ctrl->backup.bdev = NULL;
 	}
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0) || defined(CONFIG_MMI_UTAG_RW_BIO)

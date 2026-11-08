@@ -491,7 +491,7 @@ static void dsi_phy_driver_remove(struct platform_device *pdev)
 
 	if (!pdev || !phy) {
 		DSI_PHY_ERR(phy, "Invalid device\n");
-		return -EINVAL;
+		return;
 	}
 
 	mutex_lock(&dsi_phy_list_lock);

@@ -1728,7 +1728,7 @@ static int __get_qdss_iommu_virtual_addr(struct iris_hfi_device *dev,
 			rc = iommu_map(domain, iova,
 					qdss_addr_tbl[i].start,
 					qdss_addr_tbl[i].size,
-					IOMMU_READ | IOMMU_WRITE);
+					IOMMU_READ | IOMMU_WRITE, GFP_KERNEL);
 
 			if (rc) {
 				dprintk(CVP_ERR,
@@ -3540,7 +3540,7 @@ static int __init_bus(struct iris_hfi_device *device)
 		WARN(dev_get_drvdata(bus->dev), "%s's drvdata already set\n",
 				dev_name(bus->dev));
 		dev_set_drvdata(bus->dev, device);
-		bus->client = icc_get(&device->res->pdev->dev,
+		bus->client = icc_get_by_id(&device->res->pdev->dev,
 				bus->master, bus->slave);
 		if (IS_ERR_OR_NULL(bus->client)) {
 			rc = PTR_ERR(bus->client) ?: -EBADHANDLE;

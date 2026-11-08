@@ -113,8 +113,8 @@ static void btfm_slim_dai_shutdown(struct snd_pcm_substream *substream,
 	struct btfmslim_ch *ch;
 	uint8_t rxport, nchan = 1;
 
-	BTFMSLIM_DBG("dai->name: %s, dai->id: %d, dai->rate: %d", dai->name,
-		dai->id, dai->rate);
+	BTFMSLIM_DBG("dai->name: %s, dai->id: %d, dai->symmetric_rate: %d", dai->name,
+		dai->id, dai->symmetric_rate);
 
 	switch (dai->id) {
 	case BTFM_FM_SLIM_TX:
@@ -179,11 +179,11 @@ static int btfm_slim_dai_prepare(struct snd_pcm_substream *substream,
 	btfmslim = snd_soc_component_get_drvdata(dai->component);
 	btfmslim->direction = substream->stream;
 	bt_soc_enable_status = 0;
-	BTFMSLIM_INFO("dai->name: %s, dai->id: %d, dai->rate: %d direction: %d", dai->name,
-		dai->id, dai->rate, btfmslim->direction);
+	BTFMSLIM_INFO("dai->name: %s, dai->id: %d, dai->symmetric_rate: %d direction: %d", dai->name,
+		dai->id, dai->symmetric_rate, btfmslim->direction);
 
 	/* save sample rate */
-	btfmslim->sample_rate = dai->rate;
+	btfmslim->sample_rate = dai->symmetric_rate;
 
 	switch (dai->id) {
 	case BTFM_FM_SLIM_TX:
@@ -218,7 +218,7 @@ static int btfm_slim_dai_prepare(struct snd_pcm_substream *substream,
 		return ret;
 	}
 
-	ret = btfm_slim_enable_ch(btfmslim, ch, rxport, dai->rate, nchan);
+	ret = btfm_slim_enable_ch(btfmslim, ch, rxport, dai->symmetric_rate, nchan);
 
 	/* save the enable channel status */
 	if (ret == 0)
@@ -233,8 +233,8 @@ static int btfm_slim_dai_prepare(struct snd_pcm_substream *substream,
 
 /* This function will be called once during boot up */
 static int btfm_slim_dai_set_channel_map(struct snd_soc_dai *dai,
-				unsigned int tx_num, unsigned int *tx_slot,
-				unsigned int rx_num, unsigned int *rx_slot)
+				unsigned int tx_num, const unsigned int *tx_slot,
+				unsigned int rx_num, const unsigned int *rx_slot)
 {
 	int ret = 0, i;
 	struct btfmslim *btfmslim = snd_soc_component_get_drvdata(dai->component);
@@ -277,7 +277,7 @@ static int btfm_slim_dai_set_channel_map(struct snd_soc_dai *dai,
 	return ret;
 }
 
-static int btfm_slim_dai_get_channel_map(struct snd_soc_dai *dai,
+static int btfm_slim_dai_get_channel_map(const struct snd_soc_dai *dai,
 				 unsigned int *tx_num, unsigned int *tx_slot,
 				 unsigned int *rx_num, unsigned int *rx_slot)
 {
