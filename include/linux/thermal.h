@@ -24,6 +24,12 @@
 /* No upper/lower limit requirement */
 #define THERMAL_NO_LIMIT	((u32)~0)
 
+/*
+ * QTI device trees use THERMAL_MAX_LIMIT - n as a cooling limit to mean
+ * "n states below the cooling device's max_state".
+ */
+#define THERMAL_MAX_LIMIT	(THERMAL_NO_LIMIT - 1)
+
 /* Default weight of a bound cooling device */
 #define THERMAL_WEIGHT_DEFAULT 0
 
@@ -35,6 +41,7 @@ struct thermal_cooling_device;
 struct thermal_instance;
 struct thermal_debugfs;
 struct thermal_attr;
+struct thermal_of_group;
 
 enum thermal_trend {
 	THERMAL_TREND_STABLE, /* temperature is stable */

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _LINUX_QCOM_GENI_SE
@@ -37,7 +37,7 @@ enum geni_se_protocol_type {
 	GENI_SE_I2C,
 	GENI_SE_I3C,
 	GENI_SE_SPI_SLAVE,
-	GENI_SE_INVALID_PROTO = 255,
+	GENI_SE_Q2SPI = 0xE,
 };
 
 struct geni_wrapper;
@@ -526,6 +526,8 @@ void geni_se_tx_dma_unprep(struct geni_se *se, dma_addr_t iova, size_t len);
 void geni_se_rx_dma_unprep(struct geni_se *se, dma_addr_t iova, size_t len);
 
 int geni_icc_get(struct geni_se *se, const char *icc_ddr);
+
+struct device *geni_se_wrapper_dev(struct device *dev);
 
 int geni_icc_set_bw(struct geni_se *se);
 void geni_icc_set_tag(struct geni_se *se, u32 tag);

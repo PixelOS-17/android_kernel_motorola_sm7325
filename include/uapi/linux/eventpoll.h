@@ -80,6 +80,7 @@
 #define EPOLL_PACKED
 #endif
 
+#ifdef __KERNEL__
 struct epoll_event {
 	__poll_t events;
 	__u64 data;

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2020 Google, Inc
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __ADRENO_SMMU_PRIV_H
 #define __ADRENO_SMMU_PRIV_H
 
 #include <linux/io-pgtable.h>
+#include <linux/qcom-io-pgtable.h>
 
 /**
  * struct adreno_smmu_fault_info - container for key fault information
@@ -49,6 +51,7 @@ struct adreno_smmu_fault_info {
  *                 stalling on fault is enabled, the GPU driver must call
  *                 resume_translation()
  * @resume_translation: Resume translation after a fault
+ * @pgtbl_info:    io-pagetables info for the GPUs context-bank
  *
  * @set_prr_bit:   [optional] Configure the GPU's Partially Resident
  *                 Region (PRR) bit in the ACTLR register.

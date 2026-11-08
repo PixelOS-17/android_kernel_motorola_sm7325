@@ -7,13 +7,47 @@
  *  Authors:	Pierre-Louis Bossart <pierre-louis.bossart@linux.intel.com>
  *              Vinod Koul <vinod.koul@linux.intel.com>
  *
+ *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+ *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * The definitions in this file are derived from the OpenMAX AL version 1.1
- * and OpenMAX IL v 1.1.2 header files which contain the copyright notice below
- * and are licensed under the MIT license.
+ * and OpenMAX IL v 1.1.2 header files which contain the copyright notice below.
  *
  * Copyright (c) 2007-2010 The Khronos Group Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and/or associated documentation files (the
+ * "Materials "), to deal in the Materials without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Materials, and to
+ * permit persons to whom the Materials are furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Materials.
+ *
+ * THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+ *
  */
 #ifndef __SND_COMPRESS_PARAMS_H
 #define __SND_COMPRESS_PARAMS_H
@@ -25,6 +59,11 @@
 #define MAX_NUM_CODEC_DESCRIPTORS 32
 #define MAX_NUM_BITRATES 32
 #define MAX_NUM_SAMPLE_RATES 32
+
+/* Timestamp flag */
+/* Bit-0 - 1 : Enable Timestamp mode */
+/* Bit-0 - 0 : Disable Timestamp mode */
+#define COMPRESSED_TIMESTAMP_FLAG 0x0001
 
 /* Codecs are listed linearly to allow for extensibility */
 #define SND_AUDIOCODEC_PCM                   ((__u32) 0x00000001)
@@ -111,9 +150,6 @@
 #define SND_AUDIOPROFILE_WMA8                ((__u32) 0x00000002)
 #define SND_AUDIOPROFILE_WMA9                ((__u32) 0x00000004)
 #define SND_AUDIOPROFILE_WMA10               ((__u32) 0x00000008)
-#define SND_AUDIOPROFILE_WMA9_PRO            ((__u32) 0x00000010)
-#define SND_AUDIOPROFILE_WMA9_LOSSLESS       ((__u32) 0x00000020)
-#define SND_AUDIOPROFILE_WMA10_LOSSLESS      ((__u32) 0x00000040)
 
 #define SND_AUDIOMODE_WMA_LEVEL1             ((__u32) 0x00000001)
 #define SND_AUDIOMODE_WMA_LEVEL2             ((__u32) 0x00000002)
@@ -215,9 +251,8 @@ struct snd_enc_wma {
 	__u32 super_block_align; /* WMA Type-specific data */
 };
 
-
 /**
- * struct snd_enc_vorbis - Vorbis encoder parameters
+ * struct snd_enc_vorbis
  * @quality: Sets encoding quality to n, between -1 (low) and 10 (high).
  * In the default mode of operation, the quality level is 3.
  * Normal quality range is 0 - 10.
@@ -246,7 +281,7 @@ struct snd_enc_vorbis {
 
 
 /**
- * struct snd_enc_real - RealAudio encoder parameters
+ * struct snd_enc_real
  * @quant_bits: number of coupling quantization bits in the stream
  * @start_region: coupling start region in the stream
  * @num_regions: number of regions value
@@ -261,7 +296,7 @@ struct snd_enc_real {
 } __attribute__((packed, aligned(4)));
 
 /**
- * struct snd_enc_flac - FLAC encoder parameters
+ * struct snd_enc_flac
  * @num: serial number, valid only for OGG formats
  *	needs to be set by application
  * @gain: Add replay gain tags
@@ -471,5 +506,20 @@ struct snd_codec {
 	__u32 pcm_format;
 	__u32 reserved[2];
 } __attribute__((packed, aligned(4)));
+
+/** struct snd_codec_metadata
+ * @length: Length of the encoded buffer.
+ * @offset: Offset from the buffer address to the first byte of the first
+ *		encoded frame. All encoded frames are consecutive starting
+ *		from this offset.
+ * @timestamp: Session time in microseconds of the first sample in the buffer.
+ * @reserved: Reserved for future use.
+ */
+struct snd_codec_metadata {
+	__u32 length;
+	__u32 offset;
+	__u64 timestamp;
+	__u32 reserved[4];
+};
 
 #endif

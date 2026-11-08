@@ -1,7 +1,14 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ *  Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ */
+
 #ifndef __QCOM_RPROC_H__
 #define __QCOM_RPROC_H__
 
+#include <linux/remoteproc.h>
 struct notifier_block;
+struct rproc;
 
 /**
  * enum qcom_ssr_notify_type - Startup/Shutdown events related to a remoteproc
@@ -24,9 +31,42 @@ struct qcom_ssr_notify_data {
 	bool crashed;
 };
 
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS_SOCCP_V1)
+
+int rproc_set_state(struct rproc *rproc, bool state);
+
+#else
+
+static inline int rproc_set_state(struct rproc *rproc, bool state)
+{
+	return 0;
+}
+#endif
+
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+
+extern bool power_state_enter_into_hibernate;
+int qcom_rproc_set_dtb_firmware(struct rproc *rproc, const char *dtb_fw_name);
+struct rproc *qcom_rproc_get_pil_tz_generic(const char *fw_name);
+
+#else
+
+static inline struct rproc *qcom_rproc_get_pil_tz_generic(const char *fw_name)
+{
+	return NULL;
+}
+
+static inline int qcom_rproc_set_dtb_firmware(struct rproc *rproc, const char *dtb_fw_name)
+{
+	return -EINVAL;
+}
+#endif
+
 #if IS_ENABLED(CONFIG_QCOM_RPROC_COMMON)
 
 void *qcom_register_ssr_notifier(const char *name, struct notifier_block *nb);
+void *qcom_register_early_ssr_notifier(const char *name, struct notifier_block *nb);
+int qcom_unregister_early_ssr_notifier(void *notify, struct notifier_block *nb);
 int qcom_unregister_ssr_notifier(void *notify, struct notifier_block *nb);
 
 #else
@@ -37,12 +77,22 @@ static inline void *qcom_register_ssr_notifier(const char *name,
 	return NULL;
 }
 
-static inline int qcom_unregister_ssr_notifier(void *notify,
+static inline void *qcom_register_early_ssr_notifier(const char *name, struct notifier_block *nb)
+{
+	return NULL;
+}
+
+static inline int qcom_unregister_early_ssr_notifier(void *notify,
 					       struct notifier_block *nb)
 {
 	return 0;
 }
 
+static inline int qcom_unregister_ssr_notifier(void *notify,
+					       struct notifier_block *nb)
+{
+	return 0;
+}
 #endif
 
 #endif
