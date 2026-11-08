@@ -757,6 +757,10 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	size_t shorted = 0;
 	ssize_t ret;
 
+	/* DEBUG (k61.data=ckpt): a write to a whole UFS LUN stops the run */
+	if (k61_stop_data_ckpt)
+		k61_stop_ckpt_whole_disk_write(bdev);
+
 	if (bdev_read_only(bdev))
 		return -EPERM;
 

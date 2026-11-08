@@ -30,6 +30,7 @@
 #include <linux/sched/task.h>
 #include <uapi/linux/mount.h>
 #include <linux/fs_context.h>
+#include <linux/k61-stop.h>
 #include <linux/shmem_fs.h>
 #include <linux/mnt_idmapping.h>
 #include <linux/pidfs.h>
@@ -3263,6 +3264,20 @@ static int do_remount(const struct path *path, int sb_flags,
 	if (!can_change_locked_flags(mnt, mnt_flags))
 		return -EPERM;
 
+	/*
+	 * DEBUG (k61.stop=init): no writable block filesystem mounts; with
+	 * k61.data=ro they stay read-only instead
+	 */
+	if (k61_stop_init && sb->s_bdev && !(sb_flags & SB_RDONLY) &&
+	    !k61_stop_rw_mount_allowed(path)) {
+		if (!k61_stop_data_ro)
+			k61_stop_guard_trip("refusing rw remount of %s",
+					    sb->s_id);
+		pr_info("k61.stop: keeping %s read-only on rw remount\n",
+			sb->s_id);
+		sb_flags |= SB_RDONLY;
+	}
+
 	fc = fs_context_for_reconfigure(path->dentry, sb_flags, MS_RMT_MASK);
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
@@ -3697,6 +3712,24 @@ static int do_new_mount(const struct path *path, const char *fstype,
 	if (!type)
 		return -ENODEV;
 
+	/*
+	 * DEBUG (k61.stop=init): no writable block filesystem mounts; with
+	 * k61.data=ro they are mounted read-only instead
+	 */
+	if (k61_stop_init && (type->fs_flags & FS_REQUIRES_DEV) &&
+	    !(sb_flags & SB_RDONLY) && !k61_stop_rw_mount_allowed(path)) {
+		if (!k61_stop_data_ro)
+			k61_stop_guard_trip("refusing rw mount of %s on %pd (%s)",
+					    name ?: "(null)", path->dentry,
+					    fstype);
+		pr_info("k61.stop: mounting %s on %pd (%s) read-only instead of rw\n",
+			name ?: "(null)", path->dentry, fstype);
+		sb_flags |= SB_RDONLY;
+	}
+	/* DEBUG (k61.data=ckpt): rw f2fs only with checkpoint=disable */
+	if (k61_stop_data_ckpt && !(sb_flags & SB_RDONLY))
+		k61_stop_ckpt_mount_check(path, name, fstype, data);
+
 	if (type->fs_flags & FS_HAS_SUBTYPE) {
 		subtype = strchr(fstype, '.');
 		if (subtype) {
@@ -3729,6 +3762,11 @@ static int do_new_mount(const struct path *path, const char *fstype,
 		err = -EPERM;
 	if (!err)
 		err = do_new_mount_fc(fc, path, mnt_flags);
+
+	/* DEBUG (k61.stop=init): log block mounts, time the /data mount */
+	if (k61_stop_init && (fc->fs_type->fs_flags & FS_REQUIRES_DEV))
+		k61_stop_block_mounted(path, fc->root ? fc->root->d_sb : NULL,
+				       name, fc->fs_type->name, err);
 
 	put_fs_context(fc);
 	return err;

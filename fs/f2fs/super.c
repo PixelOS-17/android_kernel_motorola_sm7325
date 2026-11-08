@@ -30,6 +30,7 @@
 #include <linux/ctype.h>
 #include <linux/fs_parser.h>
 #include <linux/cleancache.h>
+#include <linux/k61-stop.h>
 
 #include "f2fs.h"
 #include "node.h"
@@ -2938,6 +2939,20 @@ static int __f2fs_remount(struct fs_context *fc, struct super_block *sb)
 
 	/* flush outstanding errors before changing fs state */
 	flush_work(&sbi->s_error_work);
+
+	/*
+	 * DEBUG (k61.data=ckpt): while the checkpoint is disabled, refuse any
+	 * remount that would enable it again (commit the writes since it was
+	 * disabled). default_options() cleared checkpoint=disable, so that is
+	 * every remount that does not ask for it again: vold's commitChanges
+	 * (checkpoint=enable), but also an emergency read-only remount.
+	 */
+	if (k61_stop_data_ckpt && is_sbi_flag_set(sbi, SBI_CP_DISABLED) &&
+	    !test_opt(sbi, DISABLE_CHECKPOINT)) {
+		k61_stop_ckpt_refuse_enable(sb->s_id);
+		err = -EPERM;
+		goto restore_opts;
+	}
 
 	/*
 	 * Previous and new state of filesystem is RO,

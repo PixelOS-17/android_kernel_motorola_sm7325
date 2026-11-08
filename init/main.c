@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
+#include <linux/k61-stop.h>
 #include <linux/initrd.h>
 #include <linux/memblock.h>
 #include <linux/acpi.h>
@@ -1031,6 +1032,7 @@ void start_kernel(void)
 	char *command_line;
 	char *after_dashes;
 
+	bringup_stage_delay(1);
 	set_task_stack_end_magic(&init_task);
 	smp_setup_processor_id();
 	debug_objects_early_init();
@@ -1593,6 +1595,493 @@ void __weak free_initmem(void)
 	free_initmem_default(POISON_FREE_INITMEM);
 }
 
+/*
+ * Bring-up aid: "k61.stop" on the cmdline panics once all initcalls have
+ * run, before any userspace starts. The panic dumps the log to ramoops and
+ * (with reboot=warm) warm-resets, so a test kernel booted once with
+ * fastboot boot on the stable slot leaves its log for the next boot
+ * without Android ever touching that slot's partitions.
+ */
+static bool bringup_stop;
+
+/*
+ * "k61.stop=init" instead lets first-stage init run and panics when PID 1
+ * executes /system/bin/init, i.e. once the first-stage mounts are done and
+ * before second stage. "k61.stop=init2" lets second stage run too. In both
+ * modes writable block mounts, storage write opens and reboots from
+ * userspace trip the guard (see linux/k61-stop.h), and so does still
+ * running after the timeout, so a hang still ends in a warm reset.
+ */
+bool k61_stop_init;
+bool k61_stop_exec;
+bool k61_stop_data_ro;
+bool k61_stop_data_rw;
+bool k61_stop_data_ckpt;
+bool k61_stop_data_closed;
+static bool k61_stop_data_mounted;
+static unsigned int k61_stop_timeout_s;
+
+static void k61_stop_timeout(struct timer_list *t)
+{
+	panic("k61.stop: timeout after %us", k61_stop_timeout_s);
+}
+static DEFINE_TIMER(k61_stop_timer, k61_stop_timeout);
+
+static int __init bringup_stop_setup(char *str)
+{
+	if (!strcmp(str, "=init")) {
+		k61_stop_init = true;
+		k61_stop_exec = true;
+		k61_stop_timeout_s = 60;
+	} else if (!strcmp(str, "=init2")) {
+		k61_stop_init = true;
+		k61_stop_timeout_s = 120;
+	} else {
+		bringup_stop = true;
+	}
+	return 1;
+}
+__setup("k61.stop", bringup_stop_setup);
+
+static int __init k61_stop_data_setup(char *str)
+{
+	if (!strcmp(str, "ckpt")) {
+		k61_stop_data_ckpt = true;
+		k61_stop_data_rw = true;
+	} else if (!strcmp(str, "rw")) {
+		k61_stop_data_rw = true;
+	} else if (strcmp(str, "ro")) {
+		return 0;
+	}
+	k61_stop_data_ro = true;
+	return 1;
+}
+__setup("k61.data=", k61_stop_data_setup);
+
+/* 0: the default, 30s (300s with k61.data=ckpt) */
+static unsigned int k61_stop_data_hold_s;
+
+/*
+ * "k61.ckpt_stop=none" (k61.data=ckpt): don't stop at sys.boot_completed=1,
+ * so the booted system can be used with /data still writable under the
+ * checkpoint; k61.data_hold then ends the run. The commit stop and the
+ * other guards stay. The default, "booted", stops at boot completed.
+ */
+static bool k61_stop_ckpt_booted = true;
+
+static int __init k61_stop_ckpt_stop_setup(char *str)
+{
+	if (!strcmp(str, "none"))
+		k61_stop_ckpt_booted = false;
+	else if (strcmp(str, "booted"))
+		return 0;
+	return 1;
+}
+__setup("k61.ckpt_stop=", k61_stop_ckpt_stop_setup);
+
+static int __init k61_stop_data_hold_setup(char *str)
+{
+	return !kstrtouint(str, 0, &k61_stop_data_hold_s);
+}
+__setup("k61.data_hold=", k61_stop_data_hold_setup);
+
+/* "k61.guard_f=0" turns guard F (no deletes on /data) off */
+static bool k61_stop_guard_f = true;
+
+static int __init k61_stop_guard_f_setup(char *str)
+{
+	return !kstrtobool(str, &k61_stop_guard_f);
+}
+__setup("k61.guard_f=", k61_stop_guard_f_setup);
+
+/*
+ * "k61.efs_rw" lets rmt_storage open the modem EFS partitions (modemst1,
+ * modemst2, fsc, fsg_a/fsg_b) for writing and lets writes to modemst1, modemst2
+ * and fsc through the bio barrier, so the modem can run with its EFS.
+ * fsg (the golden copy) stays refused. These writes are not rolled back.
+ */
+bool k61_stop_efs_rw;
+
+static int __init k61_stop_efs_rw_setup(char *str)
+{
+	k61_stop_efs_rw = true;
+	return 1;
+}
+__setup("k61.efs_rw", k61_stop_efs_rw_setup);
+
+bool k61_stop_efs_volume(const char *volname, bool write)
+{
+	if (!k61_stop_efs_rw)
+		return false;
+	if (!strcmp(volname, "modemst1") || !strcmp(volname, "modemst2") ||
+	    !strcmp(volname, "fsc"))
+		return true;
+	/* fsg_a/fsg_b on A/B: open, never written */
+	return !write && !strncmp(volname, "fsg", 3);
+}
+
+static char k61_stop_probe_paths[256] =
+	"/data/misc/vold/user_keys/de/0/encrypted_key,"
+	"/data/misc/vold/user_keys/de/0/keymaster_key_blob,"
+	"/data/misc/vold/user_keys/de/0/secdiscardable";
+
+static int __init k61_stop_probe_setup(char *str)
+{
+	strscpy(k61_stop_probe_paths, str, sizeof(k61_stop_probe_paths));
+	return 1;
+}
+__setup("k61.data_probe=", k61_stop_probe_setup);
+
+#define K61_STOP_PROBE_MAX	(8 << 20)
+
+static void k61_stop_probe_file(const char *path, void *buf)
+{
+	u8 digest[SHA256_DIGEST_SIZE];
+	struct sha256_state sctx;
+	struct file *file;
+	loff_t pos = 0;
+	ssize_t n = 0;
+
+	file = filp_open(path, O_RDONLY | O_LARGEFILE, 0);
+	if (IS_ERR(file)) {
+		pr_info("k61.stop: probe %s: open -> %ld\n", path,
+			PTR_ERR(file));
+		return;
+	}
+	sha256_init(&sctx);
+	while (pos < K61_STOP_PROBE_MAX) {
+		n = kernel_read(file, buf, PAGE_SIZE * 16, &pos);
+		if (n <= 0)
+			break;
+		sha256_update(&sctx, buf, n);
+	}
+	sha256_final(&sctx, digest);
+	fput(file);
+	if (n < 0)
+		pr_info("k61.stop: probe %s: read error %zd after %lld bytes\n",
+			path, n, pos);
+	else
+		pr_info("k61.stop: probe %s: %lld bytes, sha256 %*phN\n", path,
+			pos, SHA256_DIGEST_SIZE, digest);
+}
+
+/*
+ * Called from FS_IOC_ADD_ENCRYPTION_KEY after vold added the first
+ * hw-wrapped key, in vold's context (its root and SELinux domain): read
+ * the probe files by their plaintext names, which needs the right
+ * filenames key, and hash their contents, which needs the right contents
+ * key and DUNs on ICE. k61.data=ro only, so nothing can write meanwhile.
+ */
+void k61_stop_data_probe(void)
+{
+	static atomic_t done = ATOMIC_INIT(0);
+	char *paths, *p, *path;
+	void *buf;
+
+	if (!k61_stop_data_ro || atomic_xchg(&done, 1))
+		return;
+	paths = kstrdup(k61_stop_probe_paths, GFP_KERNEL);
+	buf = kmalloc(PAGE_SIZE * 16, GFP_KERNEL);
+	if (paths && buf) {
+		p = paths;
+		while ((path = strsep(&p, ",")))
+			if (*path)
+				k61_stop_probe_file(path, buf);
+	}
+	kfree(buf);
+	kfree(paths);
+}
+
+static void k61_stop_data_hold(struct timer_list *t)
+{
+	/* through a worker, which can sync first in k61.data=rw */
+	k61_stop_guard_trip_async("%us after the /data mount",
+				  k61_stop_data_hold_s);
+}
+static DEFINE_TIMER(k61_stop_data_timer, k61_stop_data_hold);
+
+static struct super_block *k61_stop_data_sb;
+
+/*
+ * k61.data=rw (guard F): nothing on /data may be deleted or replaced, so
+ * every file that was there before the run is still there after it.
+ * Creating and writing files stays allowed. Called by vfs_unlink(),
+ * vfs_rmdir() and by vfs_rename() when it replaces or exchanges a target;
+ * @from is the rename source, if any. The log shows what the boot would
+ * have removed.
+ */
+int k61_stop_data_delete_check(const char *op, struct dentry *dentry,
+			       struct dentry *from)
+{
+	struct super_block *sb = READ_ONCE(k61_stop_data_sb);
+
+	if (!k61_stop_data_rw || !k61_stop_guard_f || !sb || dentry->d_sb != sb)
+		return 0;
+	if (from)
+		pr_info("k61.stop: denying %s of %pd2 (from %pd2) by %s[%d]\n",
+			op, dentry, from, current->comm, task_pid_nr(current));
+	else
+		pr_info("k61.stop: denying %s of %pd2 by %s[%d]\n", op, dentry,
+			current->comm, task_pid_nr(current));
+	return -EPERM;
+}
+
+/*
+ * Called by do_new_mount() for every block filesystem mount under the
+ * guards: logs the result and starts the k61.data_hold timer once /data is
+ * mounted, so the run ends shortly after vold has installed its keys.
+ */
+void k61_stop_block_mounted(const struct path *path, struct super_block *sb,
+			    const char *source, const char *fstype, int err)
+{
+	char buf[64];
+	char *mnt = d_path(path, buf, sizeof(buf));
+
+	if (IS_ERR(mnt))
+		mnt = "?";
+	pr_info("k61.stop: mount of %s on %s (%s) -> %d\n",
+		source ?: "(null)", mnt, fstype, err);
+	if (!err && !strcmp(mnt, "/data") &&
+	    !timer_pending(&k61_stop_data_timer)) {
+		/*
+		 * k61.data=ckpt: everything 6.1 writes from here on must be
+		 * covered by the checkpoint. If f2fs did not disable it, stop
+		 * now, without syncing.
+		 */
+		if (k61_stop_data_ckpt) {
+			if (!sb || !f2fs_k61_checkpoint_disabled(sb))
+				k61_stop_guard_trip("/data is mounted with the f2fs checkpoint enabled");
+			pr_info("k61.stop: /data checkpoint disabled, writes are rolled back unless committed\n");
+			/* the init2 timeout must not end the system run */
+			mod_timer(&k61_stop_timer,
+				  jiffies + (k61_stop_data_hold_s + 30) * HZ);
+		}
+		WRITE_ONCE(k61_stop_data_sb, sb);
+		WRITE_ONCE(k61_stop_data_mounted, true);
+		pr_info("k61.stop: /data mounted, stopping in %us\n",
+			k61_stop_data_hold_s);
+		mod_timer(&k61_stop_data_timer,
+			  jiffies + k61_stop_data_hold_s * HZ);
+	}
+}
+
+/*
+ * k61.data=ckpt: every read-write f2fs mount (/data is the only f2fs) must
+ * be a checkpoint=disable mount, i.e. fs_mgr found the checkpoint that 5.4
+ * started with vdc. A plain rw mount would make 6.1's writes permanent, and
+ * f2fs_fill_super() would even commit a checkpoint left disabled by an
+ * earlier boot. Checked before the mount, so nothing is written yet. The
+ * last "checkpoint=" option is the one f2fs uses.
+ */
+void k61_stop_ckpt_mount_check(const struct path *path, const char *source,
+			       const char *fstype, const void *data)
+{
+	const char *opt = NULL, *p = data, *end;
+
+	if (!k61_stop_data_ckpt || strcmp(fstype, "f2fs"))
+		return;
+	/* the legacy mount data is a page; the options end at the NUL */
+	end = p ? p + strnlen(p, PAGE_SIZE - 1) : NULL;
+	while (p && (p = strnstr(p, "checkpoint=", end - p))) {
+		opt = p;
+		p += strlen("checkpoint=");
+	}
+	if (!opt || strncmp(opt, "checkpoint=disable", 18))
+		k61_stop_guard_trip("refusing rw f2fs mount of %s on %pd without checkpoint=disable (no checkpoint started on 5.4?)",
+				    source ?: "(null)", path->dentry);
+	p = strnchr(opt, end - opt, ',');
+	pr_info("k61.stop: rw f2fs mount of %s on %pd with %.*s\n",
+		source ?: "(null)", path->dentry,
+		(int)((p ?: end) - opt), opt);
+}
+
+/*
+ * k61.data=ckpt: called by f2fs_remount() when a remount would enable the
+ * checkpoint again (vold's commitChanges remounts /data with
+ * checkpoint=enable; any remount without checkpoint=disable, including an
+ * emergency read-only remount, has the same effect). f2fs refuses it with
+ * -EPERM and the run stops; the caller holds s_umount, so the trip runs
+ * from the workqueue.
+ */
+void k61_stop_ckpt_refuse_enable(const char *id)
+{
+	pr_emerg("k61.stop: refusing to enable the checkpoint on %s (commit) by %s[%d]\n",
+		 id, current->comm, task_pid_nr(current));
+	k61_stop_guard_trip_async("refused a checkpoint commit (remount of %s by %s)",
+				  id, current->comm);
+}
+
+/*
+ * k61.data=ckpt: the QTI boot HAL (gpt-utils) opens the whole UFS LUN
+ * read-write even to read the slot attributes (vold's needsCheckpoint,
+ * update_verifier, update_engine), so write opens of whole LUNs are
+ * allowed. Writes to them are not: k61_stop_ckpt_whole_disk_write() stops
+ * the run, and the bio barrier still refuses anything else.
+ */
+bool k61_stop_ckpt_whole_disk(struct block_device *bdev)
+{
+	return k61_stop_data_ckpt && !bdev_is_partition(bdev) &&
+	       !strncmp(bdev->bd_disk->disk_name, "sd", 2);
+}
+
+/*
+ * k61.data=ckpt: called by blkdev_write_iter(). The first write to a whole
+ * UFS LUN is the boot HAL marking the slot successful (gpt-utils rewrites
+ * both GPTs), which is the first step of vold's cp_commitChanges();
+ * system_server calls it from finishBooting() after the boot animation,
+ * right before it sets sys.boot_completed. Failing it would make
+ * system_server reboot ("Checkpoint commit failed"), so the writer is held
+ * here instead: the lock screen stays up for the hold, then the panic ends
+ * the run. Returns if this is not a whole LUN.
+ */
+void k61_stop_ckpt_whole_disk_write(struct block_device *bdev)
+{
+	if (!k61_stop_ckpt_whole_disk(bdev))
+		return;
+	if (!READ_ONCE(k61_stop_data_mounted))
+		k61_stop_guard_trip("refusing a write to %pg by %s[%d] before /data is mounted",
+				    bdev, current->comm, task_pid_nr(current));
+	k61_stop_guard_trip("stopping at the write to %pg by %s[%d] (boot HAL marking the slot successful: checkpoint commit, boot completed)",
+			    bdev, current->comm, task_pid_nr(current));
+}
+
+/*
+ * k61.data=ckpt: init writes "Boot completed" to /dev/kmsg on
+ * sys.boot_completed=1 (init.qcom.rc, init.qti.kernel.rc) and logs its
+ * action triggers. Either ends the run. Only reached if the commit did not
+ * stop it first, e.g. with persist.vold.dont_commit_checkpoint=1. Called
+ * from devkmsg_write() for PID 1 with the start of the line; init must not
+ * block, so the trip runs from the workqueue.
+ */
+void k61_stop_ckpt_kmsg(const char *line, size_t len)
+{
+	static bool seen;
+
+	if (!k61_stop_data_ckpt || !READ_ONCE(k61_stop_data_mounted))
+		return;
+	if ((strnstr(line, "Boot completed", len) ||
+	     strnstr(line, "sys.boot_completed=1", len)) && !xchg(&seen, true)) {
+		pr_emerg("k61.stop: sys.boot_completed=1 (init: %.*s)%s\n",
+			 (int)strcspn(line, "\n"), line,
+			 k61_stop_ckpt_booted ? "" : ", running on (k61.ckpt_stop=none)");
+		if (k61_stop_ckpt_booted)
+			k61_stop_guard_trip_async("sys.boot_completed=1");
+	}
+}
+
+/*
+ * "k61.hold=<s>" keeps the kernel running for that many seconds at the
+ * k61.stop point before panicking, e.g. to read the log over the USB
+ * serial console (console=ttyGS0).
+ */
+static unsigned int bringup_hold;
+
+static int __init bringup_hold_setup(char *str)
+{
+	return !kstrtouint(str, 0, &bringup_hold);
+}
+__setup("k61.hold=", bringup_hold_setup);
+
+/*
+ * k61.data=rw: only the /data mount may be read-write, and only until the
+ * write window is closed by a trip.
+ */
+bool k61_stop_rw_mount_allowed(const struct path *path)
+{
+	char buf[64];
+	char *mnt;
+
+	if (!k61_stop_data_rw || READ_ONCE(k61_stop_data_closed))
+		return false;
+	mnt = d_path(path, buf, sizeof(buf));
+	return !IS_ERR(mnt) && !strcmp(mnt, "/data");
+}
+
+/*
+ * k61.data=rw: stop before zygote (whose PackageManager scan rewrites the
+ * package state), so 6.1 only writes what init, vold, apexd and odsign do
+ * while setting up /data. Android 17 also has zygote_next (a native-app
+ * zygote that is not app_process).
+ */
+void k61_stop_exec_check(const char *filename)
+{
+	/* k61.data=ckpt runs the whole system */
+	if (!k61_stop_data_rw || k61_stop_data_ckpt ||
+	    !READ_ONCE(k61_stop_data_mounted))
+		return;
+	if (!strncmp(filename, "/system/bin/app_process", 23) ||
+	    !strcmp(filename, "/system/bin/zygote_next"))
+		k61_stop_guard_trip("stopping at the exec of %s by %s[%d]",
+				    filename, current->comm,
+				    task_pid_nr(current));
+}
+
+/* Called by the k61.stop=init/init2 guards; keeps running k61.hold seconds */
+void k61_stop_guard_trip(const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+
+	va_start(args, fmt);
+	vaf.fmt = fmt;
+	vaf.va = &args;
+	pr_emerg("k61.stop: %pV\n", &vaf);
+	va_end(args);
+
+	/*
+	 * k61.data=rw: write back what /data has so far (a consistent f2fs
+	 * checkpoint), then refuse all further userdata writes, so the hold
+	 * and the panic leave /data as if it had been synced and powered off.
+	 * k61.data=ckpt does not sync: the checkpoint drops all of it anyway.
+	 */
+	if (k61_stop_data_ckpt && !READ_ONCE(k61_stop_data_closed)) {
+		WRITE_ONCE(k61_stop_data_closed, true);
+		pr_emerg("k61.stop: userdata writes closed (no sync, checkpoint)\n");
+	} else if (k61_stop_data_rw && !READ_ONCE(k61_stop_data_closed)) {
+		pr_emerg("k61.stop: syncing\n");
+		ksys_sync();
+		WRITE_ONCE(k61_stop_data_closed, true);
+		pr_emerg("k61.stop: sync done, userdata writes closed\n");
+	}
+
+	if (bringup_hold) {
+		/* the init/init2 timeout must not cut the hold short */
+		if (timer_pending(&k61_stop_timer))
+			mod_timer(&k61_stop_timer,
+				  jiffies + (bringup_hold + 10) * HZ);
+		pr_emerg("k61.stop: holding for %us\n", bringup_hold);
+		ssleep(bringup_hold);
+	}
+	panic("k61.stop: guard tripped");
+}
+
+static char k61_stop_async_reason[128];
+static atomic_t k61_stop_async_tripped = ATOMIC_INIT(0);
+
+static void k61_stop_async_trip_fn(struct work_struct *work)
+{
+	k61_stop_guard_trip("%s", k61_stop_async_reason);
+}
+static DECLARE_WORK(k61_stop_async_trip_work, k61_stop_async_trip_fn);
+
+/*
+ * The same for callers that must not sleep or block, e.g. the block layer:
+ * the caller refuses the operation itself and the trip (hold, then panic)
+ * runs from a workqueue. Only the first call counts.
+ */
+void k61_stop_guard_trip_async(const char *fmt, ...)
+{
+	va_list args;
+
+	if (atomic_xchg(&k61_stop_async_tripped, 1))
+		return;
+	va_start(args, fmt);
+	vsnprintf(k61_stop_async_reason, sizeof(k61_stop_async_reason), fmt,
+		  args);
+	va_end(args);
+	queue_work(system_long_wq, &k61_stop_async_trip_work);
+}
+
 static int __ref kernel_init(void *unused)
 {
 	int ret;
@@ -1605,6 +2094,37 @@ static int __ref kernel_init(void *unused)
 	kernel_init_freeable();
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
+
+	if (bringup_stop) {
+		/* let deferred probes settle so their results are in the log */
+		wait_for_device_probe();
+		driver_probe_state_dump();
+		if (bringup_hold) {
+			pr_info("k61.stop: holding for %us\n", bringup_hold);
+			ssleep(bringup_hold);
+		}
+		panic("k61.stop: stopping after initcalls");
+	}
+
+	if (k61_stop_init) {
+		wait_for_device_probe();
+		driver_probe_state_dump();
+		if (!k61_stop_data_hold_s)
+			k61_stop_data_hold_s = k61_stop_data_ckpt ? 300 : 30;
+		mod_timer(&k61_stop_timer, jiffies + k61_stop_timeout_s * HZ);
+		pr_info("k61.stop: %s mode, guards on, timeout %us%s%s\n",
+			k61_stop_exec ? "init" : "init2", k61_stop_timeout_s,
+			k61_stop_data_ckpt ? ", data under checkpoint" :
+			k61_stop_data_rw ? ", data read-write" :
+			k61_stop_data_ro ? ", data read-only" : "",
+			k61_stop_data_rw && !k61_stop_guard_f ? ", guard F off" : "");
+		if (k61_stop_data_ckpt && !k61_stop_ckpt_booted)
+			pr_info("k61.stop: no stop at boot completed, data_hold %us\n",
+				k61_stop_data_hold_s);
+	} else {
+		k61_stop_data_ro = false;
+		k61_stop_data_ckpt = false;
+	}
 
 	system_state = SYSTEM_FREEING_INITMEM;
 	kprobe_free_init_mem();
@@ -1685,6 +2205,7 @@ void __init console_on_rootfs(void)
 
 static noinline void __init kernel_init_freeable(void)
 {
+	bringup_stage_delay(4);
 	/* Now the scheduler is fully set up and can do blocking allocations */
 	gfp_allowed_mask = __GFP_BITS_MASK;
 
@@ -1713,6 +2234,7 @@ static noinline void __init kernel_init_freeable(void)
 	page_alloc_init_late();
 
 	do_basic_setup();
+	bringup_stage_delay(5);
 
 	kunit_run_all_tests();
 

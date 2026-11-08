@@ -83,7 +83,8 @@ bpf_prog_run_array_cg(const struct cgroup_bpf *cgrp,
 			*(ret_flags) |= (func_ret >> 1);
 			func_ret &= 1;
 		}
-		if (!func_ret && !IS_ERR_VALUE((long)run_ctx.retval))
+		if (!func_ret && (k61_bpf_reject_eperm ||
+				  !IS_ERR_VALUE((long)run_ctx.retval)))
 			run_ctx.retval = -EPERM;
 		item++;
 	}

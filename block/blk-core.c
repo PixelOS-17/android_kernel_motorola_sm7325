@@ -53,6 +53,8 @@
 #include "blk-throttle.h"
 #include "blk-ioprio.h"
 
+#include <linux/k61-stop.h>
+
 struct dentry *blk_debugfs_root;
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
@@ -805,6 +807,8 @@ void submit_bio_noacct(struct bio *bio)
 		goto not_supported;
 
 	if (should_fail_bio(bio))
+		goto end_io;
+	if (k61_stop_init && unlikely(k61_stop_bio_refused(bio)))
 		goto end_io;
 	bio_check_ro(bio);
 	if (!bio_flagged(bio, BIO_REMAPPED)) {
