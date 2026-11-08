@@ -272,6 +272,17 @@ config BATTERY_WM97XX
 	help
 	  Say Y to enable support for battery measured by WM97xx aux port.
 
+config BATTERY_MAX1720X
+	tristate "Maxim MAX17201/MAX17215 Fuel Gauge"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  MAX1720x is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment.
+
+	  Say Y here to enable support for the MAX17201/MAX17335 standalone
+	  battery gas-gauge.
+
 config BATTERY_SBS
 	tristate "SBS Compliant gas gauge"
 	depends on I2C
@@ -333,6 +344,18 @@ config BATTERY_BQ27XXX_DT_UPDATES_NVM
 	  easily be replaced with one of a different type. Not for
 	  general-purpose kernels, as this can cause misconfiguration of a
 	  smart battery with embedded NVM/flash.
+
+config BATTERY_BQ27XXX_RESIST_TABLE_UPDATES_NVM
+        bool "BQ27xxx resistance table update of NVM/flash data memory"
+        depends on BATTERY_BQ27XXX_DT_UPDATES_NVM
+        help
+	  Say Y here to enable devicetree monitored-battery resistance table config
+	  and Qmax-cell0 value in the NVM/flash data memory. Only enable this option
+	  when calibrated resistance table and Qmax-Cell0 parameters for the battery
+	  in-use are updated in DT. If the Battery specific data is not available
+	  in DT, then this config should not be set to Y. Not for general-purpose
+	  kernels, as this can cause is the configuration of a smart battery with
+	  embedded NVM/flash.
 
 config BATTERY_DA9030
 	tristate "DA9030 battery driver"
@@ -479,6 +502,29 @@ config BATTERY_TWL4030_MADC
 	help
 	  Say Y here to enable this dumb driver for batteries managed
 	  through the TWL4030 MADC.
+
+config QTI_BATTERY_CHARGER
+	tristate "QTI Glink battery charger"
+	depends on QTI_PMIC_GLINK && EXTCON
+	help
+	  Say Y here to enable Qualcomm Technologies, Inc. battery charger
+	  driver which interfaces with the charger firmware running on the
+	  remote subsystem (e.g. DSP) by communicating over PMIC Glink channel
+	  and provides information about the battery, USB and wireless charging
+	  by exposing them as power supply devices.
+
+	  To compile the driver as a module, choose M here: the module will be
+	  called qti_battery_charger.
+
+config QTI_TYPEC_CLASS
+	tristate "Enable QTI Type-C class support for battery charger"
+	depends on QTI_BATTERY_CHARGER && TYPEC
+	help
+	  Say 'y' here to enable Type-C class integration within the QTI
+	  battery charger driver. This allows the charger driver to register
+	  and manage Type-C partner connections (device/host) via the QTI
+	  Type-C class interface. Required for micro-USB connector types that
+	  rely on extcon and Type-C class notifications for USB role switching.
 
 config CHARGER_88PM860X
 	tristate "Marvell 88PM860x Charger driver"
@@ -1096,5 +1142,6 @@ config FUEL_GAUGE_MM8013
 	  It enables the monitoring of many battery parameters, including
 	  the state of charge, temperature, cycle count, actual and design
 	  capacity, etc.
+source "drivers/power/supply/qcom/Kconfig"
 
 endif # POWER_SUPPLY
