@@ -1432,6 +1432,14 @@ PHONY += archheaders archscripts
 
 hdr-inst := -f $(srctree)/scripts/Makefile.headersinst obj
 
+# tundra builds these in-tree. The ROM builds its HALs against make headers.
+ext-mod-dirs := \
+	drivers/gpu/msm \
+	techpack/audio \
+	techpack/camera \
+	techpack/display \
+	techpack/video
+
 PHONY += headers
 headers: $(version_h) scripts_unifdef uapi-asm-generic archheaders
 ifdef HEADER_ARCH
@@ -1439,6 +1447,9 @@ ifdef HEADER_ARCH
 else
 	$(Q)$(MAKE) $(hdr-inst)=include/uapi
 	$(Q)$(MAKE) $(hdr-inst)=arch/$(SRCARCH)/include/uapi
+	$(Q)for d in $(ext-mod-dirs); do \
+		$(MAKE) $(hdr-inst)=$$d/include/uapi; \
+	done
 endif
 
 ifdef CONFIG_HEADERS_INSTALL

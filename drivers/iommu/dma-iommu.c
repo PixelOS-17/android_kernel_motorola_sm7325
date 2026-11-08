@@ -743,6 +743,10 @@ static int dma_info_to_prot(enum dma_data_direction dir, bool coherent,
 
 	if (attrs & DMA_ATTR_PRIVILEGED)
 		prot |= IOMMU_PRIV;
+	if (attrs & DMA_ATTR_SYS_CACHE)
+		prot |= IOMMU_SYS_CACHE;
+	if (attrs & DMA_ATTR_SYS_CACHE_NWA)
+		prot |= IOMMU_SYS_CACHE_NWA;
 
 	trace_android_rvh_iommu_dma_info_to_prot(attrs, &prot);
 
