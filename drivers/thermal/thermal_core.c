@@ -702,13 +702,24 @@ static bool thermal_zone_is_present(struct thermal_zone_device *tz)
 	return !list_empty(&tz->node);
 }
 
-void thermal_zone_device_update(struct thermal_zone_device *tz,
-				enum thermal_notify_event event)
+static void thermal_zone_device_update_one(struct thermal_zone_device *tz,
+					   enum thermal_notify_event event)
 {
 	guard(thermal_zone)(tz);
 
 	if (thermal_zone_is_present(tz))
 		__thermal_zone_device_update(tz, event);
+}
+
+void thermal_zone_device_update(struct thermal_zone_device *tz,
+				enum thermal_notify_event event)
+{
+	thermal_zone_device_update_one(tz, event);
+
+	/* A sensor event also concerns the other zones on that sensor */
+	if (tz->of_group)
+		thermal_of_group_update(tz, event,
+					thermal_zone_device_update_one);
 }
 EXPORT_SYMBOL_GPL(thermal_zone_device_update);
 

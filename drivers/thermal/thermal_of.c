@@ -123,9 +123,17 @@ static struct thermal_trip *thermal_of_trips_init(struct device_node *np, int *n
 	return no_free_ptr(tt);
 }
 
-static struct device_node *of_thermal_zone_find(struct device_node *sensor, int id)
+/*
+ * Find the next thermal zone after @from (NULL: the first one) that uses the
+ * couple sensor/id. QTI device trees point several zones at one sensor, e.g.
+ * a "-usr" zone for userspace and a "-step" zone for in-kernel mitigation.
+ */
+static struct device_node *of_thermal_zone_find_from(struct device_node *sensor,
+						     int id,
+						     struct device_node *from)
 {
 	struct of_phandle_args sensor_specs;
+	bool skip = from;
 
 	struct device_node *np __free(device_node) = of_find_node_by_name(NULL, "thermal-zones");
 	if (!np) {
@@ -140,6 +148,12 @@ static struct device_node *of_thermal_zone_find(struct device_node *sensor, int 
 	for_each_available_child_of_node_scoped(np, child) {
 
 		int count, i;
+
+		if (skip) {
+			if (child == from)
+				skip = false;
+			continue;
+		}
 
 		count = of_count_phandle_with_args(child, "thermal-sensors",
 						   "#thermal-sensor-cells");
@@ -172,6 +186,11 @@ static struct device_node *of_thermal_zone_find(struct device_node *sensor, int 
 	return ERR_PTR(-ENODEV);
 }
 
+static struct device_node *of_thermal_zone_find(struct device_node *sensor, int id)
+{
+	return of_thermal_zone_find_from(sensor, id, NULL);
+}
+
 static int thermal_of_monitor_init(struct device_node *np, int *delay, int *pdelay)
 {
 	int ret;
@@ -200,6 +219,7 @@ static void thermal_of_parameters_init(struct device_node *np,
 {
 	int coef[2];
 	int ncoef = ARRAY_SIZE(coef);
+	const char *governor;
 	int prop, ret;
 
 	tzp->no_hwmon = true;
@@ -330,13 +350,10 @@ out:
 	return result;
 }
 
-/**
- * thermal_of_zone_unregister - Cleanup the specific allocated ressources
- *
- * This function disables the thermal zone and frees the different
- * ressources allocated specific to the thermal OF.
- *
- * @tz: a pointer to the thermal zone structure
+/*
+ * Zones sharing one sensor: the sensor has a single threshold window, so it
+ * is programmed with the intersection of the windows of all enabled zones,
+ * and a sensor event updates every zone of the group.
  */
 static void thermal_of_zone_unregister(struct thermal_zone_device *tz)
 {
@@ -345,19 +362,11 @@ static void thermal_of_zone_unregister(struct thermal_zone_device *tz)
 }
 
 /**
- * thermal_of_zone_register - Register a thermal zone with device node
- * sensor
+ * thermal_of_zone_unregister - Cleanup the specific allocated ressources
  *
- * The thermal_of_zone_register() parses a device tree given a device
- * node sensor and identifier. It searches for the thermal zone
- * associated to the couple sensor/id and retrieves all the thermal
- * zone properties and registers new thermal zone with those
- * properties.
- *
- * @sensor: A device node pointer corresponding to the sensor in the device tree
- * @id: An integer as sensor identifier
- * @data: A private data to be stored in the thermal zone dedicated private area
- * @ops: A set of thermal sensor ops
+ * This function disables the thermal zone and frees the different
+ * ressources allocated specific to the thermal OF. Zones registered for
+ * the same sensor along with @tz are unregistered too.
  *
  * Return: a valid thermal zone structure pointer on success.
  *	- EINVAL: if the device tree thermal description is malformed
@@ -428,7 +437,7 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 	if (ret) {
 		pr_err("Failed to enabled thermal zone '%s', id=%d: %d\n",
 		       tz->type, tz->id, ret);
-		thermal_of_zone_unregister(tz);
+		__thermal_of_zone_unregister(tz);
 		return ERR_PTR(ret);
 	}
 
