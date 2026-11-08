@@ -1433,6 +1433,8 @@ struct dsi_bridge *dsi_drm_bridge_init(struct dsi_display *display,
 
 	bridge->display = display;
 	bridge->base.funcs = &dsi_bridge_ops;
+	/* drm_bridge_attach() takes references on 6.18; this initial one is ours */
+	kref_init(&bridge->base.refcount);
 	bridge->base.encoder = encoder;
 
 	rc = drm_bridge_attach(encoder, &bridge->base, NULL,

@@ -609,7 +609,8 @@ static int __iommu_probe_device(struct device *dev, struct list_head *group_list
 	 * misusing the dma_configure path outside bus code.
 	 */
 	if (dev->driver)
-		dev_WARN(dev, "late IOMMU probe at driver bind, something fishy here!\n");
+		/* tundra: every lahaina client gets here; a WARN each fills ramoops */
+		dev_dbg(dev, "late IOMMU probe at driver bind\n");
 
 	group = dev->iommu_group;
 	gdev = iommu_group_alloc_device(group, dev);
