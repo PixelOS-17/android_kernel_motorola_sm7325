@@ -32,6 +32,9 @@
  * if the IOMMU page table format is equivalent.
  */
 #define IOMMU_PRIV	(1 << 5)
+/* QC system cache (LLCC) mappings, used by the QC SMMU page table code */
+#define IOMMU_SYS_CACHE		(1 << 6)
+#define IOMMU_SYS_CACHE_NWA	(1 << 7)
 
 struct iommu_ops;
 struct iommu_group;
