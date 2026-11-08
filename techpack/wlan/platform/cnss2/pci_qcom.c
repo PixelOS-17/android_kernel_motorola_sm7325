@@ -623,16 +623,6 @@ static int cnss_pci_smmu_fault_handler(struct iommu_domain *domain,
 	return -ENOSYS;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0))
-int cnss_pci_get_iommu_addr(struct cnss_pci_data *pci_priv,
-			    struct device_node *of_node)
-{
-	pci_priv->smmu_iova_start = 0xa0000000;
-	pci_priv->smmu_iova_len = 0x10000000;
-
-	return 0;
-}
-#else
 int cnss_pci_get_iommu_addr(struct cnss_pci_data *pci_priv,
 			    struct device_node *of_node)
 {
@@ -647,7 +637,6 @@ int cnss_pci_get_iommu_addr(struct cnss_pci_data *pci_priv,
 
 	return ret;
 }
-#endif
 
 int cnss_pci_init_smmu(struct cnss_pci_data *pci_priv)
 {
