@@ -2,12 +2,15 @@
 /*
  * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
+
 #include <linux/cpu.h>
 #include <linux/cpumask.h>
 #include <linux/sched/isolation.h>
 #include <trace/hooks/sched.h>
 #include <walt.h>
 #include "trace.h"
+
+extern struct task_struct *pick_migrate_task(struct rq *rq);
 
 #ifdef CONFIG_HOTPLUG_CPU
 
