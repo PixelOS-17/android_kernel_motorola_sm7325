@@ -30,7 +30,8 @@
 #include <sound/asound.h>
 #include <sound/compress_params.h>
 
-#define SNDRV_COMPRESS_VERSION SNDRV_PROTOCOL_VERSION(0, 4, 1)
+
+#define SNDRV_COMPRESS_VERSION SNDRV_PROTOCOL_VERSION(0, 1, 2)
 /**
  * struct snd_compressed_buffer - compressed buffer
  * @fragment_size: size of buffer fragment in bytes
@@ -281,6 +282,7 @@ struct snd_compr_task_status {
 } __attribute__((packed, aligned(4)));
 
 /*
+/**
  * compress path ioctl definitions
  * SNDRV_COMPRESS_GET_CAPS: Query capability of DSP
  * SNDRV_COMPRESS_GET_CODEC_CAPS: Query capability of a codec
@@ -330,6 +332,8 @@ struct snd_compr_task_status {
 #define SNDRV_COMPRESS_TASK_STOP	_IOW('C', 0x63, __u64)
 #define SNDRV_COMPRESS_TASK_STATUS	_IOWR('C', 0x68, struct snd_compr_task_status)
 
+#define SNDRV_COMPRESS_SET_NEXT_TRACK_PARAM\
+				_IOW('C', 0x80, union snd_codec_options)
 /*
  * TODO
  * 1. add mmap support

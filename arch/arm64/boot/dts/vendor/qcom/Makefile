@@ -12,4 +12,4 @@ dtb-$(CONFIG_ARCH_QCOM) += lahaina-moto-base-v2.1.dtb \
 	lahaina-tundra-dvt2-overlay.dtbo
 
 DTC_FLAGS += -@
-DTC_INCLUDE := $(srctree)/$(src)/include
+DTC_INCLUDE := $(src)/include
