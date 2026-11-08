@@ -7156,13 +7156,10 @@ static void cnss_mhi_notify_status(struct mhi_controller *mhi_ctrl,
 		cnss_pci_update_status(pci_priv, CNSS_FW_DOWN);
 		cnss_reason = CNSS_REASON_RDDM;
 		break;
-#if IS_ENABLED(CONFIG_MHI_BUS_MISC) && \
-(LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0))
 	case MHI_CB_FALLBACK_IMG:
 		plat_priv->use_fw_path_with_prefix = false;
 		cnss_pci_update_fw_name(pci_priv);
 		return;
-#endif
 
 	default:
 		cnss_pr_err("Unsupported MHI status cb reason: %d\n", reason);
