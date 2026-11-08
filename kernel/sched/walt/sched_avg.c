@@ -247,15 +247,16 @@ static inline void update_busy_hyst_end_time(int cpu, int enq,
 	}
 }
 
-int sched_busy_hyst_handler(struct ctl_table *table, int write,
+int sched_busy_hyst_handler(const struct ctl_table *table, int write,
 				void __user *buffer, size_t *lenp, loff_t *ppos)
 {
+	struct ctl_table tmp = *table;
 	int ret;
 
-	if (table->maxlen > (sizeof(unsigned int) * num_possible_cpus()))
-		table->maxlen = sizeof(unsigned int) * num_possible_cpus();
+	if (tmp.maxlen > (sizeof(unsigned int) * num_possible_cpus()))
+		tmp.maxlen = sizeof(unsigned int) * num_possible_cpus();
 
-	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
 
 	if (!ret && write)
 		sched_update_hyst_times();

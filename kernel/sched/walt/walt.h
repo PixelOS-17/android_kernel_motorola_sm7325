@@ -116,6 +116,7 @@ struct load_subtractions {
 };
 
 struct walt_rq {
+	unsigned long		capacity_orig;
 	struct task_struct	*push_task;
 	struct walt_sched_cluster *cluster;
 	struct cpumask		freq_domain_cpumask;
@@ -221,9 +222,9 @@ extern bool cpus_halted_by_client(struct cpumask *cpu, enum pause_client client)
 
 extern unsigned int sched_get_cpu_util_pct(int cpu);
 extern void sched_update_hyst_times(void);
-extern int sched_boost_handler(struct ctl_table *table, int write,
+extern int sched_boost_handler(const struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp, loff_t *ppos);
-extern int sched_busy_hyst_handler(struct ctl_table *table, int write,
+extern int sched_busy_hyst_handler(const struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp, loff_t *ppos);
 extern u64 walt_sched_clock(void);
 extern void walt_init_tg(struct task_group *tg);
@@ -296,7 +297,7 @@ extern unsigned int sysctl_max_freq_partial_halt;
 extern unsigned int sysctl_fmax_cap[MAX_CLUSTERS];
 extern unsigned int high_perf_cluster_freq_cap[MAX_CLUSTERS];
 extern unsigned int fmax_cap[MAX_FREQ_CAP][MAX_CLUSTERS];
-extern int sched_dynamic_tp_handler(struct ctl_table *table, int write,
+extern int sched_dynamic_tp_handler(const struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp, loff_t *ppos);
 extern struct freq_relation_map relation_data[MAX_CLUSTERS][MAX_FREQ_RELATIONS];
 extern struct list_head cluster_head;
@@ -354,7 +355,8 @@ extern unsigned int sysctl_sched_suppress_region2;
 extern unsigned int sysctl_sched_skip_sp_newly_idle_lb;
 extern unsigned int sysctl_sched_asymcap_boost;
 extern struct ctl_table walt_table[];
-extern struct ctl_table walt_base_table[];
+extern struct ctl_table input_boost_sysctls[];
+extern void walt_register_sysctls(void);
 extern void walt_tunables(void);
 extern void walt_update_group_thresholds(void);
 extern void sched_window_nr_ticks_change(void);
@@ -467,13 +469,19 @@ int waltgov_register(void);
 extern void walt_lb_init(void);
 extern unsigned int walt_rotation_enabled;
 
+static inline unsigned long capacity_orig_of(int cpu)
+{
+	/* 6.18 has no rq->cpu_capacity_orig; WALT tracks its own limited value */
+	return per_cpu(walt_rq, cpu).capacity_orig ?: arch_scale_cpu_capacity(cpu);
+}
+
 /*
  * Returns the current capacity of cpu after applying both
  * cpu and freq scaling.
  */
 static inline unsigned long capacity_curr_of(int cpu)
 {
-	unsigned long max_cap = cpu_rq(cpu)->cpu_capacity_orig;
+	unsigned long max_cap = capacity_orig_of(cpu);
 	unsigned long scale_freq = arch_scale_freq_capacity(cpu);
 
 	return cap_scale(max_cap, scale_freq);
@@ -974,10 +982,6 @@ static inline void walt_irq_work_queue(struct irq_work *work)
 		irq_work_queue_on(work, cpumask_any(cpu_online_mask));
 }
 
-static inline struct task_group *css_tg(struct cgroup_subsys_state *css)
-{
-	return css ? container_of(css, struct task_group, css) : NULL;
-}
 
 /*
  * The policy of a RT boosted task (via PI mutex) still indicates it is
@@ -989,7 +993,7 @@ static inline bool walt_fair_task(struct task_struct *p)
 	return p->prio >= MAX_RT_PRIO && !is_idle_task(p);
 }
 
-extern int sched_long_running_rt_task_ms_handler(struct ctl_table *table, int write,
+extern int sched_long_running_rt_task_ms_handler(const struct ctl_table *table, int write,
 		void __user *buffer, size_t *lenp,
 		loff_t *ppos);
 

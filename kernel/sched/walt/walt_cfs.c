@@ -15,28 +15,32 @@
 
 static void create_util_to_cost_pd(struct em_perf_domain *pd)
 {
+	struct em_perf_state *table;
 	int util, cpu = cpumask_first(to_cpumask(pd->cpus));
 	unsigned long fmax;
 	unsigned long scale_cpu;
 	struct walt_rq *wrq = &per_cpu(walt_rq, cpu);
 	struct walt_sched_cluster *cluster = wrq->cluster;
 
-	fmax = (u64)pd->table[pd->nr_perf_states - 1].frequency;
+	rcu_read_lock();
+	table = em_perf_state_from_pd(pd);
+	fmax = (u64)table[pd->nr_perf_states - 1].frequency;
 	scale_cpu = arch_scale_cpu_capacity(cpu);
 
 	for (util = 0; util < 1024; util++) {
 		int j;
 
 		int f = (fmax * util) / scale_cpu;
-		struct em_perf_state *ps = &pd->table[0];
+		struct em_perf_state *ps = &table[0];
 
 		for (j = 0; j < pd->nr_perf_states; j++) {
-			ps = &pd->table[j];
+			ps = &table[j];
 			if (ps->frequency >= f)
 				break;
 		}
 		cluster->util_to_cost[util] = ps->cost;
 	}
+	rcu_read_unlock();
 }
 
 void create_util_to_cost(void)
@@ -1127,15 +1131,16 @@ static void binder_set_priority_hook(void *data,
 	if (unlikely(walt_disabled))
 		return;
 
-	if (bndrtrans && bndrtrans->need_reply && current_wts->boost == TASK_BOOST_STRICT_MAX) {
+	if (bndrtrans && !(bndrtrans->flags & TF_ONE_WAY) && current_wts->boost == TASK_BOOST_STRICT_MAX) {
 		bndrtrans->android_vendor_data1  = wts->boost;
 		wts->boost = TASK_BOOST_STRICT_MAX;
 	}
 }
 
 static void binder_restore_priority_hook(void *data,
-				struct binder_transaction *bndrtrans, struct task_struct *task)
+				struct binder_transaction *bndrtrans)
 {
+	struct task_struct *task = current;
 	struct walt_task_struct *wts = (struct walt_task_struct *) task->android_vendor_data1;
 
 	if (unlikely(walt_disabled))
@@ -1366,7 +1371,7 @@ void walt_cfs_tick(struct rq *rq)
 	 * see if we can run any other task including MVP tasks.
 	 */
 	if (((skip_mvp != wrq->skip_mvp) ||
-		(wrq->mvp_tasks.next != &wts->mvp_list)) && rq->cfs.h_nr_running > 1)
+		(wrq->mvp_tasks.next != &wts->mvp_list)) && rq->cfs.h_nr_queued > 1)
 		resched_curr(rq);
 
 out:
@@ -1379,8 +1384,7 @@ out:
  */
 static void walt_cfs_check_preempt_wakeup(void *unused, struct rq *rq, struct task_struct *p,
 					  bool *preempt, bool *nopreempt, int wake_flags,
-					  struct sched_entity *se, struct sched_entity *pse,
-					  int next_buddy_marked, unsigned int granularity)
+					  struct sched_entity *se, struct sched_entity *pse)
 {
 	struct walt_rq *wrq = &per_cpu(walt_rq, cpu_of(rq));
 	struct walt_task_struct *wts_p = (struct walt_task_struct *) p->android_vendor_data1;
@@ -1441,15 +1445,12 @@ preempt:
 		for (; se; se = NULL)
 #endif
 
-extern void set_next_entity(struct cfs_rq *cfs_rq, struct sched_entity *se);
 static void walt_cfs_replace_next_task_fair(void *unused, struct rq *rq, struct task_struct **p,
-					    struct sched_entity **se, bool *repick, bool simple,
 					    struct task_struct *prev)
 {
 	struct walt_rq *wrq = &per_cpu(walt_rq, cpu_of(rq));
 	struct walt_task_struct *wts;
 	struct task_struct *mvp;
-	struct cfs_rq *cfs_rq;
 
 	if (unlikely(walt_disabled))
 		return;
@@ -1477,24 +1478,11 @@ static void walt_cfs_replace_next_task_fair(void *unused, struct rq *rq, struct 
 	mvp = wts_to_ts(wts);
 
 	*p = mvp;
-	*se = &mvp->se;
-	*repick = true;
 
 	/* TODO: check with team if it is fine in case clock is not updated */
 	/* Mark arrival of MVP task */
 	if (!wrq->mvp_arrival_time)
 		wrq->mvp_arrival_time = rq->clock;
-
-	if (simple) {
-		for_each_sched_entity((*se)) {
-			/*
-			 * TODO If CFS_BANDWIDTH is enabled, we might pick
-			 * from a throttled cfs_rq
-			 */
-			cfs_rq = cfs_rq_of(*se);
-			set_next_entity(cfs_rq, *se);
-		}
-	}
 
 	if ((*p) && (*p) != prev && ((*p)->on_cpu == 1 || (*p)->on_rq == 0 ||
 				     (*p)->on_rq == TASK_ON_RQ_MIGRATING ||
@@ -1517,6 +1505,6 @@ void walt_cfs_init(void)
 	register_trace_android_vh_binder_set_priority(binder_set_priority_hook, NULL);
 	register_trace_android_vh_binder_restore_priority(binder_restore_priority_hook, NULL);
 
-	register_trace_android_rvh_check_preempt_wakeup(walt_cfs_check_preempt_wakeup, NULL);
+	register_trace_android_rvh_check_preempt_wakeup_fair(walt_cfs_check_preempt_wakeup, NULL);
 	register_trace_android_rvh_replace_next_task_fair(walt_cfs_replace_next_task_fair, NULL);
 }

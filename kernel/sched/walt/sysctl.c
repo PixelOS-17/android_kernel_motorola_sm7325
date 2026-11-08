@@ -6,6 +6,7 @@
 
 #include <trace/hooks/sched.h>
 
+#include <linux/kmemleak.h>
 #include "walt.h"
 #include "trace.h"
 
@@ -103,7 +104,7 @@ struct freq_relation_map relation_data[MAX_CLUSTERS][MAX_FREQ_RELATIONS];
 /* range is [1 .. INT_MAX] */
 static int sysctl_task_read_pid = 1;
 
-static int sched_freq_map_handler(struct ctl_table *table, int write,
+static int sched_freq_map_handler(const struct ctl_table *table, int write,
 					       void __user *buffer, size_t *lenp,
 					       loff_t *ppos)
 {
@@ -198,7 +199,7 @@ unlock:
 	return ret;
 }
 
-static int walt_proc_group_thresholds_handler(struct ctl_table *table, int write,
+static int walt_proc_group_thresholds_handler(const struct ctl_table *table, int write,
 				       void __user *buffer, size_t *lenp,
 				       loff_t *ppos)
 {
@@ -232,7 +233,7 @@ static int walt_proc_group_thresholds_handler(struct ctl_table *table, int write
 	return ret;
 }
 
-static int walt_proc_user_hint_handler(struct ctl_table *table,
+static int walt_proc_user_hint_handler(const struct ctl_table *table,
 				int write, void __user *buffer, size_t *lenp,
 				loff_t *ppos)
 {
@@ -257,7 +258,7 @@ unlock:
 
 DECLARE_BITMAP(sysctl_bitmap, WALT_NR_CPUS);
 
-static int walt_proc_sbt_pause_handler(struct ctl_table *table,
+static int walt_proc_sbt_pause_handler(const struct ctl_table *table,
 				       int write, void __user *buffer, size_t *lenp,
 				       loff_t *ppos)
 {
@@ -291,7 +292,7 @@ unlock:
 }
 
 /* pipeline cpus are non-prime cpus chosen to handle pipeline tasks, e.g. golds */
-static int walt_proc_pipeline_cpus_handler(struct ctl_table *table,
+static int walt_proc_pipeline_cpus_handler(const struct ctl_table *table,
 					   int write, void __user *buffer, size_t *lenp,
 					   loff_t *ppos)
 {
@@ -324,7 +325,7 @@ unlock:
 	return ret;
 }
 
-static int sched_ravg_window_handler(struct ctl_table *table,
+static int sched_ravg_window_handler(const struct ctl_table *table,
 				int write, void __user *buffer, size_t *lenp,
 				loff_t *ppos)
 {
@@ -362,7 +363,7 @@ unlock:
 }
 
 static DEFINE_MUTEX(sysctl_pid_mutex);
-static int sched_task_read_pid_handler(struct ctl_table *table, int write,
+static int sched_task_read_pid_handler(const struct ctl_table *table, int write,
 				       void __user *buffer, size_t *lenp,
 				       loff_t *ppos)
 {
@@ -388,7 +389,7 @@ enum {
 	REDUCE_AFFINITY,
 };
 
-static int sched_task_handler(struct ctl_table *table, int write,
+static int sched_task_handler(const struct ctl_table *table, int write,
 				void __user *buffer, size_t *lenp,
 				loff_t *ppos)
 {
@@ -598,7 +599,7 @@ static void sched_update_updown_migrate_values(bool up)
 	}
 }
 
-int sched_updown_migrate_handler(struct ctl_table *table, int write,
+int sched_updown_migrate_handler(const struct ctl_table *table, int write,
 				void __user *buffer, size_t *lenp,
 				loff_t *ppos)
 {
@@ -688,7 +689,7 @@ static void sched_update_updown_early_migrate_values(bool up)
 	}
 }
 
-int sched_updown_early_migrate_handler(struct ctl_table *table, int write,
+int sched_updown_early_migrate_handler(const struct ctl_table *table, int write,
 				void __user *buffer, size_t *lenp,
 				loff_t *ppos)
 {
@@ -753,7 +754,7 @@ unlock_mutex:
 	return ret;
 }
 
-int sched_fmax_cap_handler(struct ctl_table *table, int write,
+int sched_fmax_cap_handler(const struct ctl_table *table, int write,
 		void __user *buffer, size_t *lenp,
 		loff_t *ppos)
 {
@@ -796,7 +797,7 @@ unlock_mutex:
 
 static DEFINE_MUTEX(idle_enough_mutex);
 
-int sched_idle_enough_handler(struct ctl_table *table, int write,
+int sched_idle_enough_handler(const struct ctl_table *table, int write,
 			      void __user *buffer, size_t *lenp,
 			      loff_t *ppos)
 {
@@ -818,7 +819,7 @@ unlock_mutex:
 	return ret;
 }
 
-int sched_idle_enough_clust_handler(struct ctl_table *table, int write,
+int sched_idle_enough_clust_handler(const struct ctl_table *table, int write,
 				    void __user *buffer, size_t *lenp,
 				    loff_t *ppos)
 {
@@ -841,7 +842,7 @@ unlock_mutex:
 
 static DEFINE_MUTEX(util_thres_mutex);
 
-int sched_cluster_util_thres_pct_handler(struct ctl_table *table, int write,
+int sched_cluster_util_thres_pct_handler(const struct ctl_table *table, int write,
 					 void __user *buffer, size_t *lenp,
 					 loff_t *ppos)
 {
@@ -863,7 +864,7 @@ unlock_mutex:
 	return ret;
 }
 
-int sched_cluster_util_thres_pct_clust_handler(struct ctl_table *table, int write,
+int sched_cluster_util_thres_pct_clust_handler(const struct ctl_table *table, int write,
 					       void __user *buffer, size_t *lenp,
 					       loff_t *ppos)
 {
@@ -886,7 +887,7 @@ unlock_mutex:
 #endif /* CONFIG_PROC_SYSCTL */
 
 static int sysctl_sched_sibling_cluster_map[4] = {-1, -1, -1, -1};
-static int sched_sibling_cluster_handler(struct ctl_table *table, int write,
+static int sched_sibling_cluster_handler(const struct ctl_table *table, int write,
 				       void __user *buffer, size_t *lenp,
 				       loff_t *ppos)
 {
@@ -935,7 +936,6 @@ struct ctl_table input_boost_sysctls[] = {
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_INT_MAX,
 	},
-	{ }
 };
 
 struct ctl_table walt_table[] = {
@@ -1257,11 +1257,6 @@ struct ctl_table walt_table[] = {
 		.extra2		= &two_hundred_fifty_five,
 	},
 	{
-		.procname	= "input_boost",
-		.mode		= 0555,
-		.child		= input_boost_sysctls,
-	},
-	{
 		.procname	= "sched_wake_up_idle",
 		.data		= (int *) WAKE_UP_IDLE,
 		.maxlen		= sizeof(unsigned int) * 2,
@@ -1528,17 +1523,8 @@ struct ctl_table walt_table[] = {
 		.extra1		= SYSCTL_NEG_ONE,
 		.extra2		= &three,
 	},
-	{ }
 };
 
-struct ctl_table walt_base_table[] = {
-	{
-		.procname	= "walt",
-		.mode		= 0555,
-		.child		= walt_table,
-	},
-	{ },
-};
 
 void walt_tunables(void)
 {
@@ -1602,4 +1588,14 @@ void walt_tunables(void)
 			relation_data[i][j].target_cluster_cpu = -1;
 		}
 	}
+}
+
+void walt_register_sysctls(void)
+{
+	struct ctl_table_header *hdr;
+
+	hdr = register_sysctl("walt", walt_table);
+	kmemleak_not_leak(hdr);
+	hdr = register_sysctl("walt/input_boost", input_boost_sysctls);
+	kmemleak_not_leak(hdr);
 }

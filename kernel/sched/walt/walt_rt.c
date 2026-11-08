@@ -66,7 +66,7 @@ static void long_running_rt_task_notifier(void *unused, struct rq *rq)
 	}
 }
 
-int sched_long_running_rt_task_ms_handler(struct ctl_table *table, int write,
+int sched_long_running_rt_task_ms_handler(const struct ctl_table *table, int write,
 				       void __user *buffer, size_t *lenp,
 				       loff_t *ppos)
 {
@@ -310,7 +310,7 @@ static void walt_select_task_rq_rt(void *unused, struct task_struct *task, int c
 	 * If we're on asym system ensure we consider the different capacities
 	 * of the CPUs when searching for the lowest_mask.
 	 */
-	ret = cpupri_find_fitness(&task_rq(task)->rd->cpupri, task,
+	ret = cpupri_find_fitness(&task_rq(task)->rd->cpupri, task, task,
 				lowest_mask, walt_rt_task_fits_capacity);
 
 	if (cpumask_test_cpu(0, &wts->reduce_mask))
@@ -355,7 +355,7 @@ out:
 
 
 static void walt_rt_find_lowest_rq(void *unused, struct task_struct *task,
-				   struct cpumask *lowest_mask, int ret, int *best_cpu)
+				   struct task_struct *exec_ctx, struct cpumask *lowest_mask, int ret, int *best_cpu)
 
 {
 	int packing_cpu = -1;

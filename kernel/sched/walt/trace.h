@@ -875,7 +875,7 @@ TRACE_EVENT(walt_nohz_balance_kick,
 	TP_fast_assign(
 		__entry->cpu		= rq->cpu;
 		__entry->nr_running	= rq->nr_running;
-		__entry->nr_cfs_running	= rq->cfs.h_nr_running;
+		__entry->nr_cfs_running	= rq->cfs.h_nr_queued;
 	),
 
 	TP_printk("cpu=%d nr_running=%u nr_cfs_running=%u",
@@ -914,7 +914,7 @@ TRACE_EVENT(walt_newidle_balance,
 		__entry->help_min_cap	= help_min_cap;
 		__entry->avg_idle	= cpu_rq(this_cpu)->avg_idle;
 		__entry->enough_idle	= enough_idle;
-		__entry->overload	= cpu_rq(this_cpu)->rd->overload;
+		__entry->overload	= cpu_rq(this_cpu)->rd->overloaded;
 		__entry->pid		= p ? p->pid : -1;
 	),
 
@@ -945,7 +945,7 @@ TRACE_EVENT(walt_lb_cpu_util,
 	TP_fast_assign(
 		__entry->cpu			= cpu;
 		__entry->nr_running		= cpu_rq(cpu)->nr_running;
-		__entry->cfs_nr_running		= cpu_rq(cpu)->cfs.h_nr_running;
+		__entry->cfs_nr_running		= cpu_rq(cpu)->cfs.h_nr_queued;
 		__entry->nr_big			= wrq->walt_stats.nr_big_tasks;
 		__entry->nr_rtg_high_prio_tasks	= walt_nr_rtg_high_prio(cpu);
 		__entry->cpu_util		= cpu_util(cpu);
@@ -1007,7 +1007,7 @@ TRACE_EVENT(sched_cpu_util,
 			__entry->lowest_mask	= 0;
 		else
 			__entry->lowest_mask	= cpumask_bits(lowest_mask)[0];
-		__entry->thermal_pressure	= arch_scale_thermal_pressure(cpu);
+		__entry->thermal_pressure	= arch_scale_hw_pressure(cpu);
 	),
 
 	TP_printk("cpu=%d nr_running=%d cpu_util=%ld cpu_util_cum=%ld capacity_curr=%lu capacity=%lu capacity_orig=%lu idle_exit_latency=%u irqload=%llu online=%u, inactive=%u, halted=%u, reserved=%u, high_irq_load=%u nr_rtg_hp=%u prs_gprs=%llu lowest_mask=0x%x thermal_pressure=%llu",
@@ -1580,7 +1580,7 @@ TRACE_EVENT(update_cpu_capacity,
 		__entry->rq_cpu_capacity_orig = rq_cpu_capacity_orig;
 		__entry->arch_capacity = arch_scale_cpu_capacity(cpu);
 		__entry->thermal_cap = arch_scale_cpu_capacity(cpu) -
-					arch_scale_thermal_pressure(cpu);
+					arch_scale_hw_pressure(cpu);
 		__entry->max_freq = cluster->max_freq;
 		__entry->max_possible_freq = cluster->max_possible_freq;
 	),

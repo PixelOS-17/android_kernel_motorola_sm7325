@@ -496,7 +496,7 @@ static bool is_ed_task_present(struct rq *rq, u64 wallclock, struct task_struct 
 
 	wrq->ed_task = NULL;
 
-	if (!is_ed_enabled() || !rq->cfs.h_nr_running)
+	if (!is_ed_enabled() || !rq->cfs.h_nr_queued)
 		return false;
 
 	list_for_each_entry(p, &rq->cfs_tasks, se.group_node) {
@@ -4420,7 +4420,7 @@ static inline void irq_work_restrict_to_mig_clusters(cpumask_t *lock_cpus)
 void update_cpu_capacity_helper(int cpu)
 {
 	unsigned long fmax_capacity = arch_scale_cpu_capacity(cpu);
-	unsigned long thermal_pressure = arch_scale_thermal_pressure(cpu);
+	unsigned long thermal_pressure = arch_scale_hw_pressure(cpu);
 	unsigned long thermal_cap, old;
 	struct walt_sched_cluster *cluster;
 	struct rq *rq = cpu_rq(cpu);
@@ -4442,11 +4442,11 @@ void update_cpu_capacity_helper(int cpu)
 		fmax_capacity = mult_frac(fmax_capacity, cluster->walt_internal_freq_limit,
 					 cluster->max_possible_freq);
 
-	old = rq->cpu_capacity_orig;
-	rq->cpu_capacity_orig = min(fmax_capacity, thermal_cap);
+	old = per_cpu(walt_rq, cpu).capacity_orig;
+	per_cpu(walt_rq, cpu).capacity_orig = min(fmax_capacity, thermal_cap);
 
-	if (old != rq->cpu_capacity_orig)
-		trace_update_cpu_capacity(cpu, fmax_capacity, rq->cpu_capacity_orig);
+	if (old != per_cpu(walt_rq, cpu).capacity_orig)
+		trace_update_cpu_capacity(cpu, fmax_capacity, per_cpu(walt_rq, cpu).capacity_orig);
 }
 
 /*
@@ -4458,7 +4458,7 @@ static void android_rvh_update_cpu_capacity(void *unused, int cpu, unsigned long
 	unsigned long rt_pressure = arch_scale_cpu_capacity(cpu) - *capacity;
 
 	update_cpu_capacity_helper(cpu);
-	*capacity = max((int)(cpu_rq(cpu)->cpu_capacity_orig - rt_pressure), 0);
+	*capacity = max((int)(arch_scale_cpu_capacity(cpu) - rt_pressure), 0);
 }
 
 DEFINE_PER_CPU(u32, wakeup_ctr);
@@ -5210,7 +5210,7 @@ static void android_vh_scheduler_tick(void *unused, struct rq *rq)
 	walt_lb_tick(rq);
 }
 
-static void android_rvh_schedule(void *unused, unsigned int sched_mode, struct task_struct *prev,
+static void android_rvh_schedule(void *unused, struct task_struct *prev,
 		struct task_struct *next, struct rq *rq)
 {
 	u64 wallclock;
@@ -5448,9 +5448,9 @@ static int walt_init_stop_handler(void *data)
 		level++;
 	}
 
-	do_each_thread(g, p) {
+	for_each_process_thread(g, p) {
 		init_new_task_load(p);
-	} while_each_thread(g, p);
+	}
 
 	for_each_possible_cpu(cpu) {
 		struct rq *rq = cpu_rq(cpu);
@@ -5558,8 +5558,7 @@ static void walt_init(struct work_struct *work)
 			 "root domain's perf-domain values not initialized rd->pd=%d.",
 			 rd->pd);
 
-	hdr = register_sysctl_table(walt_base_table);
-	kmemleak_not_leak(hdr);
+	walt_register_sysctls();
 
 	input_boost_init();
 	core_ctl_init();

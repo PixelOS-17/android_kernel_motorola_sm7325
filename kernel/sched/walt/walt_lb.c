@@ -27,7 +27,7 @@ static void walt_detach_task(struct task_struct *p, struct rq *src_rq,
 static void walt_attach_task(struct task_struct *p, struct rq *rq)
 {
 	activate_task(rq, p, 0);
-	check_preempt_curr(rq, p, 0);
+	wakeup_preempt(rq, p, 0);
 }
 
 static int stop_walt_lb_active_migration(void *data)
@@ -501,7 +501,7 @@ static int walt_lb_find_busiest_similar_cap_cpu(int dst_cpu, const cpumask_t *sr
 		wrq = &per_cpu(walt_rq, i);
 		trace_walt_lb_cpu_util(i, wrq);
 
-		if (cpu_rq(i)->nr_running < 2 || !cpu_rq(i)->cfs.h_nr_running)
+		if (cpu_rq(i)->nr_running < 2 || !cpu_rq(i)->cfs.h_nr_queued)
 			continue;
 
 		util = walt_lb_cpu_util(i);
@@ -541,12 +541,12 @@ static int walt_lb_find_busiest_from_higher_cap_cpu(int dst_cpu, const cpumask_t
 		total_cpus += 1;
 		total_util += util;
 		total_capacity += capacity_orig_of(i);
-		total_nr += cpu_rq(i)->cfs.h_nr_running;
+		total_nr += cpu_rq(i)->cfs.h_nr_queued;
 
-		if (cpu_rq(i)->cfs.h_nr_running < 2)
+		if (cpu_rq(i)->cfs.h_nr_queued < 2)
 			continue;
 
-		if (cpu_rq(i)->cfs.h_nr_running == 2 &&
+		if (cpu_rq(i)->cfs.h_nr_queued == 2 &&
 			task_util(cpu_rq(i)->curr) < SMALL_TASK_THRESHOLD)
 			continue;
 
@@ -610,7 +610,7 @@ static int walt_lb_find_busiest_from_lower_cap_cpu(int dst_cpu, const cpumask_t 
 		total_cpus += 1;
 		total_util += util;
 		total_capacity += capacity_orig_of(i);
-		total_nr += cpu_rq(i)->cfs.h_nr_running;
+		total_nr += cpu_rq(i)->cfs.h_nr_queued;
 
 		/*
 		 * no point in selecting this CPU as busy, as
@@ -620,7 +620,7 @@ static int walt_lb_find_busiest_from_lower_cap_cpu(int dst_cpu, const cpumask_t 
 			continue;
 
 		/* active migration is allowed only to idle cpu */
-		if (cpu_rq(i)->cfs.h_nr_running < 2 &&
+		if (cpu_rq(i)->cfs.h_nr_queued < 2 &&
 			(!wrq->walt_stats.nr_big_tasks || !treat_dst_idle))
 			continue;
 
@@ -891,7 +891,7 @@ static void walt_newidle_balance(struct rq *this_rq,
 	if (walt_balance_rt(this_rq) || this_rq->nr_running)
 		goto rt_pulled;
 
-	if (!force_overload && !READ_ONCE(this_rq->rd->overload))
+	if (!force_overload && !READ_ONCE(this_rq->rd->overloaded))
 		goto repin;
 
 	if (atomic_read(&this_rq->nr_iowait) && !enough_idle)
@@ -961,11 +961,11 @@ found_busy_cpu:
 unlock:
 	raw_spin_lock(&this_rq->__lock);
 rt_pulled:
-	if (this_rq->cfs.h_nr_running && !*pulled_task)
+	if (this_rq->cfs.h_nr_queued && !*pulled_task)
 		*pulled_task = 1;
 
 	/* Is there a task of a high priority class? */
-	if (this_rq->nr_running != this_rq->cfs.h_nr_running)
+	if (this_rq->nr_running != this_rq->cfs.h_nr_queued)
 		*pulled_task = -1;
 
 	/* reset the idle time stamp if we pulled any task */
