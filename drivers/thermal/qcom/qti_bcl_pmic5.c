@@ -417,14 +417,11 @@ static int bcl_read_ibat(struct thermal_zone_device *tz, int *adc_value)
 	return ret;
 }
 
-static int bcl_get_vbat_trip(struct thermal_zone_device *tzd,
-		int type, int *trip)
+static int bcl_vbat_read_trip(struct bcl_device *bcl_perph, int type, int *trip)
 {
 	int ret = 0;
 	unsigned int val = 0;
-	struct bcl_peripheral_data *bat_data =
-		(struct bcl_peripheral_data *)tzd->devdata;
-	int16_t addr;
+		int16_t addr;
 
 	*trip = 0;
 	switch (type + BCL_VBAT_LVL0) {
@@ -441,13 +438,13 @@ static int bcl_get_vbat_trip(struct thermal_zone_device *tzd,
 		return -ENODEV;
 	}
 
-	ret = bcl_read_register(bat_data->dev, addr, &val);
+	ret = bcl_read_register(bcl_perph, addr, &val);
 	if (ret)
 		return ret;
 
 	if (addr == BCL_VBAT_ADC_LOW) {
 		*trip = val;
-		convert_adc_to_vbat_thresh_val(bat_data->dev, trip);
+		convert_adc_to_vbat_thresh_val(bcl_perph, trip);
 		pr_debug("vbat trip: %d mV ADC:0x%02x\n", *trip, val);
 	} else {
 		*trip = BCL_VBAT_THRESH_BASE + val * 25;
@@ -500,24 +497,13 @@ static int bcl_read_vbat_tz(struct thermal_zone_device *tzd, int *adc_value)
 	return ret;
 }
 
-static int bcl_read_vbat_type(struct thermal_zone_device *tzd, int trip,
-		enum thermal_trip_type *type)
-{
-	*type = THERMAL_TRIP_PASSIVE;
-	return 0;
-}
-
 static struct thermal_zone_device_ops vbat_tzd_ops = {
 	.get_temp = bcl_read_vbat_tz,
-	.get_trip_temp = bcl_get_vbat_trip,
-	.get_trip_type = bcl_read_vbat_type,
 };
 
 static struct thermal_zone_params vbat_tzp = {
 	.governor_name = "step_wise",
 	.no_hwmon = true,
-	.num_tbps = 0,
-	.tbp = NULL,
 	.sustainable_power = 0,
 	.k_po = 0,
 	.k_pu = 0,
@@ -528,7 +514,8 @@ static struct thermal_zone_params vbat_tzp = {
 	.offset = 0
 };
 
-static int bcl_get_trend(struct thermal_zone_device *tz, int trip, enum thermal_trend *trend)
+static int bcl_get_trend(struct thermal_zone_device *tz, const struct thermal_trip *trip,
+			 enum thermal_trend *trend)
 {
 	struct bcl_peripheral_data *bat_data =
 		(struct bcl_peripheral_data *)tz->devdata;
@@ -883,6 +870,8 @@ static void bcl_fetch_trip(struct platform_device *pdev, enum bcl_dev_type type,
 static void bcl_vbat_init(struct platform_device *pdev,
 		enum bcl_dev_type type, struct bcl_device *bcl_perph)
 {
+	struct thermal_trip trips[3];
+	int i;
 	struct bcl_peripheral_data *vbat = &bcl_perph->param[type];
 	unsigned int val = 0;
 	int ret;
@@ -902,8 +891,16 @@ static void bcl_vbat_init(struct platform_device *pdev,
 		if (ret || !val)
 			return;
 	}
-	vbat->tz_dev = thermal_zone_device_register("vbat", 3, 0, vbat,
-			&vbat_tzd_ops, &vbat_tzp, 0, 0);
+	for (i = 0; i < ARRAY_SIZE(trips); i++) {
+		int temp = 0;
+
+		trips[i].type = THERMAL_TRIP_PASSIVE;
+		trips[i].hysteresis = 0;
+		trips[i].temperature = bcl_vbat_read_trip(bcl_perph, i, &temp) ?
+				       THERMAL_TEMP_INVALID : temp;
+	}
+	vbat->tz_dev = thermal_zone_device_register_with_trips("vbat", trips,
+			ARRAY_SIZE(trips), vbat, &vbat_tzd_ops, &vbat_tzp, 0, 0);
 	if (IS_ERR(vbat->tz_dev)) {
 		pr_debug("vbat[%s] register failed. err:%ld\n",
 				bcl_int_names[type],

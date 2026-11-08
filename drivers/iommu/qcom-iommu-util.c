@@ -9,6 +9,7 @@
  * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include "iommu-priv.h"
 #include <linux/dma-mapping-fast.h>
 #include <linux/module.h>
 #include <linux/slab.h>

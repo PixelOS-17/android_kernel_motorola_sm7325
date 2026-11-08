@@ -757,7 +757,7 @@ static int setup_fifo_params(struct spi_device *spi_slv,
 		cpha |= CPHA;
 
 	if (spi_slv->mode & SPI_CS_HIGH)
-		demux_output_inv |= BIT(spi_slv->chip_select);
+		demux_output_inv |= BIT(spi_get_chipselect(spi_slv, 0));
 
 	if (spi_slv->controller_data) {
 		u32 cs_clk_delay = 0;
@@ -775,7 +775,7 @@ static int setup_fifo_params(struct spi_device *spi_slv,
 		(inter_words_delay | cs_clk_delay);
 	}
 
-	demux_sel = spi_slv->chip_select;
+	demux_sel = spi_get_chipselect(spi_slv, 0);
 	if (mas->cur_speed_hz != spi_slv->max_speed_hz) {
 		mas->cur_speed_hz = spi_slv->max_speed_hz;
 		ret = get_spi_clk_cfg(mas->cur_speed_hz, mas, &idx, &div);
@@ -1642,7 +1642,7 @@ static int setup_gsi_xfer(struct spi_transfer *xfer, struct spi_transfer *xfer_t
 
 	rx_len =  spi_geni_get_rx_len(xfer, xfer_tx_rx, mas);
 	spi_xfer_cmd_update(xfer, xfer_tx_rx, mas, &tx_nent, &rx_nent, &rx_len, &cmd);
-	cs |= spi_slv->chip_select;
+	cs |= spi_get_chipselect(spi_slv, 0);
 	if (!spi->cs_gpiods && !xfer->cs_change) {
 		if (!list_is_last(&xfer->transfer_list, &spi->cur_msg->transfers))
 			go_flags |= FRAGMENTATION;
@@ -3405,7 +3405,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 	}
 
 	if (slave_en)
-		spi->slave_abort = spi_slv_abort;
+		spi->target_abort = spi_slv_abort;
 
 	#if (IS_ENABLED(CONFIG_BOOTMARKER_PROXY))
 		snprintf(boot_marker, sizeof(boot_marker),

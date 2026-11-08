@@ -2116,6 +2116,7 @@ EXPORT_SYMBOL(rproc_detach);
 struct rproc *rproc_get_by_node(struct device_node *np)
 {
 	struct rproc *rproc = NULL, *r;
+	const struct device_driver *driver;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(r, &rproc_list, node) {

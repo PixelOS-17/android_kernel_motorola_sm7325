@@ -21,3 +21,4 @@ ufs_qcom_scmi-y += ufs-qcom-scmi.o
 ufs_qcom-$(CONFIG_SCSI_UFS_CRYPTO) += ufs-qcom-ice.o
 ufs_qcom_scmi-$(CONFIG_SCSI_UFS_CRYPTO) += ufs-qcom-ice.o
 obj-$(CONFIG_SCSI_UFS_CRYPTO_QTI) += ufshcd-crypto-qti.o
+ccflags-y += -I$(srctree)/drivers/ufs/core

@@ -34,23 +34,17 @@ struct bcl_device {
 
 static struct bcl_device *bcl_perph;
 
-static int bcl_soc_get_trend(struct thermal_zone_device *tz, int trip,
-				    enum thermal_trend *trend)
+static int bcl_soc_get_trend(struct thermal_zone_device *tz,
+			     const struct thermal_trip *trip,
+			     enum thermal_trend *trend)
 {
-	int trip_temp = 0, trip_hyst = 0, temp, ret;
+	int trip_temp, trip_hyst, temp;
 
-	if (!tz)
+	if (!tz || !trip)
 		return -EINVAL;
 
-	ret = tz->ops->get_trip_temp(tz, trip, &trip_temp);
-	if (ret)
-		return ret;
-
-	if (tz->ops->get_trip_hyst) {
-		ret = tz->ops->get_trip_hyst(tz, trip, &trip_hyst);
-		if (ret)
-			return ret;
-	}
+	trip_temp = trip->temperature;
+	trip_hyst = trip->hysteresis;
 	temp = READ_ONCE(tz->temperature);
 
 	if (temp >= trip_temp)

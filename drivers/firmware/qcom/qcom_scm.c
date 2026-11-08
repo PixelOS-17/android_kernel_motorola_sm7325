@@ -31,7 +31,7 @@
 #include <linux/ktime.h>
 
 #include "qcom_scm.h"
-#include "qtee_shmbridge_internal.h"
+#include "../qtee_shmbridge_internal.h"
 
 static bool download_mode = IS_ENABLED(CONFIG_QCOM_SCM_DOWNLOAD_MODE_DEFAULT);
 module_param(download_mode, bool, 0);

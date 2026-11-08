@@ -70,6 +70,7 @@ struct adreno_smmu_fault_info {
  */
 struct adreno_smmu_priv {
     const void *cookie;
+    struct qcom_io_pgtable_info pgtbl_info;
     const struct io_pgtable_cfg *(*get_ttbr1_cfg)(const void *cookie);
     int (*set_ttbr0_cfg)(const void *cookie, const struct io_pgtable_cfg *cfg);
     void (*get_fault_info)(const void *cookie, struct adreno_smmu_fault_info *info);

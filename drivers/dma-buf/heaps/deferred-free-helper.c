@@ -8,6 +8,7 @@
  * Copyright (C) 2011 Google, Inc.
  */
 
+#include <linux/shrinker.h>
 #include <linux/freezer.h>
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -101,12 +102,7 @@ static unsigned long freelist_shrink_scan(struct shrinker *shrinker,
 	return total_freed;
 }
 
-static struct shrinker freelist_shrinker = {
-	.count_objects = freelist_shrink_count,
-	.scan_objects = freelist_shrink_scan,
-	.seeks = DEFAULT_SEEKS,
-	.batch = 0,
-};
+static struct shrinker *freelist_shrinker;
 
 static int deferred_free_thread(void *data)
 {
@@ -133,7 +129,13 @@ static int deferred_freelist_init(void)
 	}
 	sched_set_normal(freelist_task, 19);
 
-	return register_shrinker(&freelist_shrinker, "dmabuf-deferred-free-shrinker");
+	freelist_shrinker = shrinker_alloc(0, "dmabuf-deferred-free-shrinker");
+	if (!freelist_shrinker)
+		return -ENOMEM;
+	freelist_shrinker->count_objects = freelist_shrink_count;
+	freelist_shrinker->scan_objects = freelist_shrink_scan;
+	shrinker_register(freelist_shrinker);
+	return 0;
 }
 module_init(deferred_freelist_init);
 MODULE_LICENSE("GPL v2");

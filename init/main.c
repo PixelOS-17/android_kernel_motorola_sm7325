@@ -1736,7 +1736,7 @@ __setup("k61.data_probe=", k61_stop_probe_setup);
 static void k61_stop_probe_file(const char *path, void *buf)
 {
 	u8 digest[SHA256_DIGEST_SIZE];
-	struct sha256_state sctx;
+	struct sha256_ctx sctx;
 	struct file *file;
 	loff_t pos = 0;
 	ssize_t n = 0;

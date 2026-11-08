@@ -34,7 +34,8 @@ struct pe_sensor_data {
 	struct mutex			mutex;
 };
 
-static int pe_sensor_get_trend(struct thermal_zone_device *tz, int trip,
+static int pe_sensor_get_trend(struct thermal_zone_device *tz,
+			       const struct thermal_trip *trip,
 			       enum thermal_trend *trend)
 {
 	int value, last_value;
