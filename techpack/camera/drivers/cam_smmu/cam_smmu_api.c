@@ -1890,6 +1890,8 @@ int cam_smmu_reserve_sec_heap(int32_t smmu_hdl,
 	}
 
 	secheap_buf = &iommu_cb_set.cb_info[idx].secheap_buf;
+	/* Our own reference, dropped by err_put or cam_smmu_release_sec_heap() */
+	get_dma_buf(buf);
 	secheap_buf->buf = buf;
 	secheap_buf->attach = dma_buf_attach(secheap_buf->buf,
 		iommu_cb_set.cb_info[idx].dev);
