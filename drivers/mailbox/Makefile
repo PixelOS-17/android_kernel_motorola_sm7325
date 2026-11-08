@@ -82,3 +82,6 @@ obj-$(CONFIG_CIX_MBOX)	+= cix-mailbox.o
 obj-$(CONFIG_BCM74110_MAILBOX)	+= bcm74110-mailbox.o
 
 obj-$(CONFIG_RISCV_SBI_MPXY_MBOX)	+= riscv-sbi-mpxy-mbox.o
+obj-$(CONFIG_APPLE_MAILBOX)	+= apple-mailbox.o
+
+obj-$(CONFIG_MSM_QMP)   += msm_qmp.o
