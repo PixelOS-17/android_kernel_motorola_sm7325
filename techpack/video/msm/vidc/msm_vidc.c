@@ -1285,11 +1285,14 @@ static inline int vb2_bufq_init(struct msm_vidc_inst *inst,
 		enum v4l2_buf_type type, enum session_type sess)
 {
 	struct vb2_queue *q = NULL;
+	struct mutex *lock = NULL;
 
 	if (type == OUTPUT_MPLANE) {
 		q = &inst->bufq[OUTPUT_PORT].vb2_bufq;
+		lock = &inst->bufq[OUTPUT_PORT].lock;
 	} else if (type == INPUT_MPLANE) {
 		q = &inst->bufq[INPUT_PORT].vb2_bufq;
+		lock = &inst->bufq[INPUT_PORT].lock;
 	} else {
 		s_vpr_e(inst->sid, "buf_type = %d not recognised\n", type);
 		return -EINVAL;
@@ -1304,6 +1307,7 @@ static inline int vb2_bufq_init(struct msm_vidc_inst *inst,
 	q->drv_priv = inst;
 	q->allow_zero_bytesused = !V4L2_TYPE_IS_OUTPUT(type);
 	q->copy_timestamp = 1;
+	q->lock = lock;
 	return vb2_queue_init(q);
 }
 
