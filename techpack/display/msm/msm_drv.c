@@ -1827,6 +1827,7 @@ static const struct file_operations fops = {
 	.read               = drm_read,
 	.llseek             = noop_llseek,
 	.mmap               = msm_gem_mmap,
+	.fop_flags          = FOP_UNSIGNED_OFFSET,
 };
 
 static struct drm_driver msm_driver = {
