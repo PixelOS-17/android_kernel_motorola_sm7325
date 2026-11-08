@@ -147,13 +147,13 @@ static struct device_node *of_thermal_zone_find_from(struct device_node *sensor,
 	 */
 	for_each_available_child_of_node_scoped(np, child) {
 
-		int count, i;
-
 		if (skip) {
 			if (child == from)
 				skip = false;
 			continue;
 		}
+
+		int count, i;
 
 		count = of_count_phandle_with_args(child, "thermal-sensors",
 						   "#thermal-sensor-cells");
@@ -223,6 +223,9 @@ static void thermal_of_parameters_init(struct device_node *np,
 	int prop, ret;
 
 	tzp->no_hwmon = true;
+
+	if (!of_property_read_string(np, "thermal-governor", &governor))
+		strscpy(tzp->governor_name, governor, THERMAL_NAME_LENGTH);
 
 	if (!of_property_read_u32(np, "sustainable-power", &prop))
 		tzp->sustainable_power = prop;
@@ -355,7 +358,91 @@ out:
  * is programmed with the intersection of the windows of all enabled zones,
  * and a sensor event updates every zone of the group.
  */
-static void thermal_of_zone_unregister(struct thermal_zone_device *tz)
+struct thermal_of_group {
+	struct mutex lock;
+	int num_tz;
+	struct thermal_zone_device **tz;
+	int *low;
+	int *high;
+	int (*set_trips)(struct thermal_zone_device *tz, int low, int high);
+};
+
+static struct thermal_of_group *thermal_of_group_alloc(int count)
+{
+	struct thermal_of_group *group;
+
+	group = kzalloc(sizeof(*group), GFP_KERNEL);
+	if (!group)
+		return NULL;
+
+	group->tz = kcalloc(count, sizeof(*group->tz), GFP_KERNEL);
+	group->low = kcalloc(count, sizeof(*group->low), GFP_KERNEL);
+	group->high = kcalloc(count, sizeof(*group->high), GFP_KERNEL);
+	if (!group->tz || !group->low || !group->high) {
+		kfree(group->tz);
+		kfree(group->low);
+		kfree(group->high);
+		kfree(group);
+		return NULL;
+	}
+	mutex_init(&group->lock);
+
+	return group;
+}
+
+static void thermal_of_group_free(struct thermal_of_group *group)
+{
+	if (!group)
+		return;
+
+	kfree(group->tz);
+	kfree(group->low);
+	kfree(group->high);
+	kfree(group);
+}
+
+static int thermal_of_group_set_trips(struct thermal_zone_device *tz,
+				      int low, int high)
+{
+	struct thermal_of_group *group = tz->of_group;
+	int agg_low = low, agg_high = high;
+	int i, ret;
+
+	if (!group)
+		return 0;
+
+	mutex_lock(&group->lock);
+	for (i = 0; i < group->num_tz; i++) {
+		if (group->tz[i] == tz) {
+			group->low[i] = low;
+			group->high[i] = high;
+			continue;
+		}
+		if (READ_ONCE(group->tz[i]->mode) != THERMAL_DEVICE_ENABLED)
+			continue;
+		agg_low = max(agg_low, group->low[i]);
+		agg_high = min(agg_high, group->high[i]);
+	}
+	ret = group->set_trips(tz, agg_low, agg_high);
+	mutex_unlock(&group->lock);
+
+	return ret;
+}
+
+void thermal_of_group_update(struct thermal_zone_device *tz,
+			     enum thermal_notify_event event,
+			     void (*update)(struct thermal_zone_device *,
+					    enum thermal_notify_event))
+{
+	struct thermal_of_group *group = tz->of_group;
+	int i;
+
+	for (i = 0; i < group->num_tz; i++)
+		if (group->tz[i] != tz)
+			update(group->tz[i], event);
+}
+
+static void __thermal_of_zone_unregister(struct thermal_zone_device *tz)
 {
 	thermal_zone_device_disable(tz);
 	thermal_zone_device_unregister(tz);
@@ -368,36 +455,44 @@ static void thermal_of_zone_unregister(struct thermal_zone_device *tz)
  * ressources allocated specific to the thermal OF. Zones registered for
  * the same sensor along with @tz are unregistered too.
  *
- * Return: a valid thermal zone structure pointer on success.
- *	- EINVAL: if the device tree thermal description is malformed
- *	- ENOMEM: if one structure can not be allocated
- *	- Other negative errors are returned by the underlying called functions
+ * @tz: a pointer to the thermal zone structure
  */
-static struct thermal_zone_device *thermal_of_zone_register(struct device_node *sensor, int id, void *data,
-							    const struct thermal_zone_device_ops *ops)
+static void thermal_of_zone_unregister(struct thermal_zone_device *tz)
+{
+	struct thermal_of_group *group = tz->of_group;
+	int i;
+
+	if (group) {
+		for (i = 0; i < group->num_tz; i++)
+			group->tz[i]->of_group = NULL;
+		for (i = 0; i < group->num_tz; i++)
+			if (group->tz[i] != tz)
+				__thermal_of_zone_unregister(group->tz[i]);
+		thermal_of_group_free(group);
+	}
+
+	__thermal_of_zone_unregister(tz);
+}
+
+static struct thermal_zone_device *
+thermal_of_zone_register_np(struct device_node *np, struct device_node *sensor,
+			    int id, void *data,
+			    const struct thermal_zone_device_ops *ops,
+			    struct thermal_of_group *group)
 {
 	struct thermal_zone_device_ops of_ops = *ops;
 	struct thermal_zone_device *tz;
 	struct thermal_trip *trips;
 	struct thermal_zone_params tzp = {};
-	struct device_node *np;
 	const char *action;
 	int delay, pdelay;
 	int ntrips;
 	int ret;
 
-	np = of_thermal_zone_find(sensor, id);
-	if (IS_ERR(np)) {
-		if (PTR_ERR(np) != -ENODEV)
-			pr_err("Failed to find thermal zone for %pOFn id=%d\n", sensor, id);
-		return ERR_CAST(np);
-	}
-
 	trips = thermal_of_trips_init(np, &ntrips);
 	if (IS_ERR(trips)) {
 		pr_err("Failed to parse trip points for %pOFn id=%d\n", sensor, id);
-		ret = PTR_ERR(trips);
-		goto out_of_node_put;
+		return ERR_CAST(trips);
 	}
 
 	if (!trips)
@@ -412,6 +507,11 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 	thermal_of_parameters_init(np, &tzp);
 
 	of_ops.should_bind = thermal_of_should_bind;
+
+	if (group && ops->set_trips) {
+		group->set_trips = ops->set_trips;
+		of_ops.set_trips = thermal_of_group_set_trips;
+	}
 
 	ret = of_property_read_string(np, "critical-action", &action);
 	if (!ret && !of_ops.critical) {
@@ -430,13 +530,23 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 		goto out_kfree_trips;
 	}
 
-	of_node_put(np);
 	kfree(trips);
+
+	if (group) {
+		tz->of_group = group;
+		group->tz[group->num_tz++] = tz;
+	}
+
+	/* QTI: the zone stays off until userspace enables it */
+	if (of_property_read_bool(np, "disable-thermal-zone"))
+		return tz;
 
 	ret = thermal_zone_device_enable(tz);
 	if (ret) {
 		pr_err("Failed to enabled thermal zone '%s', id=%d: %d\n",
 		       tz->type, tz->id, ret);
+		if (group)
+			group->num_tz--;
 		__thermal_of_zone_unregister(tz);
 		return ERR_PTR(ret);
 	}
@@ -445,10 +555,82 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 
 out_kfree_trips:
 	kfree(trips);
-out_of_node_put:
-	of_node_put(np);
 
 	return ERR_PTR(ret);
+}
+
+/**
+ * thermal_of_zone_register - Register a thermal zone with device node
+ * sensor
+ *
+ * The thermal_of_zone_register() parses a device tree given a device
+ * node sensor and identifier. It searches for the thermal zones
+ * associated to the couple sensor/id and retrieves all the thermal
+ * zone properties and registers new thermal zones with those
+ * properties. When several zones use the couple sensor/id, all of them
+ * are registered and the first one is returned.
+ *
+ * @sensor: A device node pointer corresponding to the sensor in the device tree
+ * @id: An integer as sensor identifier
+ * @data: A private data to be stored in the thermal zone dedicated private area
+ * @ops: A set of thermal sensor ops
+ *
+ * Return: a valid thermal zone structure pointer on success.
+ *	- EINVAL: if the device tree thermal description is malformed
+ *	- ENOMEM: if one structure can not be allocated
+ *	- Other negative errors are returned by the underlying called functions
+ */
+static struct thermal_zone_device *thermal_of_zone_register(struct device_node *sensor, int id, void *data,
+							    const struct thermal_zone_device_ops *ops)
+{
+	struct thermal_of_group *group = NULL;
+	struct thermal_zone_device *tz, *first = NULL;
+	struct device_node *np, *next;
+	int count = 0;
+
+	np = of_thermal_zone_find(sensor, id);
+	if (IS_ERR(np)) {
+		if (PTR_ERR(np) != -ENODEV)
+			pr_err("Failed to find thermal zone for %pOFn id=%d\n", sensor, id);
+		return ERR_CAST(np);
+	}
+
+	for (next = of_node_get(np); !IS_ERR(next); count++) {
+		struct device_node *cur = next;
+
+		next = of_thermal_zone_find_from(sensor, id, cur);
+		of_node_put(cur);
+	}
+
+	if (count > 1) {
+		group = thermal_of_group_alloc(count);
+		if (!group) {
+			of_node_put(np);
+			return ERR_PTR(-ENOMEM);
+		}
+	}
+
+	while (!IS_ERR(np)) {
+		tz = thermal_of_zone_register_np(np, sensor, id, data, ops, group);
+		next = of_thermal_zone_find_from(sensor, id, np);
+		of_node_put(np);
+		np = next;
+
+		if (IS_ERR(tz)) {
+			if (!IS_ERR(np))
+				of_node_put(np);
+			if (first)
+				thermal_of_zone_unregister(first);
+			else
+				thermal_of_group_free(group);
+			return tz;
+		}
+
+		if (!first)
+			first = tz;
+	}
+
+	return first;
 }
 
 static void devm_thermal_of_zone_release(struct device *dev, void *res)

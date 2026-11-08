@@ -136,6 +136,7 @@ struct thermal_zone_device {
 	int prev_low_trip;
 	int prev_high_trip;
 	struct thermal_zone_device_ops ops;
+	struct thermal_of_group *of_group;
 	struct thermal_zone_params *tzp;
 	struct thermal_governor *governor;
 	void *governor_data;
@@ -302,5 +303,20 @@ static inline void
 thermal_cooling_device_stats_update(struct thermal_cooling_device *cdev,
 				    unsigned long new_state) {}
 #endif /* CONFIG_THERMAL_STATISTICS */
+
+#ifdef CONFIG_THERMAL_OF
+void thermal_of_group_update(struct thermal_zone_device *tz,
+			     enum thermal_notify_event event,
+			     void (*update)(struct thermal_zone_device *,
+					    enum thermal_notify_event));
+#else
+static inline void
+thermal_of_group_update(struct thermal_zone_device *tz,
+			enum thermal_notify_event event,
+			void (*update)(struct thermal_zone_device *,
+				       enum thermal_notify_event))
+{
+}
+#endif
 
 #endif /* __THERMAL_CORE_H__ */

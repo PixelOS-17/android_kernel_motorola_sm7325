@@ -3354,7 +3354,6 @@ static int msm_geni_serial_handle_tx(struct uart_port *uport, bool done,
 	unsigned int xmit_size;
 	unsigned int fifo_width_bytes =
 		(uart_console(uport) ? 1 : (msm_port->tx_fifo_width >> 3));
-	int temp_tail = 0;
 	int irq_en;
 
 	if (msm_port->uart_ssr.is_ssr_down)

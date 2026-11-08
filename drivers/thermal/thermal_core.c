@@ -845,6 +845,19 @@ static int thermal_bind_cdev_to_trip(struct thermal_zone_device *tz,
 	bool upper_no_limit;
 	int result;
 
+	/*
+	 * QTI limits just below THERMAL_MAX_LIMIT are offsets from max_state,
+	 * see include/linux/thermal.h.
+	 */
+	if (cool_spec->upper != THERMAL_NO_LIMIT &&
+	    cool_spec->upper >= THERMAL_MAX_LIMIT - cdev->max_state)
+		cool_spec->upper = cdev->max_state -
+				   (THERMAL_MAX_LIMIT - cool_spec->upper);
+	if (cool_spec->lower != THERMAL_NO_LIMIT &&
+	    cool_spec->lower >= THERMAL_MAX_LIMIT - cdev->max_state)
+		cool_spec->lower = cdev->max_state -
+				   (THERMAL_MAX_LIMIT - cool_spec->lower);
+
 	/* lower default 0, upper default max_state */
 	if (cool_spec->lower == THERMAL_NO_LIMIT)
 		cool_spec->lower = 0;
