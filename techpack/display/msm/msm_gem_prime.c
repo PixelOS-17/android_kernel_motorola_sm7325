@@ -80,13 +80,14 @@ void msm_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr)
 
 int msm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
 {
-	int ret;
+	/*
+	 * This is drm_gem_object_funcs.mmap: it is called by drm_gem_mmap_obj()
+	 * and drm_gem_prime_mmap(), which have already set up vm_ops and taken
+	 * the object reference.
+	 */
+	vm_flags_set(vma, VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP);
 
-	ret = drm_gem_mmap_obj(obj, obj->size, vma);
-	if (ret < 0)
-		return ret;
-
-	return msm_gem_mmap_obj(vma->vm_private_data, vma);
+	return msm_gem_mmap_obj(obj, vma);
 }
 
 struct drm_gem_object *msm_gem_prime_import_sg_table(struct drm_device *dev,

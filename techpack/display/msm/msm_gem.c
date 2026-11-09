@@ -258,13 +258,12 @@ int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	int ret;
 
+	/* drm_gem_mmap_obj() calls msm_gem_prime_mmap() through funcs->mmap */
 	ret = drm_gem_mmap(filp, vma);
-	if (ret) {
+	if (ret)
 		DBG("mmap failed: %d", ret);
-		return ret;
-	}
 
-	return msm_gem_mmap_obj(vma->vm_private_data, vma);
+	return ret;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
