@@ -1,7 +1,7 @@
 ### AnyKernel3 Ramdisk Mod Script
 ## osm0sis @ xda-developers
-## tundra (Motorola Edge 30 Fusion): kernel-only flash into boot of the active slot.
-## Boot header v4: the DTB lives in vendor_boot and the ramdisk is left untouched.
+## tundra (Motorola Edge 30 Fusion): kernel, dtbo and base DTB for the active slot.
+## Boot header v4: the DTB lives in vendor_boot. The ramdisks are left untouched.
 
 ### AnyKernel setup
 # global properties
@@ -36,3 +36,18 @@ split_boot;
 flash_boot;
 flash_generic dtbo;
 ## end boot install
+
+# vendor_boot shell variables
+BLOCK=vendor_boot;
+IS_SLOT_DEVICE=1;
+RAMDISK_COMPRESSION=auto;
+PATCH_VBMETA_FLAG=auto;
+
+# reset for vendor_boot patching
+reset_ak;
+
+# vendor_boot install: replace only the DTB, keep the vendor ramdisk as-is
+split_boot;
+
+flash_boot;
+## end vendor_boot install

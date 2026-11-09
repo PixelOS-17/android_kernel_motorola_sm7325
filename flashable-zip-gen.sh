@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Pack a built tundra 6.18 kernel and dtbo into an AnyKernel3 flashable zip.
 #
-# The zip replaces the kernel in the active slot's boot partition and the
-# active slot's dtbo (see anykernel/anykernel.sh); the ramdisk and vendor_boot
-# (DTB and kernel command line) are left untouched.
+# The zip replaces the kernel in the active slot's boot partition, its dtbo,
+# and the base DTB in its vendor_boot (see anykernel/anykernel.sh). The
+# ramdisks and the kernel command line are left untouched.
 #
 # Usage:
 #   DTBO=/path/dtbo.img ./flashable-zip-gen.sh # dtbo.img from pack-tundra.sh
@@ -20,6 +20,7 @@ TC="${TC:-$SRC_DIR/../toolchain}"
 KOUT="${KOUT:-$SRC_DIR/../out-full}"
 DTBO="${DTBO:?set DTBO to the dtbo.img from pack-tundra.sh}"
 IMAGE="$KOUT/arch/arm64/boot/Image"
+DTS="$KOUT/arch/arm64/boot/dts/vendor/qcom"
 # Pinned AnyKernel3, cached under $TC.
 AK3_URL="${AK3_URL:-https://github.com/osm0sis/AnyKernel3}"
 AK3_COMMIT="${AK3_COMMIT:-41f04bdb4ee30a44e429c2c1131d5e8bb32b15f1}"
@@ -27,6 +28,7 @@ AK3_DIR="$TC/AnyKernel3"
 
 [ -f "$IMAGE" ] || { echo "ERROR: $IMAGE not found; run ./build-tundra.sh first" >&2; exit 1; }
 [ -f "$DTBO" ] || { echo "ERROR: $DTBO not found" >&2; exit 1; }
+[ -f "$DTS/lahaina-moto-base.dtb" ] || { echo "ERROR: base DTBs not found in $DTS" >&2; exit 1; }
 command -v zip >/dev/null || { echo "ERROR: zip not installed" >&2; exit 1; }
 
 mkdir -p "$TC"
@@ -45,6 +47,7 @@ rm -rf "$STAGE/README.md" "$STAGE/modules" "$STAGE/patch" "$STAGE/ramdisk"
 cp "$SRC_DIR/anykernel/anykernel.sh" "$STAGE/anykernel.sh"
 cp "$IMAGE" "$STAGE/Image"
 cp "$DTBO" "$STAGE/dtbo.img"
+cat "$DTS"/lahaina-moto-base-v2.1.dtb "$DTS"/lahaina-moto-base.dtb > "$STAGE/dtb"
 
 KSHA=$(strings "$IMAGE" | sed -n '/Linux version/s/.*-g\([0-9a-f]\{12\}\).*/\1/p')
 KSHA=${KSHA%%$'\n'*}
