@@ -180,6 +180,23 @@
 };
 
 &tlmm {
+	qupv3_se18_ctsrx_sleep: qupv3_se18_ctsrx_sleep {
+		cts {
+			pins = "gpio68";
+			function = "qup18";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		rx {
+			pins = "gpio71";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+			input-enable;
+		};
+	};
+
 	redriver_enable: redriver_enable {
 		mux {
 			pins = "gpio3";
@@ -361,4 +378,13 @@
 		compatible = "mmi,watchdog_cpu_ctx";
 		memory-region = <&wdog_cpuctx_mem>;
 	};
+};
+
+/*
+ * pinctrl-msm masks a pin's interrupt while the pin is muxed away from GPIO,
+ * so the RX wakeup interrupt can only fire with RX in GPIO mode during sleep.
+ */
+&qupv3_se18_4uart {
+	pinctrl-2 = <&qupv3_se18_ctsrx_sleep>, <&qupv3_se18_rts>,
+						<&qupv3_se18_tx>;
 };
