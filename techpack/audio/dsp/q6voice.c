@@ -2765,9 +2765,11 @@ static int voice_get_cal(struct cal_block_data **cal_block,
 			 int col_data_idx, int session_id)
 {
 	int ret = 0;
-	u64 src_vmid_list = BIT(VMID_LPASS) | BIT_ULL(VMID_ADSP_HEAP);
-	struct qcom_scm_vmperm dst_vmids[] = {{QCOM_SCM_VMID_HLOS,
-		PERM_READ | PERM_WRITE | PERM_EXEC}};
+	u64 src_vmid_list = BIT_ULL(VMID_HLOS);
+	struct qcom_scm_vmperm dst_vmids[] = {
+		{VMID_LPASS, PERM_READ | PERM_WRITE},
+		{VMID_ADSP_HEAP, PERM_READ | PERM_WRITE},
+	};
 	*cal_block = cal_utils_get_only_cal_block(
 		common.cal_data[cal_block_idx]);
 	if (*cal_block == NULL) {
