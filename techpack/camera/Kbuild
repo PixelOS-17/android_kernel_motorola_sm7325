@@ -29,6 +29,10 @@ ifeq ($(CONFIG_QTI_CAMERA_LAHAINA), y)
 include $(CAMERA_KERNEL_ROOT)/config/lahaina.mk
 endif
 
+ifeq ($(CONFIG_QTI_CAMERA_YUPIK), y)
+include $(CAMERA_KERNEL_ROOT)/config/yupik.mk
+endif
+
 ifeq ($(CONFIG_ARCH_KONA), y)
 include $(CAMERA_KERNEL_ROOT)/config/kona.mk
 endif

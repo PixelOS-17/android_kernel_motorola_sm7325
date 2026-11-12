@@ -11,6 +11,14 @@ config QTI_CAMERA_LAHAINA
 
 if QTI_CAMERA_LAHAINA
 
+config QTI_CAMERA_YUPIK
+	bool "Spectra LRME for yupik"
+	help
+	  Add the Spectra LRME block that yupik (SM7325) has and lahaina
+	  lacks to the lahaina camera build, as config/yupikcamera.conf
+	  did. The remaining blocks yupik uses are already part of the
+	  lahaina feature set.
+
 config AF_NOISE_ELIMINATION
 	bool "For elimnating AF resonance noise"
 	default n
