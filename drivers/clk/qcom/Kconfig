@@ -1632,4 +1632,48 @@ config SM_CAMCC_LAHAINA
 	  Say Y if you want to support camera devices and functionality such as
 	  capturing pictures.
 
+config SM_GCC_YUPIK
+	tristate "Yupik Global Clock Controller"
+	depends on COMMON_CLK_QCOM
+	help
+	  Support for the global clock controller on Qualcomm Technologies, Inc
+	  Yupik (SM7325) devices.
+	  Say Y if you want to use peripheral devices such as UART, SPI, I2C,
+	  USB, UFS, SD/eMMC, PCIe, etc.
+
+config SM_GPUCC_YUPIK
+	tristate "Yupik Graphics Clock Controller"
+	select SM_GCC_YUPIK
+	help
+	  Support for the graphics clock controller on Qualcomm Technologies, Inc
+	  Yupik (SM7325) devices.
+	  Say Y if you want to support graphics controller devices.
+
+config SM_VIDEOCC_YUPIK
+	tristate "Yupik Video Clock Controller"
+	select SM_GCC_YUPIK
+	help
+	  Support for the video clock controller on Qualcomm Technologies, Inc
+	  Yupik (SM7325) devices.
+	  Say Y if you want to support video devices and functionality such as
+	  video encode/decode.
+
+config SM_DISPCC_YUPIK
+	tristate "Yupik Display Clock Controller"
+	select SM_GCC_YUPIK
+	help
+	  Support for the display clock controller on Qualcomm Technologies, Inc
+	  Yupik (SM7325) devices.
+	  Say Y if you want to support display devices and functionality such as
+	  splash screen.
+
+config SM_CAMCC_YUPIK
+	tristate "Yupik Camera Clock Controller"
+	select SM_GCC_YUPIK
+	help
+	  Support for the camera clock controller on Qualcomm Technologies, Inc
+	  Yupik (SM7325) devices.
+	  Say Y if you want to support camera devices and functionality such as
+	  capturing pictures.
+
 endif
