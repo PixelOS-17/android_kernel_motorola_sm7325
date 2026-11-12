@@ -30,3 +30,4 @@ obj-$(CONFIG_PHY_QCOM_SGMII_ETH)	+= phy-qcom-sgmii-eth.o
 obj-$(CONFIG_PHY_QCOM_UFS)		+= phy-qcom-ufs.o
 obj-$(CONFIG_PHY_QCOM_UFS_V4)		+= phy-qcom-ufs-qmp-v4.o
 obj-$(CONFIG_PHY_QCOM_UFS_V4_LAHAINA)	+= phy-qcom-ufs-qmp-v4-lahaina.o
+obj-$(CONFIG_PHY_QCOM_UFS_V4_YUPIK)	+= phy-qcom-ufs-qmp-v4-yupik.o
