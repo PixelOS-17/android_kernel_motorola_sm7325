@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 
-# The lahaina/tundra DT is the 5.4 vendor DT (seventeen 053cdcc70b89), built
+# The lahaina/tundra DT is the 5.4 vendor DT (seventeen 053cdcc70b89) and the
+# yupik/dubai DT the one at 49978be49cbc, built
 # against the 5.4 dt-bindings in include/: the drivers here index clocks,
 # interconnects etc. by those numbers.
 # Base DTBs (go into vendor_boot) and the board overlays (go into dtbo).
@@ -9,7 +10,9 @@ dtb-$(CONFIG_ARCH_QCOM) += lahaina-moto-base-v2.1.dtb \
 	lahaina-moto-base.dtb \
 	lahaina-tundra-evb-overlay.dtbo \
 	lahaina-tundra-dvt1-overlay.dtbo \
-	lahaina-tundra-dvt2-overlay.dtbo
+	lahaina-tundra-dvt2-overlay.dtbo \
+	yupik-moto-base.dtb \
+	yupik-dubai-evb-overlay.dtbo
 
 DTC_FLAGS += -@
 DTC_INCLUDE := $(src)/include
