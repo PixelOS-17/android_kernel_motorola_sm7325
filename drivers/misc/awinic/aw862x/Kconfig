@@ -1,2 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0-only
 config AW862X_HAPTIC
-	tristate "Awinic Haptics"
+	tristate "Awinic AW862x haptics"
+	depends on INPUT_AWINIC_HAPTIC && I2C
+	help
+	  Driver for the Awinic AW8622x, AW86214 and AW8624 haptic drivers
+	  (compatible "awinic,haptic_nv"), as used on Motorola dubai.

@@ -711,4 +711,6 @@ source "drivers/misc/utag/Kconfig"
 
 source "drivers/misc/sx937x/Kconfig"
 
+source "drivers/misc/awinic/Kconfig"
+
 endmenu

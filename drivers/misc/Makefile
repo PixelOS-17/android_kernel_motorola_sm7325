@@ -83,5 +83,6 @@ obj-$(CONFIG_PKVM_IOMMU_TEMPLATE)  += pkvm-iommu-temp/
 obj-$(CONFIG_QSEECOM_PROXY) 	+= qseecom_proxy.o
 obj-$(CONFIG_QSEECOM)		+= qseecom/
 obj-$(CONFIG_MMI_SYS_TEMP)	+= mmi_sys_temp/
+obj-$(CONFIG_INPUT_AWINIC_HAPTIC)	+= awinic/
 obj-$(CONFIG_MOTO_UTAGS)	+= utag/
 obj-$(CONFIG_SARSENSOR_SX937X)	+= sx937x/
