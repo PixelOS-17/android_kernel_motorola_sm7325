@@ -13,6 +13,7 @@ source "techpack/wlan/platform/cnss2/Kconfig"
 source "techpack/wlan/platform/cnss_genl/Kconfig"
 source "techpack/wlan/platform/cnss_prealloc/Kconfig"
 source "techpack/wlan/platform/cnss_utils/Kconfig"
+source "techpack/wlan/platform/icnss2/Kconfig"
 
 config QCA_CLD_WLAN
 	tristate "Qualcomm Atheros CLD WLAN module"
