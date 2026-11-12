@@ -34,7 +34,6 @@
 #include <linux/soc/qcom/qmi.h>
 #include <linux/sysfs.h>
 #include <linux/thermal.h>
-#include <soc/qcom/memory_dump.h>
 #include <soc/qcom/secure_buffer.h>
 #include <soc/qcom/socinfo.h>
 #include <soc/qcom/qcom_ramdump.h>
@@ -1891,7 +1890,7 @@ static int icnss_driver_event_fw_ready_ind(struct icnss_priv *priv, void *data)
 	if (!priv)
 		return -ENODEV;
 
-	del_timer(&priv->recovery_timer);
+	timer_delete(&priv->recovery_timer);
 	set_bit(ICNSS_FW_READY, &priv->state);
 	clear_bit(ICNSS_MODE_ON, &priv->state);
 	atomic_set(&priv->soc_wake_ref_count, 0);
@@ -2903,7 +2902,7 @@ static int icnss_wpss_notifier_nb(struct notifier_block *nb,
 
 
 	if (priv->wpss_self_recovery_enabled)
-		del_timer(&priv->wpss_ssr_timer);
+		timer_delete(&priv->wpss_ssr_timer);
 
 	priv->is_ssr = true;
 
@@ -3437,7 +3436,7 @@ static void *icnss_create_ramdump_device(struct icnss_priv *priv, const char *de
 
 	snprintf(ramdump_info->name, ARRAY_SIZE(ramdump_info->name), "icnss_%s", dev_name);
 
-	ramdump_info->minor = ida_simple_get(&rd_minor_id, 0, RAMDUMP_NUM_DEVICES, GFP_KERNEL);
+	ramdump_info->minor = ida_alloc_max(&rd_minor_id, RAMDUMP_NUM_DEVICES - 1, GFP_KERNEL);
 	if (ramdump_info->minor < 0) {
 		icnss_pr_err("%s: No more minor numbers left! rc:%d\n", __func__,
 			     ramdump_info->minor);
@@ -3458,7 +3457,7 @@ static void *icnss_create_ramdump_device(struct icnss_priv *priv, const char *de
 	return (void *)ramdump_info;
 
 fail_device_create:
-	ida_simple_remove(&rd_minor_id, ramdump_info->minor);
+	ida_free(&rd_minor_id, ramdump_info->minor);
 fail_out_of_minors:
 	kfree(ramdump_info);
 	return ERR_PTR(ret);
@@ -4110,10 +4109,10 @@ int icnss_get_soc_info(struct device *dev, struct icnss_soc_info *info)
 	info->fw_version = priv->fw_version_info.fw_version;
 	fw_build_timestamp = priv->fw_version_info.fw_build_timestamp;
 	fw_build_timestamp[WLFW_MAX_TIMESTAMP_LEN] = '\0';
-	strlcpy(info->fw_build_timestamp,
+	strscpy(info->fw_build_timestamp,
 		priv->fw_version_info.fw_build_timestamp,
 		WLFW_MAX_TIMESTAMP_LEN + 1);
-	strlcpy(info->fw_build_id, priv->fw_build_id,
+	strscpy(info->fw_build_id, priv->fw_build_id,
 	        ICNSS_WLFW_MAX_BUILD_ID_LEN + 1);
 	info->rd_card_chain_cap = priv->rd_card_chain_cap;
 	info->phy_he_channel_width_cap = priv->phy_he_channel_width_cap;
@@ -5669,7 +5668,7 @@ static void icnss_destroy_ramdump_device(struct icnss_ramdump_info *ramdump_info
 
 	device_unregister(ramdump_info->dev);
 
-	ida_simple_remove(&rd_minor_id, ramdump_info->minor);
+	ida_free(&rd_minor_id, ramdump_info->minor);
 
 	kfree(ramdump_info);
 }
@@ -5696,10 +5695,10 @@ static void icnss_remove(struct platform_device *pdev)
 
 	icnss_pr_info("Removing driver: state: 0x%lx\n", priv->state);
 
-	del_timer(&priv->recovery_timer);
+	timer_delete(&priv->recovery_timer);
 
 	if (priv->wpss_self_recovery_enabled)
-		del_timer(&priv->wpss_ssr_timer);
+		timer_delete(&priv->wpss_ssr_timer);
 
 	device_init_wakeup(&priv->pdev->dev, false);
 
@@ -5770,7 +5769,7 @@ static void icnss_remove(struct platform_device *pdev)
 
 void icnss_recovery_timeout_hdlr(struct timer_list *t)
 {
-	struct icnss_priv *priv = from_timer(priv, t, recovery_timer);
+	struct icnss_priv *priv = timer_container_of(priv, t, recovery_timer);
 
 	/* This is to handle if slate is not up and modem SSR is triggered */
 	if (priv->is_slate_rfa && !test_bit(ICNSS_SLATE_UP, &priv->state))
@@ -5782,7 +5781,7 @@ void icnss_recovery_timeout_hdlr(struct timer_list *t)
 
 void icnss_wpss_ssr_timeout_hdlr(struct timer_list *t)
 {
-	struct icnss_priv *priv = from_timer(priv, t, wpss_ssr_timer);
+	struct icnss_priv *priv = timer_container_of(priv, t, wpss_ssr_timer);
 
 	icnss_pr_err("Timeout waiting for WPSS SSR notification 0x%lx\n",
 		      priv->state);
