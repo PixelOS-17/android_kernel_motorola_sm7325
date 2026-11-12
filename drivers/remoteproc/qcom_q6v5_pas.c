@@ -2158,6 +2158,19 @@ static const struct adsp_data lahaina_mpss_resource = {
 	.ssctl_id = 0x12,
 };
 
+/* yupik's WPSS runs the WCN6750 firmware. icnss2 boots it. */
+static const struct adsp_data yupik_wpss_resource = {
+	.crash_reason_smem = 626,
+	.firmware_name = "wpss.mdt",
+	.pas_id = 6,
+	.minidump_id = 4,
+	.auto_boot = false,
+	.ssr_name = "wpss",
+	.sysmon_name = "wpss",
+	.qmp_name = "wpss",
+	.ssctl_id = 0x19,
+};
+
 /*
  * The stock lahaina DT describes every PAS remoteproc with the 5.4 PIL
  * binding (compatible "qcom,pil-tz-generic"), told apart only by
@@ -2173,6 +2186,7 @@ static const struct {
 	{ "modem", &lahaina_mpss_resource },
 	{ "cdsp", &lahaina_cdsp_resource },
 	{ "slpi", &lahaina_slpi_resource },
+	{ "wpss", &yupik_wpss_resource },
 };
 
 static int adsp_pil_tz_generic_probe(struct platform_device *pdev)
