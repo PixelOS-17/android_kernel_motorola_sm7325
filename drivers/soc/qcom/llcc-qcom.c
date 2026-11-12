@@ -486,6 +486,19 @@ static const struct llcc_slice_config lahaina_data[] =  {
 	LAHAINA_SCT(LLCC_CPUHWT,   5, 512, 1, 1, 0xFFF, 0x0, 0, 0, 0, 0, 0, 1),
 };
 
+/* The 5.4 yupik table (llcc-yupik.c). */
+static const struct llcc_slice_config yupik_data[] =  {
+	LAHAINA_SCT(LLCC_CPUSS,    1, 768, 1, 0, 0x3F, 0x0, 0, 0, 0, 0, 1, 1),
+	LAHAINA_SCT(LLCC_MDMHPGRW, 7, 512, 2, 1, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+	LAHAINA_SCT(LLCC_CMPT,     10, 768, 1, 1, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+	LAHAINA_SCT(LLCC_GPUHTW,   11, 256, 1, 1, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+	LAHAINA_SCT(LLCC_GPU,      12, 512, 1, 0, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+	LAHAINA_SCT(LLCC_MMUHWT,   13, 256, 1, 1, 0x3F, 0x0, 0, 0, 0, 0, 0, 1),
+	LAHAINA_SCT(LLCC_MDMPNG,   21, 768, 0, 1, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+	LAHAINA_SCT(LLCC_WLNHW,    24, 256, 1, 1, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+	LAHAINA_SCT(LLCC_MDMVPE,   29, 64,  1, 1, 0x3F, 0x0, 0, 0, 0, 0, 1, 0),
+};
+
 static const struct llcc_slice_config sm8450_data[] =  {
 	{LLCC_CPUSS,     1, 3072, 1, 0, 0xFFFF, 0x0,   0, 0, 0, 1, 1, 0, 0 },
 	{LLCC_VIDSC0,    2,  512, 3, 1, 0xFFFF, 0x0,   0, 0, 0, 1, 0, 0, 0 },
@@ -770,6 +783,11 @@ static const struct qcom_llcc_config sm8350_cfg = {
 static const struct qcom_llcc_config lahaina_cfg = {
 	.sct_data	= lahaina_data,
 	.size		= ARRAY_SIZE(lahaina_data),
+};
+
+static const struct qcom_llcc_config yupik_cfg = {
+	.sct_data	= yupik_data,
+	.size		= ARRAY_SIZE(yupik_data),
 };
 
 static const struct qcom_llcc_config sm8450_cfg = {
@@ -2089,6 +2107,7 @@ static const struct of_device_id qcom_llcc_of_match[] = {
 	{ .compatible = "qcom,sdmshrike-llcc", .data = &sdmshrike_cfg },
 	{ .compatible = "qcom,sm8350-llcc", .data = &sm8350_cfg },
 	{ .compatible = "qcom,lahaina-llcc", .data = &lahaina_cfg },
+	{ .compatible = "qcom,yupik-llcc", .data = &yupik_cfg },
 	{ .compatible = "qcom,sm8450-llcc", .data = &sm8450_cfg },
 	{ .compatible = "qcom,sm8550-llcc", .data = &sm8550_cfg },
 	{ .compatible = "qcom,pineapple-llcc", .data = &pineapple_cfg },
