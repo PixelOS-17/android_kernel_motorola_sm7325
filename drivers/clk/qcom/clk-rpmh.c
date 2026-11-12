@@ -626,6 +626,30 @@ static const struct clk_rpmh_desc clk_rpmh_lahaina = {
 	.num_clks = ARRAY_SIZE(lahaina_rpmh_clocks),
 };
 
+DEFINE_CLK_RPMH_ARC(yupik, bi_tcxo, bi_tcxo_ao, "xo.lvl", 0x3, 4);
+
+/* Indexed by the 5.4 binding like lahaina, which numbers it the same way */
+static struct clk_hw *yupik_rpmh_clocks[] = {
+	[LAHAINA_RPMH_CXO_CLK]		= &yupik_bi_tcxo.hw,
+	[LAHAINA_RPMH_CXO_CLK_A]	= &yupik_bi_tcxo_ao.hw,
+	[LAHAINA_RPMH_LN_BB_CLK2]	= &lahaina_ln_bb_clk2.hw,
+	[LAHAINA_RPMH_LN_BB_CLK2_A]	= &lahaina_ln_bb_clk2_ao.hw,
+	[LAHAINA_RPMH_RF_CLK1]		= &lahaina_rf_clk1.hw,
+	[LAHAINA_RPMH_RF_CLK1_A]	= &lahaina_rf_clk1_ao.hw,
+	[LAHAINA_RPMH_RF_CLK3]		= &lahaina_rf_clk3.hw,
+	[LAHAINA_RPMH_RF_CLK3_A]	= &lahaina_rf_clk3_ao.hw,
+	[LAHAINA_RPMH_RF_CLK4]		= &lahaina_rf_clk4.hw,
+	[LAHAINA_RPMH_RF_CLK4_A]	= &lahaina_rf_clk4_ao.hw,
+	[LAHAINA_RPMH_IPA_CLK]		= &lahaina_ipa.hw,
+	[LAHAINA_RPMH_PKA_CLK]		= &lahaina_pka.hw,
+	[LAHAINA_RPMH_HWKM_CLK]		= &lahaina_hwkm.hw,
+};
+
+static const struct clk_rpmh_desc clk_rpmh_yupik = {
+	.clks = yupik_rpmh_clocks,
+	.num_clks = ARRAY_SIZE(yupik_rpmh_clocks),
+};
+
 DEFINE_CLK_RPMH_VRM(sc8280xp, ln_bb_clk3, ln_bb_clk3_ao, "lnbclka3", 2);
 
 static struct clk_hw *sc8280xp_rpmh_clocks[] = {
@@ -1088,6 +1112,7 @@ static const struct of_device_id clk_rpmh_match_table[] = {
 	{ .compatible = "qcom,sm8250-rpmh-clk", .data = &clk_rpmh_sm8250},
 	{ .compatible = "qcom,sm8350-rpmh-clk", .data = &clk_rpmh_sm8350},
 	{ .compatible = "qcom,lahaina-rpmh-clk", .data = &clk_rpmh_lahaina},
+	{ .compatible = "qcom,yupik-rpmh-clk", .data = &clk_rpmh_yupik},
 	{ .compatible = "qcom,sm8450-rpmh-clk", .data = &clk_rpmh_sm8450},
 	{ .compatible = "qcom,sc7280-rpmh-clk", .data = &clk_rpmh_sc7280},
 	{ .compatible = "qcom,kalama-rpmh-clk", .data = &clk_rpmh_kalama},
