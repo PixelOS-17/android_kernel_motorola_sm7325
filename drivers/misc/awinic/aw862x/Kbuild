@@ -1,0 +1,6 @@
+obj-$(CONFIG_AW862X_HAPTIC) += aw862x.o
+
+aw862x-objs += haptic_nv.o
+aw862x-objs += aw8622x.o
+aw862x-objs += aw86214.o
+aw862x-objs += aw8624.o
