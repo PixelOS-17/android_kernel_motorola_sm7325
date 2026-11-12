@@ -77,3 +77,4 @@ obj-$(CONFIG_PINCTRL_TLMM_TEST) += tlmm-test.o
 
 # tundra (from seventeen-6.1)
 obj-$(CONFIG_PINCTRL_LAHAINA)	+= pinctrl-lahaina.o
+obj-$(CONFIG_PINCTRL_YUPIK)	+= pinctrl-yupik.o
