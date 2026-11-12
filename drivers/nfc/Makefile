@@ -21,3 +21,4 @@ obj-$(CONFIG_NFC_VIRTUAL_NCI)	+= virtual_ncidev.o
 
 # tundra (from seventeen-6.1)
 obj-$(CONFIG_NFC_I2C)		+= sn1xx/
+obj-$(CONFIG_NFC_ST21NFC)	+= st21nfc/
