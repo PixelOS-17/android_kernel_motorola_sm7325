@@ -529,7 +529,7 @@ static int aw8624_ram_update(struct aw8624 *aw8624)
 {
 	aw8624->ram_init = 0;
 	aw8624->rtp_init = 0;
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 				aw8624_ram_name, aw8624->dev, GFP_KERNEL,
 				aw8624, aw8624_ram_check);
 }
@@ -1139,7 +1139,7 @@ static int aw8624_haptic_ram_vbat_comp(struct aw8624 *aw8624, bool flag)
 	return 0;
 }
 
-void aw8624_haptic_set_rtp_aei(struct aw8624 *aw8624, bool flag)
+static void aw8624_haptic_set_rtp_aei(struct aw8624 *aw8624, bool flag)
 {
 	if (flag) {
 		aw8624_i2c_write_bits(aw8624,
@@ -1173,7 +1173,7 @@ static unsigned char aw8624_haptic_rtp_get_fifo_afi(struct aw8624 *aw8624)
 	return ret;
 }
 
-unsigned char aw8624_haptic_rtp_get_fifo_afs(struct aw8624 *aw8624)
+static unsigned char aw8624_haptic_rtp_get_fifo_afs(struct aw8624 *aw8624)
 {
 	unsigned char ret = 0;
 	unsigned char reg_val = 0;
@@ -1904,9 +1904,9 @@ int aw8624_haptic_init(struct aw8624 *aw8624)
 	aw8624->haptic_audio.delay_val = 23;
 	aw8624->haptic_audio.timer_val = 23;
 	INIT_LIST_HEAD(&(aw8624->haptic_audio.ctr_list));
-	hrtimer_init(&aw8624->haptic_audio.timer,
-			CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw8624->haptic_audio.timer.function = aw8624_haptic_audio_timer_func;
+	hrtimer_setup(&aw8624->haptic_audio.timer,
+		      aw8624_haptic_audio_timer_func,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw8624->haptic_audio.work, aw8624_haptic_audio_work_routine);
 	aw8624->gun_type = AW_GUN_TYPE_DEF_VAL;
 	aw8624->bullet_nr = AW_BULLET_NR_DEF_VAL;
@@ -3245,14 +3245,14 @@ static int aw8624_rtp_osc_calibration(struct aw8624 *aw8624)
 	disable_irq(gpio_to_irq(aw8624->irq_gpio));
 	/* haptic start */
 	aw8624_haptic_start(aw8624);
-	pm_qos_add_request(&aw8624_pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
-							AW8624_PM_QOS_VALUE_VB);
+	cpu_latency_qos_add_request(&aw8624_pm_qos_req_vb,
+				    AW8624_PM_QOS_VALUE_VB);
 	while (1) {
 		ret = aw8624_osc_calculation_time(aw8624);
 		if (ret < 0)
 			break;
 	}
-	pm_qos_remove_request(&aw8624_pm_qos_req_vb);
+	cpu_latency_qos_remove_request(&aw8624_pm_qos_req_vb);
 	enable_irq(gpio_to_irq(aw8624->irq_gpio));
 
 	aw8624->osc_cali_flag = 0;
@@ -3770,8 +3770,8 @@ int aw8624_vibrator_init(struct aw8624 *aw8624)
 		return ret;
 	}
 #endif
-	hrtimer_init(&aw8624->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw8624->timer.function = aw8624_vibrator_timer_func;
+	hrtimer_setup(&aw8624->timer, aw8624_vibrator_timer_func,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw8624->vibrator_work, aw8624_vibrator_work_routine);
 
 	if (aw8624->IsUsedIRQ)

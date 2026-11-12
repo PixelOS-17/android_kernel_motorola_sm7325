@@ -1116,7 +1116,7 @@ static int aw86214_ram_update(struct aw86214 *aw86214)
 {
 	aw86214->ram_init = 0;
 
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 				       aw86214_ram_name, aw86214->dev,
 				       GFP_KERNEL, aw86214, aw86214_ram_check);
 }
@@ -2886,8 +2886,8 @@ int aw86214_vibrator_init(struct aw86214 *aw86214)
 		return ret;
 	}
 #endif
-	hrtimer_init(&aw86214->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw86214->timer.function = aw86214_vibrator_timer_func;
+	hrtimer_setup(&aw86214->timer, aw86214_vibrator_timer_func,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw86214->vibrator_work,
 		  aw86214_vibrator_work_routine);
 
@@ -2907,9 +2907,9 @@ int aw86214_haptic_init(struct aw86214 *aw86214)
 	aw86214->haptic_audio.delay_val = 1;
 	aw86214->haptic_audio.timer_val = 21318;
 	INIT_LIST_HEAD(&(aw86214->haptic_audio.ctr_list));
-	hrtimer_init(&aw86214->haptic_audio.timer,
-		CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw86214->haptic_audio.timer.function = aw86214_haptic_audio_timer_func;
+	hrtimer_setup(&aw86214->haptic_audio.timer,
+		      aw86214_haptic_audio_timer_func,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw86214->haptic_audio.work,
 		aw86214_haptic_audio_work_routine);
 	mutex_init(&aw86214->haptic_audio.lock);

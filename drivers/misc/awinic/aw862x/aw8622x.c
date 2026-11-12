@@ -959,8 +959,8 @@ static int aw8622x_haptic_rtp_init(struct aw8622x *aw8622x)
 	struct aw8622x_container *rtp_container = aw8622x->rtp_container;
 
 	aw_dev_dbg("%s enter\n", __func__);
-	pm_qos_add_request(&aw8622x_pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
-			   AW8622X_PM_QOS_VALUE_VB);
+	cpu_latency_qos_add_request(&aw8622x_pm_qos_req_vb,
+				    AW8622X_PM_QOS_VALUE_VB);
 	aw8622x->rtp_cnt = 0;
 	mutex_lock(&aw8622x->rtp_lock);
 	while ((!aw8622x_haptic_rtp_get_fifo_afs(aw8622x))
@@ -1008,7 +1008,7 @@ static int aw8622x_haptic_rtp_init(struct aw8622x *aw8622x)
 					   __func__, glb_state_val,
 					   aw8622x->rtp_cnt);
 			aw8622x->rtp_cnt = 0;
-			pm_qos_remove_request(&aw8622x_pm_qos_req_vb);
+			cpu_latency_qos_remove_request(&aw8622x_pm_qos_req_vb);
 			mutex_unlock(&aw8622x->rtp_lock);
 			return 0;
 		}
@@ -1019,7 +1019,7 @@ static int aw8622x_haptic_rtp_init(struct aw8622x *aw8622x)
 
 	aw_dev_dbg("%s exit\n", __func__);
 	mutex_unlock(&aw8622x->rtp_lock);
-	pm_qos_remove_request(&aw8622x_pm_qos_req_vb);
+	cpu_latency_qos_remove_request(&aw8622x_pm_qos_req_vb);
 	return 0;
 }
 
@@ -1285,14 +1285,14 @@ static int aw8622x_rtp_osc_calibration(struct aw8622x *aw8622x)
 	/* haptic go */
 	aw8622x_haptic_play_go(aw8622x, true);
 	/* require latency of CPU & DMA not more then PM_QOS_VALUE_VB us */
-	pm_qos_add_request(&aw8622x_pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY,
-			   AW8622X_PM_QOS_VALUE_VB);
+	cpu_latency_qos_add_request(&aw8622x_pm_qos_req_vb,
+				    AW8622X_PM_QOS_VALUE_VB);
 	while (1) {
 		ret = aw8622x_osc_calculation_time(aw8622x);
 		if (ret < 0)
 			break;
 	}
-	pm_qos_remove_request(&aw8622x_pm_qos_req_vb);
+	cpu_latency_qos_remove_request(&aw8622x_pm_qos_req_vb);
 	enable_irq(gpio_to_irq(aw8622x->irq_gpio));
 	aw8622x->microsecond = ktime_to_us(ktime_sub(aw8622x->kend,
 						aw8622x->kstart));
@@ -1673,7 +1673,7 @@ static int aw8622x_ram_update(struct aw8622x *aw8622x)
 	aw8622x->ram_init = 0;
 	aw8622x->rtp_init = 0;
 
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 				       aw8622x_ram_name, aw8622x->dev,
 				       GFP_KERNEL, aw8622x, aw8622x_ram_check);
 }
@@ -3865,8 +3865,8 @@ int aw8622x_vibrator_init(struct aw8622x *aw8622x)
 		return ret;
 	}
 #endif
-	hrtimer_init(&aw8622x->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw8622x->timer.function = aw8622x_vibrator_timer_func;
+	hrtimer_setup(&aw8622x->timer, aw8622x_vibrator_timer_func,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw8622x->vibrator_work,
 		  aw8622x_vibrator_work_routine);
 	INIT_WORK(&aw8622x->rtp_work, aw8622x_rtp_work_routine);
@@ -4107,9 +4107,9 @@ int aw8622x_haptic_init(struct aw8622x *aw8622x)
 	aw8622x->haptic_audio.delay_val = 1;
 	aw8622x->haptic_audio.timer_val = 21318;
 	INIT_LIST_HEAD(&(aw8622x->haptic_audio.ctr_list));
-	hrtimer_init(&aw8622x->haptic_audio.timer,
-		CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw8622x->haptic_audio.timer.function = aw8622x_haptic_audio_timer_func;
+	hrtimer_setup(&aw8622x->haptic_audio.timer,
+		      aw8622x_haptic_audio_timer_func,
+		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw8622x->haptic_audio.work,
 		aw8622x_haptic_audio_work_routine);
 	mutex_init(&aw8622x->haptic_audio.lock);

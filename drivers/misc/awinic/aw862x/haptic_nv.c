@@ -238,7 +238,7 @@ static int haptic_nv_parse_dt(struct awinic *awinic, struct device *dev,
 }
 
 static int
-haptic_nv_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
+haptic_nv_i2c_probe(struct i2c_client *i2c)
 {
 	int ret = -1;
 	int irq_flags = 0;
@@ -279,7 +279,7 @@ haptic_nv_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 
 	if (gpio_is_valid(awinic->irq_gpio)) {
 		ret = devm_gpio_request_one(&i2c->dev, awinic->irq_gpio,
-			GPIOF_DIR_IN, "haptic_nv_int");
+			GPIOF_IN, "haptic_nv_int");
 		if (ret) {
 			aw_dev_err("%s: int request failed\n", __func__);
 			goto err_irq_gpio_request;
@@ -296,10 +296,6 @@ haptic_nv_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		awinic->aw8624 = devm_kzalloc(&i2c->dev,
 					sizeof(struct aw8624), GFP_KERNEL);
 		if (awinic->aw8624 == NULL) {
-			if (gpio_is_valid(awinic->irq_gpio))
-				devm_gpio_free(&i2c->dev, awinic->irq_gpio);
-			if (gpio_is_valid(awinic->reset_gpio))
-				devm_gpio_free(&i2c->dev, awinic->reset_gpio);
 			devm_kfree(&i2c->dev, awinic);
 			awinic = NULL;
 			return -ENOMEM;
@@ -346,10 +342,6 @@ haptic_nv_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		awinic->aw8622x = devm_kzalloc(&i2c->dev,
 					sizeof(struct aw8622x), GFP_KERNEL);
 		if (awinic->aw8622x == NULL) {
-			if (gpio_is_valid(awinic->irq_gpio))
-				devm_gpio_free(&i2c->dev, awinic->irq_gpio);
-			if (gpio_is_valid(awinic->reset_gpio))
-				devm_gpio_free(&i2c->dev, awinic->reset_gpio);
 			devm_kfree(&i2c->dev, awinic);
 			awinic = NULL;
 			return -ENOMEM;
@@ -404,8 +396,6 @@ haptic_nv_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		awinic->aw86214 = devm_kzalloc(&i2c->dev,
 					sizeof(struct aw86214), GFP_KERNEL);
 		if (awinic->aw86214 == NULL) {
-			if (gpio_is_valid(awinic->reset_gpio))
-				devm_gpio_free(&i2c->dev, awinic->reset_gpio);
 			devm_kfree(&i2c->dev, awinic);
 			awinic = NULL;
 			return -ENOMEM;
@@ -480,11 +470,7 @@ err_aw8624_parse_dt:
 	}
 
 err_id:
-	if (gpio_is_valid(awinic->irq_gpio))
-		devm_gpio_free(&i2c->dev, awinic->irq_gpio);
 err_irq_gpio_request:
-	if (gpio_is_valid(awinic->reset_gpio))
-		devm_gpio_free(&i2c->dev, awinic->reset_gpio);
 err_reset_gpio_request:
 err_parse_dt:
 	devm_kfree(&i2c->dev, awinic);
@@ -493,7 +479,7 @@ err_parse_dt:
 
 }
 
-static int haptic_nv_i2c_remove(struct i2c_client *i2c)
+static void haptic_nv_i2c_remove(struct i2c_client *i2c)
 {
 	struct awinic *awinic = i2c_get_clientdata(i2c);
 
@@ -562,10 +548,9 @@ static int haptic_nv_i2c_remove(struct i2c_client *i2c)
 
 	} else {
 		aw_dev_err("%s no chip\n", __func__);
-		return -ERANGE;
+		return;
 	}
 	aw_dev_info("%s exit\n", __func__);
-	return 0;
 }
 
 static const struct i2c_device_id haptic_nv_i2c_id[] = {
