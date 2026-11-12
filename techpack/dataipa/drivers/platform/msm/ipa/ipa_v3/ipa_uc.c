@@ -57,6 +57,8 @@
  *                                 monitor.
  * IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR: Command to disable HOLB monitoring.
  * IPA_CPU_2_HW_CMD_ADD_EOGRE_MAPPING: Command to create/update GRE mapping
+ * IPA_CPU_2_HW_CMD_QUOTA_MONITORING_YUPIK: Quota monitoring on IPA v4.11
+ * IPA_CPU_2_HW_CMD_BW_MONITORING_YUPIK: BW monitoring on IPA v4.11
  */
 enum ipa3_cpu_2_hw_commands {
 	IPA_CPU_2_HW_CMD_NO_OP                     =
@@ -101,6 +103,14 @@ enum ipa3_cpu_2_hw_commands {
 		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 20),
 	IPA_CPU_2_HW_CMD_ADD_EOGRE_MAPPING             =
 		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 21),
+	/*
+	 * IPA v4.11 uC firmware takes quota and BW monitoring on these common
+	 * opcodes; 21 is shared with ADD_EOGRE_MAPPING on other firmware.
+	 */
+	IPA_CPU_2_HW_CMD_QUOTA_MONITORING_YUPIK        =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 21),
+	IPA_CPU_2_HW_CMD_BW_MONITORING_YUPIK           =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 22),
 };
 
 /**
@@ -1781,10 +1791,16 @@ int ipa3_uc_quota_monitor(uint64_t quota)
 		IPA_UC_MON_INTERVAL;
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
-	res = ipa3_uc_send_cmd((u32)(cmd.phys_base),
-		IPA_CPU_2_HW_CMD_QUOTA_MONITORING,
-		IPA_HW_2_CPU_OFFLOAD_CMD_STATUS_SUCCESS,
-		false, 10 * HZ);
+	if (ipa3_ctx->ipa_hw_type != IPA_HW_v4_11) {
+		res = ipa3_uc_send_cmd((u32)(cmd.phys_base),
+			IPA_CPU_2_HW_CMD_QUOTA_MONITORING,
+			IPA_HW_2_CPU_OFFLOAD_CMD_STATUS_SUCCESS,
+			false, 10 * HZ);
+	} else {
+		res = ipa3_uc_send_cmd((u32)(cmd.phys_base),
+			IPA_CPU_2_HW_CMD_QUOTA_MONITORING_YUPIK, 0,
+			false, 10 * HZ);
+	}
 
 	if (res) {
 		IPAERR(" faile to set quota %d, number offset %d\n",
@@ -1890,10 +1906,16 @@ int ipa_uc_bw_monitor(struct ipa_wdi_bw_info *info)
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 
-	res = ipa3_uc_send_cmd((u32)(cmd.phys_base),
-		IPA_CPU_2_HW_CMD_BW_MONITORING,
+	if (ipa3_ctx->ipa_hw_type != IPA_HW_v4_11) {
+		res = ipa3_uc_send_cmd((u32)(cmd.phys_base),
+			IPA_CPU_2_HW_CMD_BW_MONITORING,
 			IPA_HW_2_CPU_OFFLOAD_CMD_STATUS_SUCCESS,
 			false, 10 * HZ);
+	} else {
+		res = ipa3_uc_send_cmd((u32)(cmd.phys_base),
+			IPA_CPU_2_HW_CMD_BW_MONITORING_YUPIK, 0,
+			false, 10 * HZ);
+	}
 
 	if (res) {
 		IPAERR(" faile to set bw %d level with %d coutners\n",

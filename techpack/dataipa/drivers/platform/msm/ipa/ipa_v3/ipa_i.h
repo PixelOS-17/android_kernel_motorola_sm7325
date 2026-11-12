@@ -2357,6 +2357,7 @@ enum ipa_per_usb_enum_type_e {
  * mhi_ctrl_state: state of mhi ctrl pipes
  * @per_stats_smem_pa: Peripheral stats physical address to be passed to Q6
  * @per_stats_smem_va: Peripheral stats virtual address to update stats from Apps
+ * @is_bw_monitor_supported: Flag to check BW monitor supported or not.
  */
 struct ipa3_context {
 	bool coal_stopped;
@@ -2594,6 +2595,7 @@ struct ipa3_context {
 	u32 ipa_wdi3_5g_holb_timeout;
 	bool is_wdi3_tx1_needed;
 	bool ipa_endp_delay_wa_v2;
+	bool is_bw_monitor_supported;
 	u32 pkt_init_ex_imm_opcode;
 	struct ipa_mem_buffer pkt_init_mem;
 	struct ipa_mem_buffer pkt_init_ex_mem;
@@ -2725,6 +2727,7 @@ struct ipa3_plat_drv_res {
 	u32 ipa_wdi3_2g_holb_timeout;
 	u32 ipa_wdi3_5g_holb_timeout;
 	bool ipa_endp_delay_wa_v2;
+	bool is_bw_monitor_supported;
 	bool ulso_supported;
 	u16 ulso_ip_id_min;
 	u16 ulso_ip_id_max;

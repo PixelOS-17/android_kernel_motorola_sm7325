@@ -9529,6 +9529,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	}
 	ipa3_ctx->ipa_endp_delay_wa = resource_p->ipa_endp_delay_wa;
 	ipa3_ctx->ipa_endp_delay_wa_v2 = resource_p->ipa_endp_delay_wa_v2;
+	ipa3_ctx->is_bw_monitor_supported = resource_p->is_bw_monitor_supported;
 	ipa3_ctx->ulso_wa = resource_p->ulso_wa;
 	ipa3_ctx->coal_ipv4_id_ignore = resource_p->coal_ipv4_id_ignore;
 
@@ -10440,6 +10441,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_config_is_auto = false;
 	ipa_drv_res->max_num_smmu_cb = IPA_SMMU_CB_MAX;
 	ipa_drv_res->ipa_endp_delay_wa_v2 = false;
+	ipa_drv_res->is_bw_monitor_supported = false;
 	ipa_drv_res->use_tput_est_ep = false;
 	ipa_drv_res->rmnet_ctl_enable = 0;
 	ipa_drv_res->rmnet_ll_enable = 0;
@@ -10544,6 +10546,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		"qcom,ipa-endp-delay-wa-v2");
 	IPADBG(": endppoint delay wa v2 = %s\n",
 		ipa_drv_res->ipa_endp_delay_wa_v2
+		? "True" : "False");
+
+	ipa_drv_res->is_bw_monitor_supported =
+		of_property_read_bool(pdev->dev.of_node,
+			"qcom,bw-monitor-supported");
+	IPADBG(": BW Monitor and QUOTA stats supported = %s\n",
+		ipa_drv_res->is_bw_monitor_supported
 		? "True" : "False");
 
 	/**
