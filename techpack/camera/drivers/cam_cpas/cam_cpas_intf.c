@@ -171,13 +171,16 @@ bool cam_cpas_is_part_supported(uint32_t flag, uint32_t hw_map, uint32_t part_in
 	struct cam_cpas *cpas_core = NULL;
 	struct cam_cpas_subpart_info *cam_subpart_info = NULL;
 
-	mutex_lock(&cpas_hw->hw_mutex);
+	/*
+	 * No hw_mutex: the CPAS power-on path calls this through
+	 * cam_cpas_util_reg_update() with it held, and the subpart table is
+	 * static once probe sets it.
+	 */
 	cpas_core = cpas_hw->core_info;
 	cam_subpart_info = cpas_core->cam_subpart_info;
 
 	if (!cam_subpart_info) {
 		CAM_DBG(CAM_CPAS, "Invalid address of cam_subpart_info");
-		mutex_unlock(&cpas_hw->hw_mutex);
 		return true;
 	}
 
@@ -186,12 +189,10 @@ bool cam_cpas_is_part_supported(uint32_t flag, uint32_t hw_map, uint32_t part_in
 			(cam_subpart_info->hw_bitmap_mask[i][1] == hw_map)) {
 			CAM_DBG(CAM_CPAS, "flag: %u hw_map: %u part_info:0x%x",
 				flag, hw_map, part_info);
-			mutex_unlock(&cpas_hw->hw_mutex);
 			return ((part_info & BIT(i)) == 0);
 		}
 	}
 
-	mutex_unlock(&cpas_hw->hw_mutex);
 	return true;
 }
 
