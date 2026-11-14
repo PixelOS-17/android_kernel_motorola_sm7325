@@ -20,6 +20,7 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include <linux/power_supply.h>
+#include <linux/reboot.h>
 #include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/spmi.h>
@@ -819,6 +820,17 @@ static int _qpnp_pon_is_warm_reset(struct qpnp_pon *pon)
 			|| (pon->warm_reset_reason2 & QPNP_PON_WARM_RESET_TFT);
 	else
 		return pon->warm_reset_reason1;
+}
+
+/*
+ * PSCI drops PS_HOLD with whatever reset type the PMIC holds. A warm reset
+ * keeps DDR powered, so ramoops survives every reboot, panics included.
+ */
+static int qpnp_pon_restart(struct sys_off_data *data)
+{
+	qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
+
+	return NOTIFY_DONE;
 }
 
 /**
@@ -2473,8 +2485,18 @@ static int qpnp_pon_probe(struct platform_device *pdev)
 		return rc;
 	}
 
-	if (sys_reset)
+	if (sys_reset) {
+		/* Must run before the PSCI restart handler (priority 129). */
+		rc = devm_register_sys_off_handler(dev, SYS_OFF_MODE_RESTART,
+						   SYS_OFF_PRIO_HIGH,
+						   qpnp_pon_restart, NULL);
+		if (rc) {
+			dev_err(dev, "Failed to register restart handler, rc=%d\n",
+				rc);
+			return rc;
+		}
 		sys_reset_dev = pon;
+	}
 	if (modem_reset)
 		modem_reset_dev = pon;
 
