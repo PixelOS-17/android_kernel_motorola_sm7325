@@ -48,6 +48,11 @@
 #include <linux/srcu.h>
 #include <linux/moduleparam.h>
 #include <linux/kallsyms.h>
+#include <linux/reboot.h>
+#include <linux/sched/debug.h>
+#include <linux/nmi.h>
+#include <linux/pid.h>
+#include <linux/pid_namespace.h>
 #include <linux/buildid.h>
 #include <linux/writeback.h>
 #include <linux/cpu.h>
@@ -87,6 +92,8 @@
 #include <linux/blkdev.h>
 #include <linux/sched/clock.h>
 #include <linux/sched/task.h>
+#include <linux/sched/signal.h>
+#include <linux/file.h>
 #include <linux/sched/task_stack.h>
 #include <linux/context_tracking.h>
 #include <linux/random.h>
@@ -1026,6 +1033,8 @@ static void __init print_kernel_cmdline(const char *cmdline)
 		pr_notice("%s%s\n", KERNEL_CMDLINE_PREFIX, cmdline);
 }
 
+static void dbg_hang_check(const char *point);
+
 asmlinkage __visible __init __no_sanitize_address __noreturn __no_stack_protector
 void start_kernel(void)
 {
@@ -1053,6 +1062,7 @@ void start_kernel(void)
 	setup_arch_task_struct_size();
 #endif
 	setup_arch(&command_line);
+	dbg_hang_check("start");
 	/* Static keys and static calls are needed by LSMs */
 	jump_label_init();
 	static_call_init();
@@ -1231,6 +1241,7 @@ void start_kernel(void)
 	kcsan_init();
 
 	/* Do the rest non-__init'ed, we're now alive */
+	dbg_hang_check("rest");
 	rest_init();
 
 	/*
@@ -1393,11 +1404,154 @@ static inline void do_trace_initcall_level(const char *level)
 }
 #endif /* !TRACEPOINTS_ENABLED */
 
+static char dbg_hang[64];
+static bool dbg_reset;
+
+static int __init dbg_hang_setup(char *str)
+{
+	strscpy(dbg_hang, str, sizeof(dbg_hang));
+	return 0;
+}
+early_param("dbg_hang", dbg_hang_setup);
+
+static int __init dbg_reset_setup(char *str)
+{
+	dbg_reset = true;
+	return 0;
+}
+early_param("dbg_reset", dbg_reset_setup);
+
+static void dbg_hang_check(const char *point)
+{
+	if (!dbg_hang[0] || strcmp(dbg_hang, point))
+		return;
+	if (dbg_reset)
+		emergency_restart();
+	smp_send_stop();
+	local_irq_disable();
+	for (;;)
+		cpu_relax();
+}
+
+static unsigned int dbg_dump_secs;
+
+static int __init dbg_dump_setup(char *str)
+{
+	return kstrtouint(str, 0, &dbg_dump_secs);
+}
+early_param("dbg_dump", dbg_dump_setup);
+
+static void dbg_dump_fn(struct work_struct *work)
+{
+	static const int pids[] = { 1, 12 };
+	int i;
+
+	console_verbose();
+	pr_emerg("DBG: blocked tasks\n");
+	show_state_filter(TASK_UNINTERRUPTIBLE);
+	for (i = 0; i < ARRAY_SIZE(pids); i++) {
+		struct task_struct *p;
+
+		rcu_read_lock();
+		p = pid_task(find_pid_ns(pids[i], &init_pid_ns), PIDTYPE_PID);
+		if (p)
+			sched_show_task(p);
+		rcu_read_unlock();
+	}
+	pr_emerg("DBG: cpu backtraces\n");
+	trigger_all_cpu_backtrace();
+	pr_emerg("DBG: dump done\n");
+}
+static DECLARE_DELAYED_WORK(dbg_dump_work, dbg_dump_fn);
+
+static int __init dbg_dump_init(void)
+{
+	if (dbg_dump_secs)
+		queue_delayed_work(system_unbound_wq, &dbg_dump_work,
+				   dbg_dump_secs * HZ);
+	return 0;
+}
+core_initcall(dbg_dump_init);
+
+static void dbg_hb_fn(struct work_struct *work);
+static DECLARE_DELAYED_WORK(dbg_hb_work, dbg_hb_fn);
+static unsigned int dbg_hb_n;
+
+static void dbg_hb_fn(struct work_struct *work)
+{
+	pr_emerg("DBGHB %u\n", ++dbg_hb_n);
+	if (dbg_hb_n < 60)
+		queue_delayed_work(system_unbound_wq, &dbg_hb_work, HZ / 2);
+}
+
+static int __init dbg_hb_init(void)
+{
+	queue_delayed_work(system_unbound_wq, &dbg_hb_work, HZ / 2);
+	return 0;
+}
+core_initcall(dbg_hb_init);
+
+static unsigned int dbg_panic_secs;
+
+static int __init dbg_panic_setup(char *str)
+{
+	return kstrtouint(str, 0, &dbg_panic_secs);
+}
+early_param("dbg_panic", dbg_panic_setup);
+
+static bool dbg_panic_match(struct task_struct *p)
+{
+	struct file *exe;
+	bool match;
+
+	if (!strcmp(p->comm, "surfaceflinger"))
+		return true;
+	exe = get_task_exe_file(p);
+	if (!exe)
+		return false;
+	match = !!strstr(exe->f_path.dentry->d_name.name, "display");
+	fput(exe);
+	return match;
+}
+
+static void dbg_panic_fn(struct work_struct *work)
+{
+	struct task_struct *p, *t;
+
+	console_verbose();
+	rcu_read_lock();
+	for_each_process(p) {
+		if (!dbg_panic_match(p))
+			continue;
+		pr_emerg("DBGPANIC pid %d %s\n", p->pid, p->comm);
+		for_each_thread(p, t)
+			sched_show_task(t);
+	}
+	rcu_read_unlock();
+	panic("DEBUG: timed panic at %u s", dbg_panic_secs);
+}
+static DECLARE_DELAYED_WORK(dbg_panic_work, dbg_panic_fn);
+
+static int __init dbg_panic_init(void)
+{
+	if (dbg_panic_secs)
+		queue_delayed_work(system_unbound_wq, &dbg_panic_work,
+				   dbg_panic_secs * HZ);
+	return 0;
+}
+core_initcall(dbg_panic_init);
+
+
 int __init_or_module do_one_initcall(initcall_t fn)
 {
 	int count = preempt_count();
 	char msgbuf[64];
 	int ret;
+
+	if (dbg_hang[0]) {
+		snprintf(msgbuf, sizeof(msgbuf), "%ps", fn);
+		dbg_hang_check(msgbuf);
+	}
 
 	if (initcall_blacklisted(fn))
 		return -EPERM;
@@ -1463,6 +1617,7 @@ static void __init do_initcall_level(int level, char *command_line)
 		   level, level,
 		   NULL, ignore_unknown_bootoption);
 
+	dbg_hang_check(initcall_level_names[level]);
 	do_trace_initcall_level(initcall_level_names[level]);
 	for (fn = initcall_levels[level]; fn < initcall_levels[level+1]; fn++)
 		do_one_initcall(initcall_from_entry(fn));
@@ -2145,6 +2300,8 @@ static int __ref kernel_init(void *unused)
 	rcu_end_inkernel_boot();
 
 	do_sysctl_args();
+
+	dbg_hang_check("userspace");
 
 	if (ramdisk_execute_command) {
 		ret = run_init_process(ramdisk_execute_command);

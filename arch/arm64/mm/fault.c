@@ -43,6 +43,7 @@
 #include <asm/sysreg.h>
 #include <asm/system_misc.h>
 #include <asm/tlbflush.h>
+#include <linux/workqueue.h>
 #include <asm/traps.h>
 #include <asm/virt.h>
 #include <trace/hooks/fault.h>
@@ -843,11 +844,37 @@ static int do_bad(unsigned long far, unsigned long esr, struct pt_regs *regs)
 	return 1; /* "fault" */
 }
 
+static void dbg_sea_print(unsigned long far, unsigned long esr,
+			  struct pt_regs *regs)
+{
+	unsigned long fp = regs->regs[29], frame[2];
+	struct work_struct *work = NULL;
+	int i;
+
+	if (current->flags & PF_WQ_WORKER)
+		work = current_work();
+	for (i = 0; i < 2; i++)
+		pr_emerg("DBGSEA cpu%d pc=%pS lr=%pS far=%lx esr=%lx comm=%s work=%ps\n",
+			 raw_smp_processor_id(), (void *)regs->pc,
+			 (void *)ptrauth_strip_kernel_insn_pac(regs->regs[30]), far, esr, current->comm,
+			 work ? work->func : NULL);
+	for (i = 0; i < 8 && fp; i++) {
+		if (copy_from_kernel_nofault(frame, (void *)fp, sizeof(frame)))
+			break;
+		pr_emerg("DBGSEA #%d %pS\n", i,
+			 (void *)ptrauth_strip_kernel_insn_pac(frame[1]));
+		fp = frame[0];
+	}
+}
+
 static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 {
 	const struct fault_info *inf;
 	unsigned long siaddr;
 	bool can_fixup = false;
+
+	if (!user_mode(regs))
+		dbg_sea_print(far, esr, regs);
 
 	trace_android_vh_try_fixup_sea(far, esr, regs, &can_fixup);
 	if (can_fixup && fixup_exception(regs, esr))

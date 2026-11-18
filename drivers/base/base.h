@@ -174,6 +174,7 @@ static inline int driver_match_device(const struct device_driver *drv,
 
 static inline void dev_sync_state(struct device *dev)
 {
+	pr_emerg("DBGSYNC %s %s\n", dev_driver_string(dev), dev_name(dev));
 	if (dev->bus->sync_state)
 		dev->bus->sync_state(dev);
 	else if (dev->driver && dev->driver->sync_state)

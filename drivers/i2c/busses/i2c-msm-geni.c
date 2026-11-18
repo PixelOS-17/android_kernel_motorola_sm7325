@@ -252,6 +252,66 @@ static struct geni_i2c_dev *gi2c_dev_dbg[MAX_SE];
 static int arr_idx;
 static int geni_i2c_runtime_suspend(struct device *dev);
 
+/* 1: never suspend SE4, 2: keep ICC, 3: keep clocks/pinctrl, 4: no GPI pause */
+static int dbg_se4;
+static int __init dbg_se4_setup(char *s)
+{
+	return !kstrtoint(s, 0, &dbg_se4);
+}
+__setup("dbg_se4=", dbg_se4_setup);
+
+static bool dbg_is_se4(struct geni_i2c_dev *gi2c)
+{
+	return !strcmp(dev_name(gi2c->dev), "990000.i2c");
+}
+
+static void __iomem *dbg_gcc;
+
+static void dbg_gcc_snap(const char *tag)
+{
+	if (!dbg_gcc)
+		return;
+	pr_emerg("DBGGCC %s vote=%08x core=%08x core2x=%08x mahb=%08x sahb=%08x s4=%08x\n",
+		 tag, readl(dbg_gcc + 0x52008), readl(dbg_gcc + 0x23000),
+		 readl(dbg_gcc + 0x23008), readl(dbg_gcc + 0x17004),
+		 readl(dbg_gcc + 0x17008), readl(dbg_gcc + 0x174cc));
+}
+
+static unsigned int dbg_core_vote;
+static int __init dbg_core_vote_setup(char *s)
+{
+	return !kstrtouint(s, 0, &dbg_core_vote);
+}
+__setup("dbg_core_vote=", dbg_core_vote_setup);
+
+static unsigned int dbg_se4_ping;
+static int __init dbg_se4_ping_setup(char *s)
+{
+	return !kstrtouint(s, 0, &dbg_se4_ping);
+}
+__setup("dbg_se4_ping=", dbg_se4_ping_setup);
+
+static struct geni_i2c_dev *dbg_ping_gi2c;
+static unsigned int dbg_ping_n;
+static void dbg_ping_fn(struct work_struct *work);
+static DECLARE_DELAYED_WORK(dbg_ping_work, dbg_ping_fn);
+
+static void dbg_ping_fn(struct work_struct *work)
+{
+	struct geni_i2c_dev *gi2c = dbg_ping_gi2c;
+	int ret;
+
+	pr_emerg("DBGPING %u get\n", ++dbg_ping_n);
+	dbg_gcc_snap("ping");
+	ret = pm_runtime_get_sync(gi2c->dev);
+	pr_emerg("DBGPING %u ret=%d ios=%x\n", dbg_ping_n, ret,
+		 ret < 0 ? 0 : geni_read_reg(gi2c->base, SE_GENI_IOS));
+	pm_runtime_mark_last_busy(gi2c->dev);
+	pm_runtime_put_autosuspend(gi2c->dev);
+	if (dbg_ping_n < 300)
+		schedule_delayed_work(&dbg_ping_work, msecs_to_jiffies(dbg_se4_ping));
+}
+
 static void ssr_i2c_force_suspend(struct device *dev);
 static void ssr_i2c_force_resume(struct device *dev);
 
@@ -2968,6 +3028,8 @@ static int geni_i2c_resources_init(struct platform_device *pdev, struct geni_i2c
 				__func__, ret);
 			return ret;
 		}
+		if (dbg_core_vote)
+			gi2c->i2c_rsc.icc_paths[GENI_TO_CORE].avg_bw = dbg_core_vote;
 	}
 
 	gi2c->irq = platform_get_irq(pdev, 0);
@@ -3174,6 +3236,18 @@ static int geni_i2c_probe(struct platform_device *pdev)
 		pm_runtime_use_autosuspend(gi2c->dev);
 	}
 	pm_runtime_enable(gi2c->dev);
+	if (dbg_is_se4(gi2c) && dbg_se4 == 1) {
+		pr_emerg("DBGRPM forbid runtime suspend\n");
+		pm_runtime_forbid(gi2c->dev);
+	}
+	if (dbg_is_se4(gi2c)) {
+		dbg_gcc = ioremap(0x100000, 0x60000);
+		dbg_gcc_snap("probe");
+	}
+	if (dbg_is_se4(gi2c) && dbg_se4_ping) {
+		dbg_ping_gi2c = gi2c;
+		schedule_delayed_work(&dbg_ping_work, msecs_to_jiffies(1000));
+	}
 	gi2c->adap.nr = geni_i2c_legacy_bus_nr(pdev);
 	if (gi2c->adap.nr >= 0) {
 		ret = i2c_add_numbered_adapter(&gi2c->adap);
@@ -3350,10 +3424,14 @@ static int geni_i2c_runtime_suspend(struct device *dev)
 	start_time = geni_capture_start_time(&gi2c->i2c_rsc, gi2c->ipc_log_kpi, __func__,
 					     gi2c->i2c_kpi);
 
+	if (dbg_is_se4(gi2c))
+		pr_emerg("DBGRPM suspend enter mode=%d se_mode=%d shared=%d skipbw=%d\n",
+			 dbg_se4, gi2c->se_mode, gi2c->is_shared, gi2c->skip_bw_vote);
+
 	if (gi2c->se_mode == FIFO_SE_DMA)
 		disable_irq(gi2c->irq);
 
-	if (gi2c->se_mode == GSI_ONLY) {
+	if (gi2c->se_mode == GSI_ONLY && !(dbg_is_se4(gi2c) && dbg_se4 == 4)) {
 		if (!gi2c->is_le_vm) {
 			ret = geni_i2c_gpi_pause_resume(gi2c, true);
 			if (ret) {
@@ -3396,8 +3474,10 @@ static int geni_i2c_runtime_suspend(struct device *dev)
 			I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev,
 			"%s failing at geni_icc_disable ret=%d\n", __func__, ret);
 	} else if (!gi2c->is_le_vm) {
-		geni_se_resources_off(&gi2c->i2c_rsc);
-		ret = geni_icc_disable(&gi2c->i2c_rsc);
+		if (!(dbg_is_se4(gi2c) && dbg_se4 == 3))
+			geni_se_resources_off(&gi2c->i2c_rsc);
+		if (!(dbg_is_se4(gi2c) && dbg_se4 == 2))
+			ret = geni_icc_disable(&gi2c->i2c_rsc);
 		if (ret)
 			I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev,
 			"%s failing at geni_icc_disable ret=%d\n", __func__, ret);
@@ -3408,6 +3488,10 @@ skip_bw_vote:
 		clk_disable_unprepare(gi2c->core_clk);
 
 	I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev, "%s ret=%d\n", __func__, ret);
+	if (dbg_is_se4(gi2c))
+		pr_emerg("DBGRPM suspend exit ret=%d\n", ret);
+	if (dbg_is_se4(gi2c))
+		dbg_gcc_snap("suspended");
 	geni_capture_stop_time(&gi2c->i2c_rsc, gi2c->ipc_log_kpi, __func__,
 			       gi2c->i2c_kpi, start_time, 0, 0);
 	return 0;
@@ -3429,11 +3513,19 @@ static int geni_i2c_runtime_resume(struct device *dev)
 		gi2c->ipcl = ipc_log_context_create(2, ipc_name, 0);
 	}
 
+	if (dbg_is_se4(gi2c)) {
+		pr_emerg("DBGRPM resume enter se_mode=%d core_bw=%u\n", gi2c->se_mode,
+			 gi2c->i2c_rsc.icc_paths[GENI_TO_CORE].avg_bw);
+		dbg_gcc_snap("resume");
+	}
+
 	if (!gi2c->is_le_vm) {
 		if (gi2c->skip_bw_vote)
 			goto skip_bw_vote;
 
 		ret = geni_icc_enable(&gi2c->i2c_rsc);
+		if (dbg_is_se4(gi2c))
+			pr_emerg("DBGRS icc_enable ret=%d\n", ret);
 		if (ret) {
 			I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev,
 			"%s failing at geni icc enable ret=%d\n", __func__, ret);
@@ -3441,6 +3533,8 @@ static int geni_i2c_runtime_resume(struct device *dev)
 		}
 
 		ret = geni_common_icc_set_bw(&gi2c->i2c_rsc, gi2c->ipcl);
+		if (dbg_is_se4(gi2c))
+			pr_emerg("DBGRS icc_set_bw ret=%d\n", ret);
 		if (ret) {
 			I2C_LOG_ERR(gi2c->ipcl, true, gi2c->dev,
 			"%s failing at icc set bw ret=%d\n", __func__, ret);
@@ -3462,7 +3556,13 @@ skip_bw_vote:
 		if (ret)
 			return ret;
 
+		if (dbg_is_se4(gi2c)) {
+			pr_emerg("DBGRS resources_on ret=%d\n", ret);
+			dbg_gcc_snap("clks_on");
+		}
 		ret = geni_i2c_prepare(gi2c);
+		if (dbg_is_se4(gi2c))
+			pr_emerg("DBGRS prepare ret=%d\n", ret);
 		if (ret) {
 			dev_err(gi2c->dev, "I2C prepare failed: %d\n", ret);
 			return ret;
@@ -3474,11 +3574,13 @@ skip_bw_vote:
 		 * HW team recommendation
 		 */
 		udelay(10);
+		if (dbg_is_se4(gi2c))
+			pr_emerg("DBGRS output_ctrl written, enable_irq %d\n", gi2c->irq);
 
 		if (gi2c->se_mode == FIFO_SE_DMA)
 			enable_irq(gi2c->irq);
 
-		if (gi2c->se_mode == GSI_ONLY) {
+		if (gi2c->se_mode == GSI_ONLY && !(dbg_is_se4(gi2c) && dbg_se4 == 4)) {
 			ret = geni_i2c_gpi_pause_resume(gi2c, false);
 			if (ret) {
 				I2C_LOG_ERR(gi2c->ipcl, false, gi2c->dev,
@@ -3521,6 +3623,8 @@ skip_bw_vote:
 	}
 
 	I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev, "%s ret=%d\n", __func__, ret);
+	if (dbg_is_se4(gi2c))
+		pr_emerg("DBGRPM resume exit ret=%d\n", ret);
 	geni_capture_stop_time(&gi2c->i2c_rsc, gi2c->ipc_log_kpi, __func__,
 			       gi2c->i2c_kpi, start_time, 0, 0);
 	return 0;

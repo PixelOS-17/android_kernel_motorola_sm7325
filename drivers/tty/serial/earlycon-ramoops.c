@@ -19,6 +19,7 @@
 #include <linux/kernel.h>
 #include <linux/serial_core.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 #include <asm/early_ioremap.h>
 
@@ -65,6 +66,12 @@ static int __init earlycon_ramoops_setup(struct earlycon_device *dev,
 	unsigned long long size = SZ_256K;
 
 	if (!dev->port.mapbase)
+		return -ENODEV;
+	/*
+	 * Recovery runs this same kernel and is where the previous boot's log
+	 * gets pulled, so only log normal boots.
+	 */
+	if (!strstr(boot_command_line, "androidboot.force_normal_boot=1"))
 		return -ENODEV;
 	if (opt && *opt && kstrtoull(opt, 0, &size))
 		return -EINVAL;

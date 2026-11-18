@@ -484,12 +484,22 @@ void geni_se_config_packing(struct geni_se *se, int bpw, int pack_words,
 }
 EXPORT_SYMBOL(geni_se_config_packing);
 
+/* 1: keep the wrapper AHB clocks on, 2: keep the SE clock on */
+static unsigned int dbg_qup_keep;
+static int __init dbg_qup_keep_setup(char *s)
+{
+	return !kstrtouint(s, 0, &dbg_qup_keep);
+}
+__setup("dbg_qup_keep=", dbg_qup_keep_setup);
+
 static void geni_se_clks_off(struct geni_se *se)
 {
 	struct geni_wrapper *wrapper = se->wrapper;
 
-	clk_disable_unprepare(se->clk);
-	clk_bulk_disable_unprepare(wrapper->num_clks, wrapper->clks);
+	if (!(dbg_qup_keep & 2))
+		clk_disable_unprepare(se->clk);
+	if (!(dbg_qup_keep & 1))
+		clk_bulk_disable_unprepare(wrapper->num_clks, wrapper->clks);
 }
 
 /**
@@ -539,16 +549,24 @@ static int geni_se_clks_on(struct geni_se *se)
  */
 int geni_se_resources_on(struct geni_se *se)
 {
+	bool dbg = !strcmp(dev_name(se->dev), "990000.i2c");
 	int ret;
 
 	if (has_acpi_companion(se->dev))
 		return 0;
 
+	if (dbg)
+		pr_emerg("DBGRS clks_on start nclks=%u\n", se->wrapper->num_clks);
 	ret = geni_se_clks_on(se);
+	if (dbg) {
+		pr_emerg("DBGRS clks_on ret=%d\n", ret);
+	}
 	if (ret)
 		return ret;
 
 	ret = pinctrl_pm_select_default_state(se->dev);
+	if (dbg)
+		pr_emerg("DBGRS pinctrl ret=%d\n", ret);
 	if (ret)
 		geni_se_clks_off(se);
 
