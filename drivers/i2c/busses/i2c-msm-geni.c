@@ -2961,7 +2961,7 @@ static int geni_i2c_resources_init(struct platform_device *pdev, struct geni_i2c
 		else
 			ret =
 			geni_se_common_rsc_init(&gi2c->rsc,
-						GENI_DEFAULT_BW, GENI_DEFAULT_BW,
+						I2C_CORE2X_VOTE, GENI_DEFAULT_BW,
 						Bps_to_icc(gi2c->clk_freq_out));
 		if (ret) {
 			dev_err(&pdev->dev, "%s: Error - resources_init ret:%d\n",
