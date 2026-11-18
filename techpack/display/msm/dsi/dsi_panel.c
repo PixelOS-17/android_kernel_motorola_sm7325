@@ -4273,17 +4273,13 @@ static int dsi_panel_set_hbm_status(struct dsi_panel *panel,
 	priv_info = panel->cur_mode->priv_info;
 	bl_level = panel->bl_config.real_bl_level;
 
-	if (!panel->lhbm_config.alpha_size) {
-		DSI_ERR("invalid local hbm alpha table\n");
-		return -EINVAL;
-	}
-
 	if (hbm_status) {
 		type = DSI_CMD_SET_HBM_ON;
 		alpha_val = bl_level;
 	} else if (fod_hbm_status) {
 		type = DSI_CMD_SET_HBM_FOD_ON;
-		alpha_val = dsi_panel_get_lhbm_alpha(panel, bl_level);
+		alpha_val = panel->lhbm_config.enable ?
+			dsi_panel_get_lhbm_alpha(panel, bl_level) : 0;
 	} else {
 		type = DSI_CMD_SET_HBM_OFF;
 		alpha_val = 0;
@@ -4305,10 +4301,16 @@ static int dsi_panel_set_hbm_status(struct dsi_panel *panel,
 				return rc;
 		}
 
-		rc = dsi_panel_update_hbm_cmd(cmd_set,
-				panel->lhbm_config.alpha_reg, alpha_val);
-		if (rc)
-			return rc;
+		/*
+		 * Panels without a local HBM spot (dubai's flat NT37701) light
+		 * the sensor with the global HBM brightness in their FOD command.
+		 */
+		if (panel->lhbm_config.enable) {
+			rc = dsi_panel_update_hbm_cmd(cmd_set,
+					panel->lhbm_config.alpha_reg, alpha_val);
+			if (rc)
+				return rc;
+		}
 	}
 
 	rc = dsi_panel_tx_cmd_set(panel, type);
