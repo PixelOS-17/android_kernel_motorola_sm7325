@@ -4731,8 +4731,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 
 	mutex_init(&panel->panel_lock);
 
-	if (panel->lhbm_config.enable &&
-			sysfs_create_group(&panel->parent->kobj, &panel_attrs_group))
+	if (sysfs_create_group(&panel->parent->kobj, &panel_attrs_group))
 		DSI_ERR("failed to create panel sysfs attributes\n");
 	if (dsi_panel_has_hbm_cmds(panel) &&
 			sysfs_create_group(&panel->parent->kobj, &panel_hbm_attrs_group))
@@ -4753,8 +4752,7 @@ void dsi_panel_put(struct dsi_panel *panel)
 		sysfs_remove_group(&panel->parent->kobj, &panel_hbm_attrs_group);
 	if (dsi_panel_has_dc_cmds(panel))
 		sysfs_remove_group(&panel->parent->kobj, &panel_dc_attrs_group);
-	if (panel->lhbm_config.enable)
-		sysfs_remove_group(&panel->parent->kobj, &panel_attrs_group);
+	sysfs_remove_group(&panel->parent->kobj, &panel_attrs_group);
 	kfree(panel->lhbm_config.alpha);
 	kfree(panel->fod_dim_lut);
 
