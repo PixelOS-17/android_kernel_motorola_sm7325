@@ -1055,6 +1055,141 @@ void icnss_dms_deinit(struct icnss_priv *priv)
 	qmi_handle_release(&priv->qmi_dms);
 }
 
+/* Motorola names the BDF after the product: bdwlan.elf.<device>.<nv>. */
+#define NV_IPA "ipa"
+#define MOTO_STRING_LEN 32
+static char device_ptr[MOTO_STRING_LEN];
+static char radio_ptr[MOTO_STRING_LEN];
+
+typedef struct moto_product {
+	char hw_device[32];
+	char hw_radio[32];
+	char nv_name[64];
+} moto_product;
+
+static moto_product products_list[] = {
+	{"berlin",	"all",	NV_IPA},
+	{"berlna",	"all",	NV_IPA},
+	{"dubai",	"all",	NV_IPA},
+	/* Terminator */
+	{{0}, {0}, {0}},
+};
+
+static char *bootargs_str;
+
+static int icnss_get_bootarg(char *key, char **value)
+{
+	const char *bootargs_ptr = NULL;
+	char *idx = NULL;
+	char *kvpair = NULL;
+	int err = 1;
+	struct device_node *n = of_find_node_by_path("/chosen");
+	size_t bootargs_ptr_len = 0;
+
+	if (n == NULL)
+		goto err;
+
+	if (of_property_read_string(n, "bootargs", &bootargs_ptr) != 0)
+		goto err_putnode;
+
+	bootargs_ptr_len = strlen(bootargs_ptr);
+	if (!bootargs_str) {
+		/* Following operations need a non-const version of bootargs */
+		bootargs_str = kzalloc(bootargs_ptr_len + 1, GFP_KERNEL);
+		if (!bootargs_str)
+			goto err_putnode;
+	}
+	strscpy(bootargs_str, bootargs_ptr, bootargs_ptr_len + 1);
+
+	idx = strnstr(bootargs_str, key, strlen(bootargs_str));
+	if (idx) {
+		kvpair = strsep(&idx, " ");
+		if (kvpair)
+			if (strsep(&kvpair, "=")) {
+				*value = strsep(&kvpair, " ");
+				if (*value)
+					err = 0;
+			}
+	}
+
+err_putnode:
+	of_node_put(n);
+err:
+	return err;
+}
+
+static int is_void_product(moto_product *entry)
+{
+	return entry && !strlen(entry->hw_device) && !strlen(entry->hw_radio);
+}
+
+static int num_of_products(moto_product *list)
+{
+	int num = 0;
+
+	if (!list)
+		return 0;
+	while (!is_void_product(list + num))
+		num++;
+	return num;
+}
+
+static int get_moto_device(void)
+{
+	char *bootdevice = NULL;
+	int rc = 0;
+
+	rc = icnss_get_bootarg("androidboot.device=", &bootdevice);
+	if (rc || !bootdevice) {
+		icnss_pr_dbg("androidboot.device not found\n");
+		return -ENOMEM;
+	}
+	strscpy(device_ptr, bootdevice, MOTO_STRING_LEN);
+	return 0;
+}
+
+static int get_moto_radio(void)
+{
+	char *radiodevice = NULL;
+	int rc = 0;
+
+	rc = icnss_get_bootarg("androidboot.radio=", &radiodevice);
+	if (rc || !radiodevice) {
+		icnss_pr_dbg("androidboot.radio not found\n");
+		return -ENOMEM;
+	}
+	strscpy(radio_ptr, radiodevice, MOTO_STRING_LEN);
+	return 0;
+}
+
+static int selectFileNameByProduct(char *filename, u32 filename_len)
+{
+	int i, num, ret = 0;
+
+	if (get_moto_radio() != 0 || get_moto_device() != 0)
+		icnss_pr_dbg("device or radio not present\n");
+
+	icnss_pr_dbg("device:%s, radio:%s\n", device_ptr, radio_ptr);
+
+	num = num_of_products(products_list);
+	for (i = 0; i < num; i++) {
+		moto_product *product = products_list + i;
+
+		if (strncmp(device_ptr, product->hw_device, strlen(product->hw_device)))
+			continue;
+		if (strncmp(radio_ptr, product->hw_radio, strlen(product->hw_radio)) &&
+		    strncmp(product->hw_radio, "all", strlen(product->hw_radio)))
+			continue;
+
+		snprintf(filename, filename_len, "%s.%s.%s", ELF_BDF_FILE_NAME,
+			 product->hw_device, product->nv_name);
+		ret = 1;
+		break;
+	}
+
+	return ret;
+}
+
 static int icnss_get_bdf_file_name(struct icnss_priv *priv,
 				   u32 bdf_type, char *filename,
 				   u32 filename_len)
@@ -1065,6 +1200,9 @@ static int icnss_get_bdf_file_name(struct icnss_priv *priv,
 
 	switch (bdf_type) {
 	case ICNSS_BDF_ELF:
+		/* As on 5.4, the product BDF sits at the firmware root. */
+		if (selectFileNameByProduct(filename, filename_len) > 0)
+			return 0;
 		if (priv->board_id == 0xFF)
 			snprintf(filename_tmp, filename_len, ELF_BDF_FILE_NAME);
 		else if (priv->board_id < 0xFF)
