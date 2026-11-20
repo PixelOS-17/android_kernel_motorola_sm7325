@@ -179,10 +179,20 @@ static int audio_notifier_reg_service(int service, int domain)
 
 	switch (service) {
 	case AUDIO_NOTIFIER_SSR_SERVICE:
-		/* the lahaina ADSP registers its SSR notifier as "adsp" */
-		handle = audio_ssr_legacy_register(
-			qcom_rproc_get_pil_tz_generic("adsp") ? "adsp" : "lpass",
-			service_data[service][domain].hook.nb);
+		if (service_data[service][domain].domain_id ==
+		    AUDIO_SSR_DOMAIN_MODEM) {
+			handle = audio_ssr_legacy_register("modem",
+				service_data[service][domain].hook.nb);
+		} else {
+			/* the lahaina/yupik ADSP registers its SSR notifier as "adsp" */
+			struct rproc *adsp = qcom_rproc_get_pil_tz_generic("adsp");
+			const char *ssr_name = adsp ? "adsp" : "lpass";
+
+			if (adsp)
+				rproc_put(adsp);
+			handle = audio_ssr_legacy_register(ssr_name,
+				service_data[service][domain].hook.nb);
+		}
 		break;
 	case AUDIO_NOTIFIER_PDR_SERVICE:
 		handle = audio_pdr_service_register(
