@@ -777,6 +777,7 @@ static int cam_lrme_mgr_hw_flush(void *hw_mgr_priv, void *hw_flush_args)
 		frame_req = req_list[i];
 		cam_mem_put_cpu_buf(frame_req->hw_update_entries[0].handle);
 		memset(frame_req, 0x0, sizeof(*frame_req));
+		INIT_LIST_HEAD(&frame_req->frame_list);
 		cam_lrme_mgr_util_put_frame_req(&hw_mgr->frame_free_list,
 			frame_req, &hw_mgr->free_req_lock, false);
 	}
