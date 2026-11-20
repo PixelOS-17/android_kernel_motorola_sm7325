@@ -713,6 +713,14 @@ bool icnss_is_pdr(void)
 }
 EXPORT_SYMBOL(icnss_is_pdr);
 
+static bool icnss_has_smp2p_entry(struct icnss_priv *priv,
+				  enum smp2p_out_entry smp2p_entry)
+{
+	return of_property_match_string(priv->pdev->dev.of_node,
+					"qcom,smem-state-names",
+					icnss_smp2p_str[smp2p_entry]) >= 0;
+}
+
 static bool icnss_is_smp2p_valid(struct icnss_priv *priv,
 			  enum smp2p_out_entry smp2p_entry)
 {
@@ -1308,11 +1316,14 @@ static int icnss_driver_event_server_arrive(struct icnss_priv *priv,
 
 	if (priv->device_id == WCN6750_DEVICE_ID ||
 	    priv->device_id == WCN6450_DEVICE_ID) {
-		if (!priv->fw_soc_wake_ack_irq)
-			register_soc_wake_notif(&priv->pdev->dev);
+		if (icnss_has_smp2p_entry(priv, ICNSS_SMP2P_OUT_SOC_WAKE)) {
+			if (!priv->fw_soc_wake_ack_irq)
+				register_soc_wake_notif(&priv->pdev->dev);
 
-		icnss_get_smp2p_info(priv, ICNSS_SMP2P_OUT_SOC_WAKE);
-		icnss_get_smp2p_info(priv, ICNSS_SMP2P_OUT_EP_POWER_SAVE);
+			icnss_get_smp2p_info(priv, ICNSS_SMP2P_OUT_SOC_WAKE);
+		}
+		if (icnss_has_smp2p_entry(priv, ICNSS_SMP2P_OUT_EP_POWER_SAVE))
+			icnss_get_smp2p_info(priv, ICNSS_SMP2P_OUT_EP_POWER_SAVE);
 	}
 
 	if (priv->wpss_supported)
@@ -2174,8 +2185,11 @@ static int icnss_event_soc_wake_request(struct icnss_priv *priv, void *data)
 		return 0;
 	}
 
-	ret = icnss_send_smp2p(priv, ICNSS_SOC_WAKE_REQ,
-			       ICNSS_SMP2P_OUT_SOC_WAKE);
+	if (!IS_ERR_OR_NULL(priv->smp2p_info[ICNSS_SMP2P_OUT_SOC_WAKE].smem_state))
+		ret = icnss_send_smp2p(priv, ICNSS_SOC_WAKE_REQ,
+				       ICNSS_SMP2P_OUT_SOC_WAKE);
+	else
+		ret = wlfw_send_soc_wake_msg(priv, QMI_WLFW_WAKE_REQUEST_V01);
 	if (!ret)
 		atomic_inc(&priv->soc_wake_ref_count);
 
@@ -2195,8 +2209,11 @@ static int icnss_event_soc_wake_release(struct icnss_priv *priv, void *data)
 		return 0;
 	}
 
-	ret = icnss_send_smp2p(priv, ICNSS_SOC_WAKE_REL,
-			       ICNSS_SMP2P_OUT_SOC_WAKE);
+	if (!IS_ERR_OR_NULL(priv->smp2p_info[ICNSS_SMP2P_OUT_SOC_WAKE].smem_state))
+		ret = icnss_send_smp2p(priv, ICNSS_SOC_WAKE_REL,
+				       ICNSS_SMP2P_OUT_SOC_WAKE);
+	else
+		ret = wlfw_send_soc_wake_msg(priv, QMI_WLFW_WAKE_RELEASE_V01);
 	return ret;
 }
 
@@ -4694,26 +4711,34 @@ EXPORT_SYMBOL(icnss_exit_power_save);
 int icnss_prevent_l1(struct device *dev)
 {
 	struct icnss_priv *priv = dev_get_drvdata(dev);
+	enum smp2p_out_entry smp2p_entry;
 
 	if (test_bit(ICNSS_PD_RESTART, &priv->state) ||
 	    !test_bit(ICNSS_MODE_ON, &priv->state))
 		return 0;
 
+	smp2p_entry = !IS_ERR_OR_NULL(priv->smp2p_info[ICNSS_SMP2P_OUT_EP_POWER_SAVE].smem_state) ?
+		      ICNSS_SMP2P_OUT_EP_POWER_SAVE : ICNSS_SMP2P_OUT_POWER_SAVE;
+
 	return icnss_send_smp2p(priv, ICNSS_PCI_EP_POWER_SAVE_EXIT,
-				ICNSS_SMP2P_OUT_EP_POWER_SAVE);
+				smp2p_entry);
 }
 EXPORT_SYMBOL(icnss_prevent_l1);
 
 void icnss_allow_l1(struct device *dev)
 {
 	struct icnss_priv *priv = dev_get_drvdata(dev);
+	enum smp2p_out_entry smp2p_entry;
 
 	if (test_bit(ICNSS_PD_RESTART, &priv->state) ||
 	    !test_bit(ICNSS_MODE_ON, &priv->state))
 		return;
 
+	smp2p_entry = !IS_ERR_OR_NULL(priv->smp2p_info[ICNSS_SMP2P_OUT_EP_POWER_SAVE].smem_state) ?
+		      ICNSS_SMP2P_OUT_EP_POWER_SAVE : ICNSS_SMP2P_OUT_POWER_SAVE;
+
 	icnss_send_smp2p(priv, ICNSS_PCI_EP_POWER_SAVE_ENTER,
-			 ICNSS_SMP2P_OUT_EP_POWER_SAVE);
+			 smp2p_entry);
 }
 EXPORT_SYMBOL(icnss_allow_l1);
 
