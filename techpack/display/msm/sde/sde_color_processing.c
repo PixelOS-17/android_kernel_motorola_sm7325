@@ -1859,8 +1859,24 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 		hw_cfg.dspp[i] = hw_dspp;
 	}
 
-	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC)
-		return;
+	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC) {
+		struct drm_property_blob *blob = prop_node->blob_ptr;
+
+		if (blob) {
+			const struct drm_msm_pcc *pcc_cfg = blob->data;
+
+			if (pcc_cfg->r.c == 0 && pcc_cfg->g.c == 0 &&
+			    pcc_cfg->b.c == 0) {
+				sde_crtc_state->color_invert_on = false;
+				hw_cfg.payload = NULL;
+				hw_cfg.len = 0;
+			} else {
+				sde_crtc_state->color_invert_on = true;
+			}
+		} else {
+			sde_crtc_state->color_invert_on = false;
+		}
+	}
 
 	if ((prop_node->feature >= SDE_CP_CRTC_MAX_FEATURES) ||
 			set_crtc_feature_wrappers[prop_node->feature] == NULL) {
