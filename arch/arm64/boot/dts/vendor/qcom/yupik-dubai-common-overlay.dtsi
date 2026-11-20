@@ -89,6 +89,32 @@
             output-low;
         };
     };
+
+    qupv3_se7_ctsrx_sleep: qupv3_se7_ctsrx_sleep {
+        cts {
+            pins = "gpio28";
+            function = "qup07";
+            drive-strength = <2>;
+            bias-disable;
+        };
+
+        rx {
+            pins = "gpio31";
+            function = "gpio";
+            drive-strength = <2>;
+            bias-disable;
+            input-enable;
+        };
+    };
+};
+
+/*
+ * pinctrl-msm masks a pin's interrupt while the pin is muxed away from GPIO,
+ * so the BT UART RX wakeup interrupt can only fire with RX in GPIO mode during
+ * sleep.
+ */
+&qupv3_se7_4uart {
+    pinctrl-2 = <&qupv3_se7_ctsrx_sleep>, <&qupv3_se7_rts>, <&qupv3_se7_tx>;
 };
 
 /*
