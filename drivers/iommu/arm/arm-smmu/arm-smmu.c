@@ -93,10 +93,7 @@ struct arm_smmu_option_prop {
 
 
 /* DEBUG (k61.stop bring-up): step trace that reaches ramoops before a hang */
-#define k61dbg(fmt, ...) do {					\
-	pr_info("k61dbg: " fmt "\n", ##__VA_ARGS__);		\
-	mb();							\
-} while (0)
+#define k61dbg(fmt, ...) pr_debug("k61dbg: " fmt "\n", ##__VA_ARGS__)
 
 static struct arm_smmu_option_prop arm_smmu_options[] = {
 	{ ARM_SMMU_OPT_FATAL_ASF, "qcom,fatal-asf" },
