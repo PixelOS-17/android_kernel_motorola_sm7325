@@ -1411,7 +1411,8 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 		}
 	}
 
-	for (i = 0; i < dot11f_ie_rsn.pmkid_count; i++) {
+	for (i = 0; i < dot11f_ie_rsn.pmkid_count &&
+		    i < QDF_ARRAY_SIZE(dot11f_ie_rsn.pmkid); i++) {
 		if (qdf_mem_cmp(dot11f_ie_rsn.pmkid[i],
 		    pe_session->fils_info->fils_pmkid,
 		    PMKID_LEN) == 0) {
