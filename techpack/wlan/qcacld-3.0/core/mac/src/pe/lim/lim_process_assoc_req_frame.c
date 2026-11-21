@@ -2183,7 +2183,8 @@ static bool lim_is_sae_peer_allowed(struct mac_context *mac_ctx,
 	if (!rsn_ie->pmkid_count) {
 		*mac_status_code = STATUS_NOT_SUPPORTED_AUTH_ALG;
 		pe_debug("No PMKID present in RSNIE; Tried to use SAE AKM after non-SAE authentication");
-	} else if (lim_is_pmkid_found_for_peer(mac_ctx, peer_mac_addr, session,
+	} else if (rsn_ie->pmkid_count <= QDF_ARRAY_SIZE(rsn_ie->pmkid) &&
+		   lim_is_pmkid_found_for_peer(mac_ctx, peer_mac_addr, session,
 					       &rsn_ie->pmkid[0][0],
 					       rsn_ie->pmkid_count)) {
 		pe_debug("Valid PMKID found for SAE peer");
