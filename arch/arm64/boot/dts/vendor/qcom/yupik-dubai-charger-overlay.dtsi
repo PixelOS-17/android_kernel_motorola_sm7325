@@ -185,6 +185,7 @@ compatible = "mmi,mmi-charger";
 	io-channels = 	<&pm7250b_vadc ADC5_AMUX_THM2_100K_PU>,
 			<&pm7250b_vadc ADC5_AMUX_THM3_100K_PU>;
 
+	/delete-node/ charger_skin_therm;
 
 	smb_therm {
 		reg = <ADC5_AMUX_THM2_100K_PU>;
@@ -205,6 +206,9 @@ compatible = "mmi,mmi-charger";
 	};
 	//pm7250b thermal
 
+	chg-skin-therm-usr {
+		status = "disabled";
+	};
 	/delete-node/ conn-therm-usr;
         usb_therm {
                 polling-delay-passive = <0>;
