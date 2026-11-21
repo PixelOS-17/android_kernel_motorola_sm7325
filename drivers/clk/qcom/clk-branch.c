@@ -75,14 +75,17 @@ static bool clk_branch2_check_halt(const struct clk_branch *br, bool enabling)
 
 static int get_branch_timeout(const struct clk_branch *br)
 {
-	int rate, period_us, timeout;
+	unsigned long rate;
+	int period_us, timeout = 0;
 
 	/*
 	 * The time it takes a clock branch to toggle is roughly 3 clock cycles.
 	 */
 	rate = clk_hw_get_rate(&br->clkr.hw);
-	period_us = 1000000 / rate;
-	timeout = 3 * period_us;
+	if (rate) {
+		period_us = 1000000UL / rate;
+		timeout = 3 * period_us;
+	}
 
 	return max(timeout, 200);
 }
