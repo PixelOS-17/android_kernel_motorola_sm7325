@@ -375,9 +375,6 @@ static int adc_tm5_get_temp(struct thermal_zone_device *tz, int *temp)
 	if (ret < 0)
 		return ret;
 
-	if (ret != IIO_VAL_INT)
-		return -EINVAL;
-
 	return 0;
 }
 
@@ -1132,7 +1129,8 @@ static int adc_tm5_probe(struct platform_device *pdev)
 	adc_tm->regmap = regmap;
 	adc_tm->dev = dev;
 	adc_tm->base = reg;
-	adc_tm->legacy_binding = of_device_is_compatible(node, "qcom,adc-tm7");
+	adc_tm->legacy_binding = of_device_is_compatible(node, "qcom,adc-tm7") ||
+				 of_device_is_compatible(node, "qcom,adc-tm5");
 
 	ret = adc_tm5_get_dt_data(adc_tm, node);
 	if (ret) {
@@ -1223,6 +1221,10 @@ static const struct of_device_id adc_tm5_match_table[] = {
 	},
 	{
 		.compatible = "qcom,spmi-adc-tm5-iio",
+		.data = &adc_tm5_data_pmic,
+	},
+	{
+		.compatible = "qcom,adc-tm5",
 		.data = &adc_tm5_data_pmic,
 	},
 	{
