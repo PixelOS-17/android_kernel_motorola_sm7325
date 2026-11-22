@@ -111,6 +111,14 @@ config QTI_CPU_ISOLATE_COOLING_DEVICE
 	   CPU pause. Used by BCL, SOCD, PMIC, and CPU thermal zones to
 	   isolate cores before hotplugging them.
 
+config QTI_LMH_ISENS_VREF
+	tristate "QTI LMh iSens VREF regulator initializer"
+	depends on OF && REGULATOR
+	help
+	   Configures and enables the isens_vref_0p8 and isens_vref_1p8 LDOs
+	   described by qcom,msm-hw-limits nodes for on-die LMh current
+	   sensors.
+
 config QTI_DDR_COOLING_DEVICE
 	tristate "QTI DDR cooling devices"
 	depends on THERMAL && INTERCONNECT

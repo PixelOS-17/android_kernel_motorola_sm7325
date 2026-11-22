@@ -18,6 +18,7 @@ qti_qmi_sensor_v2-y += thermal_sensor_service_v02.o qmi_sensors_v2.o
 obj-$(CONFIG_QTI_CPU_VOLTAGE_COOLING_DEVICE) += cpu_voltage_cooling.o
 obj-$(CONFIG_QTI_CPU_HOTPLUG_COOLING_DEVICE) += cpu_hotplug.o
 obj-$(CONFIG_QTI_CPU_ISOLATE_COOLING_DEVICE) += cpu_isolate.o
+obj-$(CONFIG_QTI_LMH_ISENS_VREF) += msm_lmh_isens.o
 obj-$(CONFIG_QTI_DDR_COOLING_DEVICE) += ddr_cdev.o
 obj-${CONFIG_QTI_SDPM_CLOCK_MONITOR} += sdpm_clk.o
 obj-$(CONFIG_THERMAL_TSENS_LEGACY)	+= msm-tsens-driver.o
