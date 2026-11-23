@@ -1247,7 +1247,10 @@ static inline void blk_flush_plug(struct blk_plug *plug, bool async)
 static __always_inline void blk_plug_invalidate_ts(void)
 {
 	if (unlikely(current->flags & PF_BLOCK_TS)) {
-		current->plug->cur_ktime = 0;
+		struct blk_plug *plug = READ_ONCE(current->plug);
+
+		if (plug)
+			WRITE_ONCE(plug->cur_ktime, 0);
 		current->flags &= ~PF_BLOCK_TS;
 	}
 }

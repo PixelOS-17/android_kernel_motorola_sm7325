@@ -1327,7 +1327,7 @@ void __blk_flush_plug(struct blk_plug *plug, bool from_schedule)
 	if (unlikely(!rq_list_empty(&plug->cached_rqs)))
 		blk_mq_free_plug_rqs(plug);
 
-	plug->cur_ktime = 0;
+	WRITE_ONCE(plug->cur_ktime, 0);
 	current->flags &= ~PF_BLOCK_TS;
 }
 
@@ -1345,7 +1345,13 @@ void blk_finish_plug(struct blk_plug *plug)
 {
 	if (plug == current->plug) {
 		__blk_flush_plug(plug, false);
-		current->plug = NULL;
+		/*
+		 * Ensure PF_BLOCK_TS is cleared before current->plug becomes
+		 * NULL so preemption here cannot race with
+		 * blk_plug_invalidate_ts().
+		 */
+		barrier();
+		WRITE_ONCE(current->plug, NULL);
 	}
 }
 EXPORT_SYMBOL(blk_finish_plug);
