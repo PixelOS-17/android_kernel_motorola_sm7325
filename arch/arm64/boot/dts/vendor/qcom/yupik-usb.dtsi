@@ -76,6 +76,7 @@
 			tx-fifo-resize;
 			maximum-speed = "super-speed";
 			dr_mode = "otg";
+			usb-role-switch;
 		};
 
 		port {
