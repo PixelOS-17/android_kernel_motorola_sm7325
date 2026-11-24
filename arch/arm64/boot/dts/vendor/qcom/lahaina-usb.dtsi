@@ -76,6 +76,7 @@
 			tx-fifo-resize;
 			maximum-speed = "super-speed-plus";
 			dr_mode = "otg";
+			usb-role-switch;
 		};
 
 		qcom,usbbam@a704000 {
